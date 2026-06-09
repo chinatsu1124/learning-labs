@@ -71,10 +71,12 @@ function renderVigenere(){
     kRow += kc;
     cRow += String.fromCharCode(c + 65);
   }
+  // 每个字母放进等宽格子里居中，逐列对齐不依赖字体度量
+  const cells = s => s ? [...s].map(c => `<span class="ch">${c}</span>`).join('') : '—';
   box.innerHTML =
-    `<span class="r"><span class="lab">明文</span><span class="p">${pRow || '—'}</span></span>` +
-    `<span class="r"><span class="lab">密钥</span><span class="k">${kRow || '—'}</span></span>` +
-    `<span class="r"><span class="lab">密文</span><span class="c">${cRow || '—'}</span></span>`;
+    `<span class="r"><span class="lab">明文</span><span class="p">${cells(pRow)}</span></span>` +
+    `<span class="r"><span class="lab">密钥</span><span class="k">${cells(kRow)}</span></span>` +
+    `<span class="r"><span class="lab">密文</span><span class="c">${cells(cRow)}</span></span>`;
 }
 ['vIn','vKey'].forEach(id => $(id).addEventListener('input', renderVigenere));
 renderVigenere();
