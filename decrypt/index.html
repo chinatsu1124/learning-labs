@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
 <style>
 :root{
   --ink:#070b16;          /* 最深台面 */
@@ -128,7 +130,7 @@ h2 .han{font-family:var(--han);font-weight:700}
 .card.hash{border-top:2px solid var(--key)}
 
 /* ---- 通用：算法模块 ---- */
-.algo-head{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+.algo-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px}
 .algo-head .badge{font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:20px;
   letter-spacing:1px;text-transform:uppercase;border:1px solid var(--line)}
 .badge.sym{color:var(--cipher);border-color:rgba(67,224,200,.4)}
@@ -159,7 +161,7 @@ h2 .han{font-family:var(--han);font-weight:700}
 .field input:focus,.field textarea:focus{outline:none;border-color:var(--cipher);
   box-shadow:0 0 0 3px var(--cipher-glow)}
 .out{background:var(--ink);border:1px solid var(--line-soft);border-radius:9px;
-  padding:14px;font-family:var(--mono);font-size:14.5px;word-break:break-all;
+  padding:14px;font-family:var(--mono);font-size:14.5px;letter-spacing:.5px;word-break:break-all;
   min-height:1.5em;line-height:1.7}
 .out.ciph{color:var(--cipher)}
 .out.key{color:var(--key)}
@@ -177,17 +179,22 @@ button.act:focus-visible,a:focus-visible,input:focus-visible{
   outline:2px solid var(--cipher);outline-offset:2px}
 
 /* ---- 维吉尼亚字母对齐 ---- */
-.vig-rows{font-family:var(--mono);font-size:14px;line-height:2.1;letter-spacing:2px;
+.vig-rows{font-family:var(--mono);font-size:15px;line-height:1;
   background:var(--ink);border:1px solid var(--line-soft);border-radius:9px;
-  padding:14px;overflow-x:auto;white-space:nowrap}
-.vig-rows .r{display:block}
-.vig-rows .lab{color:var(--muted);display:inline-block;width:56px}
+  padding:14px;overflow-x:auto}
+.vig-rows .r{display:grid;grid-template-columns:52px auto;align-items:center;column-gap:14px;white-space:nowrap}
+.vig-rows .r + .r{margin-top:8px}
+.vig-rows .vlab{width:52px;margin:0;font-family:var(--han);
+  font-size:11px;font-weight:500;color:var(--plain-dim);text-align:center;
+  background:var(--surface-2);border:1px solid var(--line-soft);border-radius:20px;
+  padding:5px 0;line-height:1}
+.vig-rows .ch{display:inline-block;width:1.6ch;text-align:center;line-height:1;vertical-align:middle}
 .vig-rows .p{color:var(--plain)}
 .vig-rows .k{color:var(--key)}
 .vig-rows .c{color:var(--cipher)}
 
 /* ---- 雪崩效应位差 ---- */
-.bits{font-family:var(--mono);font-size:13px;word-break:break-all;line-height:1.8}
+.bits{font-family:var(--mono);font-size:14.5px;word-break:break-all;line-height:1.7}
 .bits .diff{color:var(--danger);background:var(--danger-soft);font-weight:700;border-radius:2px}
 .bits .same{color:var(--muted)}
 .avalanche{display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap}
@@ -206,6 +213,8 @@ button.act:focus-visible,a:focus-visible,input:focus-visible{
 .step .t b{color:var(--plain);font-weight:500}
 .step .t .v{font-family:var(--mono);color:var(--cipher);font-weight:500}
 .step .t .vk{font-family:var(--mono);color:var(--key);font-weight:500}
+.step .t .katex{font-size:1.05em;color:var(--plain)}
+.step .t .katex .mord.text{color:inherit}
 
 /* ---- DH 颜色混合 ---- */
 .dh-mix{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:8px}

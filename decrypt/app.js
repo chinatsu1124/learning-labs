@@ -1,6 +1,18 @@
 'use strict';
 const $ = id => document.getElementById(id);
 
+/* ---- LaTeX 公式渲染（KaTeX，加载失败时回退到 HTML） ---- */
+const KX = { ciph:'#43e0c8', key:'#f2b04a', violet:'#9a8cff' };
+function tex(latex){
+  if (window.katex){
+    try { return katex.renderToString(latex, { throwOnError:false }); }
+    catch(_){ /* 回退 */ }
+  }
+  return null;
+}
+// 优先用 KaTeX 渲染 latex，不可用时回退到 fallback（纯 HTML）
+function fx(latex, fallback){ const t = tex(latex); return t !== null ? t : fallback; }
+
 /* ============================================================
    1 · 凯撒密码（Hero + 工具 + 暴力破解）
    ============================================================ */
@@ -48,7 +60,7 @@ function renderVigenere(){
   const plain = $('vIn').value.toUpperCase().replace(/[^A-Z]/g, '');
   const key   = $('vKey').value.toUpperCase().replace(/[^A-Z]/g, '');
   const box = $('vRows');
-  if (!key){ box.innerHTML = '<span class="r"><span class="lab">密钥</span><span class="k">请输入密钥词</span></span>'; return; }
+  if (!key){ box.innerHTML = '<span class="r"><span class="vlab">密钥</span><span class="k">请输入密钥词</span></span>'; return; }
   let pRow = '', kRow = '', cRow = '';
   for (let i = 0; i < plain.length; i++){
     const p = plain.charCodeAt(i) - 65;
@@ -59,10 +71,12 @@ function renderVigenere(){
     kRow += kc;
     cRow += String.fromCharCode(c + 65);
   }
+  // 每个字母放进等宽格子里居中，逐列对齐不依赖字体度量
+  const cells = s => s ? [...s].map(c => `<span class="ch">${c}</span>`).join('') : '—';
   box.innerHTML =
-    `<span class="r"><span class="lab">明文</span><span class="p">${pRow || '—'}</span></span>` +
-    `<span class="r"><span class="lab">密钥</span><span class="k">${kRow || '—'}</span></span>` +
-    `<span class="r"><span class="lab">密文</span><span class="c">${cRow || '—'}</span></span>`;
+    `<span class="r"><span class="vlab">明文</span><span class="p">${cells(pRow)}</span></span>` +
+    `<span class="r"><span class="vlab">密钥</span><span class="k">${cells(kRow)}</span></span>` +
+    `<span class="r"><span class="vlab">密文</span><span class="c">${cells(cRow)}</span></span>`;
 }
 ['vIn','vKey'].forEach(id => $(id).addEventListener('input', renderVigenere));
 renderVigenere();
@@ -153,14 +167,14 @@ function renderRSA(){
   const back = modpow(c, d, n);                  // 解密 m = c^d mod n
 
   box.innerHTML =
-    step(1, `选两个素数 <span class="vk">p=${p}</span>、<span class="vk">q=${q}</span>`) +
-    step(2, `相乘得模数 <b>n = p·q =</b> <span class="v">${n}</span>　（公开）`) +
-    step(3, `欧拉函数 <b>φ(n) = (p−1)(q−1) =</b> <span class="v">${phi}</span>　（保密）`) +
-    step(4, `选公钥指数 <b>e =</b> <span class="vk">${e}</span>，满足 gcd(e, φ)=1`) +
-    step(5, `求私钥指数 <b>d =</b> <span class="vk">${d}</span>，满足 e·d ≡ 1 (mod φ)`) +
-    step('K', `<b>公钥 = (n=${n}, e=${e})</b>　·　<b>私钥 = (n=${n}, d=${d})</b>`) +
-    step('E', `加密：<b>c = m<sup>e</sup> mod n = ${m}<sup>${e}</sup> mod ${n} =</b> <span class="v">${c}</span>${warn}`) +
-    step('D', `解密：<b>m = c<sup>d</sup> mod n =</b> <span class="v">${back}</span>　${back === m ? '✓ 还原成功' : ''}`);
+    step(1, `选两个素数 ${fx(`p=\\textcolor{${KX.key}}{${p}}`, `<span class="vk">p=${p}</span>`)}、${fx(`q=\\textcolor{${KX.key}}{${q}}`, `<span class="vk">q=${q}</span>`)}`) +
+    step(2, `相乘得模数 ${fx(`n = p\\cdot q = \\textcolor{${KX.ciph}}{${n}}`, `<b>n = p·q =</b> <span class="v">${n}</span>`)}　（公开）`) +
+    step(3, `欧拉函数 ${fx(`\\varphi(n) = (p-1)(q-1) = \\textcolor{${KX.ciph}}{${phi}}`, `<b>φ(n) = (p−1)(q−1) =</b> <span class="v">${phi}</span>`)}　（保密）`) +
+    step(4, `选公钥指数 ${fx(`e = \\textcolor{${KX.key}}{${e}}`, `<b>e =</b> <span class="vk">${e}</span>`)}，满足 ${fx(`\\gcd(e,\\varphi)=1`, `gcd(e, φ)=1`)}`) +
+    step(5, `求私钥指数 ${fx(`d = \\textcolor{${KX.key}}{${d}}`, `<b>d =</b> <span class="vk">${d}</span>`)}，满足 ${fx(`e\\cdot d \\equiv 1 \\pmod{\\varphi}`, `e·d ≡ 1 (mod φ)`)}`) +
+    step('K', `公钥 ${fx(`(n=${n},\\ e=${e})`, `<b>(n=${n}, e=${e})</b>`)}　·　私钥 ${fx(`(n=${n},\\ d=${d})`, `<b>(n=${n}, d=${d})</b>`)}`) +
+    step('E', `加密：${fx(`c = m^{e}\\bmod n = ${m}^{${e}}\\bmod ${n} = \\textcolor{${KX.ciph}}{${c}}`, `<b>c = m<sup>e</sup> mod n = ${m}<sup>${e}</sup> mod ${n} =</b> <span class="v">${c}</span>`)}${warn}`) +
+    step('D', `解密：${fx(`m = c^{d}\\bmod n = \\textcolor{${KX.ciph}}{${back}}`, `<b>m = c<sup>d</sup> mod n =</b> <span class="v">${back}</span>`)}　${back === m ? '✓ 还原成功' : ''}`);
 }
 ['rP','rQ','rM'].forEach(id => $(id).addEventListener('input', renderRSA));
 renderRSA();
@@ -224,10 +238,10 @@ function renderDH(){
 
   // 数学步骤
   $('dhSteps').innerHTML =
-    step('公', `公开参数：底数 <span class="vk">g=${DH_G}</span>、素数 <span class="vk">p=${DH_P}</span>（窃听者也看得到）`) +
-    step('A', `Alice 算公开值 <b>A = g<sup>a</sup> mod p = ${DH_G}<sup>${a}</sup> mod ${DH_P} =</b> <span class="v">${A}</span> → 发给 Bob`) +
-    step('B', `Bob 算公开值 <b>B = g<sup>b</sup> mod p = ${DH_G}<sup>${b}</sup> mod ${DH_P} =</b> <span class="v">${B}</span> → 发给 Alice`) +
-    step('=', `Alice：<b>B<sup>a</sup> mod p =</b> <span class="v">${sA}</span>　Bob：<b>A<sup>b</sup> mod p =</b> <span class="v">${sB}</span>　${sA === sB ? '<b style="color:var(--cipher)">✓ 相等！</b>' : ''}`) +
+    step('公', `公开参数：底数 ${fx(`g=\\textcolor{${KX.key}}{${DH_G}}`, `<span class="vk">g=${DH_G}</span>`)}、素数 ${fx(`p=\\textcolor{${KX.key}}{${DH_P}}`, `<span class="vk">p=${DH_P}</span>`)}（窃听者也看得到）`) +
+    step('A', `Alice 算公开值 ${fx(`A = g^{a}\\bmod p = ${DH_G}^{${a}}\\bmod ${DH_P} = \\textcolor{${KX.ciph}}{${A}}`, `<b>A = g<sup>a</sup> mod p = ${DH_G}<sup>${a}</sup> mod ${DH_P} =</b> <span class="v">${A}</span>`)} → 发给 Bob`) +
+    step('B', `Bob 算公开值 ${fx(`B = g^{b}\\bmod p = ${DH_G}^{${b}}\\bmod ${DH_P} = \\textcolor{${KX.ciph}}{${B}}`, `<b>B = g<sup>b</sup> mod p = ${DH_G}<sup>${b}</sup> mod ${DH_P} =</b> <span class="v">${B}</span>`)} → 发给 Alice`) +
+    step('=', `Alice：${fx(`B^{a}\\bmod p = \\textcolor{${KX.ciph}}{${sA}}`, `<b>B<sup>a</sup> mod p =</b> <span class="v">${sA}</span>`)}　Bob：${fx(`A^{b}\\bmod p = \\textcolor{${KX.ciph}}{${sB}}`, `<b>A<sup>b</sup> mod p =</b> <span class="v">${sB}</span>`)}　${sA === sB ? '<b style="color:var(--cipher)">✓ 相等！</b>' : ''}`) +
     step('!', `窃听者只拿到 g、p、A、B，想反推出 a 或 b 就得解<b>离散对数</b>——大素数下做不到。`);
 }
 ['dhA','dhB'].forEach(id => $(id).addEventListener('input', renderDH));
