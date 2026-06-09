@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>字节实验室 · BYTE LAB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b10;
+    --bg2:#0f1118;
+    --panel:#13151f;
+    --panel-hi:#1a1d29;
+    --line:#262a38;
+    --ink:#dfe3ec;
+    --muted:#8a90a3;
+    --faint:#565c70;
+    --amber:#ffb648;
+    --amber-dim:#5a4422;
+    --teal:#4fe3c1;
+    --teal-dim:#1f4d44;
+    --rose:#ff7a85;
+    --display:'Syne',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:48px 48px;
+    background-position:center top;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(255,182,72,.07),transparent 60%),
+               radial-gradient(ellipse 70% 50% at 90% 20%,rgba(79,227,193,.05),transparent 55%),
+               linear-gradient(180deg,rgba(10,11,16,.4),var(--bg) 90%);
+  }
+  .wrap{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:0 24px}
+
+  /* ---------- header ---------- */
+  header{padding:90px 0 40px;text-align:center}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:var(--amber);
+    text-transform:uppercase;margin-bottom:24px;opacity:0;animation:rise .7s .1s forwards}
+  h1.hero{font-family:var(--display);font-weight:800;font-size:clamp(64px,16vw,150px);
+    line-height:.9;letter-spacing:-.03em;margin-bottom:8px}
+  h1.hero .b{display:inline-block;opacity:0;transform:translateY(40px);
+    animation:rise .8s forwards}
+  h1.hero .b:nth-child(1){animation-delay:.15s;color:var(--ink)}
+  h1.hero .b:nth-child(2){animation-delay:.25s;color:var(--amber)}
+  h1.hero .b:nth-child(3){animation-delay:.35s;color:var(--ink)}
+  h1.hero .b:nth-child(4){animation-delay:.45s;color:var(--teal)}
+  .sub{font-family:var(--mono);color:var(--muted);font-size:15px;margin-top:18px;
+    opacity:0;animation:rise .7s .6s forwards}
+  .sub b{color:var(--ink);font-weight:500}
+  .scrollcue{margin-top:54px;font-family:var(--mono);font-size:11px;letter-spacing:.3em;
+    color:var(--faint);opacity:0;animation:rise .7s .9s forwards;text-transform:uppercase}
+  .scrollcue span{display:block;font-size:18px;margin-top:6px;animation:bob 1.8s ease-in-out infinite}
+
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+  /* ---------- sections ---------- */
+  section{padding:56px 0;border-top:1px solid var(--line)}
+  .secnum{font-family:var(--mono);font-size:12px;color:var(--amber);letter-spacing:.2em;
+    margin-bottom:10px;display:flex;align-items:center;gap:12px}
+  .secnum::after{content:"";flex:1;height:1px;background:var(--line)}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);
+    line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
+  h2 em{font-style:normal;color:var(--amber)}
+  p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
+  p b{color:var(--ink);font-weight:600}
+  .hl{color:var(--teal);font-weight:600}
+  .hl-a{color:var(--amber);font-weight:600}
+  code{font-family:var(--mono);background:var(--panel-hi);color:var(--teal);
+    padding:2px 7px;border-radius:5px;font-size:.88em;border:1px solid var(--line)}
+
+  /* ---------- panel ---------- */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:28px;margin:26px 0;position:relative;overflow:hidden}
+  .panel::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--amber),transparent);opacity:.5}
+  .panel-label{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--faint);
+    text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+  .panel-label::before{content:"●";color:var(--teal);font-size:8px}
+
+  /* ---------- single bit ---------- */
+  .bit-solo{display:flex;flex-direction:column;align-items:center;gap:18px}
+  .bit-switch{width:120px;height:120px;border-radius:24px;border:2px solid var(--line);
+    background:var(--bg2);font-family:var(--mono);font-weight:700;font-size:56px;
+    color:var(--faint);cursor:pointer;transition:all .25s cubic-bezier(.4,0,.2,1);
+    display:flex;align-items:center;justify-content:center;user-select:none}
+  .bit-switch.on{color:var(--amber);border-color:var(--amber);
+    background:var(--amber-dim);box-shadow:0 0 40px rgba(255,182,72,.35),inset 0 0 20px rgba(255,182,72,.15)}
+  .bit-switch:active{transform:scale(.94)}
+  .bit-state{font-family:var(--mono);font-size:14px;color:var(--muted)}
+  .bit-state b{color:var(--ink)}
+
+  /* ---------- byte explorer ---------- */
+  .byte-row{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-bottom:6px}
+  .pv-row{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-bottom:18px}
+  .pv{text-align:center;font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .bitcell{aspect-ratio:1;border-radius:10px;border:1.5px solid var(--line);
+    background:var(--bg2);font-family:var(--mono);font-weight:700;font-size:clamp(18px,5vw,26px);
+    color:var(--faint);cursor:pointer;transition:all .2s cubic-bezier(.4,0,.2,1);
+    display:flex;align-items:center;justify-content:center;user-select:none;position:relative}
+  .bitcell:hover{border-color:var(--muted)}
+  .bitcell.on{color:var(--amber);border-color:var(--amber);background:var(--amber-dim);
+    box-shadow:0 0 22px rgba(255,182,72,.28)}
+  .bitcell .idx{position:absolute;top:3px;right:6px;font-size:9px;color:var(--faint);font-weight:400}
+
+  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;
+    margin-top:22px}
+  .ro{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .ro .lab{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--faint);
+    text-transform:uppercase;margin-bottom:8px}
+  .ro .val{font-family:var(--mono);font-weight:700;font-size:clamp(22px,5vw,30px);color:var(--ink);
+    transition:color .15s;word-break:break-all}
+  .ro.acc .val{color:var(--amber)}
+  .ro.acc2 .val{color:var(--teal)}
+  .sum{font-family:var(--mono);font-size:14px;color:var(--muted);margin-top:20px;
+    padding:14px 16px;background:var(--bg2);border-radius:10px;border:1px solid var(--line);
+    line-height:2.1;word-break:break-word}
+  .sum .t{color:var(--amber);font-weight:700}
+  .sum .o{color:var(--faint)}
+  .byte-tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .btn{font-family:var(--mono);font-size:13px;background:var(--panel-hi);color:var(--ink);
+    border:1px solid var(--line);border-radius:8px;padding:9px 16px;cursor:pointer;transition:all .18s}
+  .btn:hover{border-color:var(--amber);color:var(--amber)}
+  .toggle-grp{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:18px}
+  .toggle-grp button{font-family:var(--mono);font-size:13px;background:transparent;color:var(--muted);
+    border:0;padding:9px 18px;cursor:pointer;transition:all .18s}
+  .toggle-grp button.active{background:var(--teal-dim);color:var(--teal)}
+
+  /* ---------- converter ---------- */
+  .conv{display:grid;gap:14px}
+  .conv-row{display:grid;grid-template-columns:90px 1fr;gap:14px;align-items:center}
+  .conv-row .tag{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:right}
+  .conv-row input{font-family:var(--mono);font-size:18px;background:var(--bg2);color:var(--ink);
+    border:1px solid var(--line);border-radius:10px;padding:12px 16px;width:100%;outline:none;
+    transition:border-color .18s}
+  .conv-row input:focus{border-color:var(--amber)}
+  .conv-row input.bad{border-color:var(--rose);color:var(--rose)}
+
+  /* ---------- power table ---------- */
+  .ptable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:14px;margin-top:6px}
+  .ptable th,.ptable td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
+  .ptable th{color:var(--faint);font-weight:500;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+  .ptable td:first-child{color:var(--amber)}
+  .ptable td .big{color:var(--ink);font-weight:700}
+  .ptable tr:last-child td{border-bottom:0}
+
+  /* ---------- units ---------- */
+  .unit-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+  .unit-card{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .unit-card h4{font-family:var(--mono);font-size:13px;margin-bottom:12px;letter-spacing:.05em}
+  .unit-card.dec h4{color:var(--teal)}
+  .unit-card.bin h4{color:var(--amber)}
+  .unit-card ul{list-style:none;font-family:var(--mono);font-size:12.5px;color:var(--muted);line-height:2}
+  .unit-card li b{color:var(--ink)}
+
+  /* ---------- utf8 inspector ---------- */
+  .utf-input{width:100%;font-family:var(--body);font-size:22px;background:var(--bg2);color:var(--ink);
+    border:1px solid var(--line);border-radius:12px;padding:16px 18px;outline:none;transition:border-color .18s}
+  .utf-input:focus{border-color:var(--teal)}
+  .utf-summary{display:flex;gap:22px;flex-wrap:wrap;margin:18px 0;font-family:var(--mono);font-size:13px;color:var(--muted)}
+  .utf-summary b{color:var(--teal);font-size:20px;font-weight:700;display:block}
+  .char-list{display:flex;flex-direction:column;gap:10px}
+  .char-card{display:grid;grid-template-columns:64px 1fr;gap:16px;align-items:center;
+    background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .char-glyph{font-size:34px;text-align:center;line-height:1.2;min-height:44px;
+    display:flex;align-items:center;justify-content:center;background:var(--panel-hi);
+    border-radius:8px;border:1px solid var(--line)}
+  .char-meta{font-family:var(--mono);font-size:12.5px;line-height:1.9}
+  .char-meta .cp{color:var(--amber)}
+  .char-meta .bytes{margin-top:4px}
+  .bchip{display:inline-block;background:var(--teal-dim);color:var(--teal);border-radius:5px;
+    padding:2px 7px;margin-right:5px;font-size:12px;font-weight:500}
+  .nbadge{display:inline-block;font-size:11px;color:var(--faint);margin-left:6px}
+
+  /* ---------- endian ---------- */
+  .endian-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+  .endian-box{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .endian-box h4{font-family:var(--mono);font-size:13px;margin-bottom:14px}
+  .endian-box.big h4{color:var(--amber)}
+  .endian-box.little h4{color:var(--teal)}
+  .ebytes{display:flex;gap:8px}
+  .ebyte{flex:1;text-align:center;font-family:var(--mono);font-size:15px;font-weight:700;
+    background:var(--panel-hi);border:1px solid var(--line);border-radius:8px;padding:12px 0;color:var(--ink)}
+  .ebyte small{display:block;font-size:10px;color:var(--faint);font-weight:400;margin-top:4px}
+
+  /* ---------- callout ---------- */
+  .callout{border-left:3px solid var(--amber);background:var(--panel);border-radius:0 12px 12px 0;
+    padding:16px 20px;margin:22px 0}
+  .callout .t{font-family:var(--mono);font-size:12px;letter-spacing:.15em;color:var(--amber);
+    text-transform:uppercase;margin-bottom:6px}
+  .callout p{margin:0;font-size:15px;color:var(--ink)}
+  .callout.teal{border-color:var(--teal)}
+  .callout.teal .t{color:var(--teal)}
+
+  /* ---------- footer ---------- */
+  footer{padding:60px 0 80px;text-align:center;border-top:1px solid var(--line)}
+  .recap{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;
+    text-align:left;margin-bottom:40px}
+  .recap div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .recap .n{font-family:var(--mono);color:var(--amber);font-size:12px;margin-bottom:6px}
+  .recap .x{font-size:14px;color:var(--muted);line-height:1.5}
+  .recap .x b{color:var(--ink)}
+  footer .sig{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.2em}
+
+  @media(max-width:560px){
+    .conv-row{grid-template-columns:70px 1fr}
+    .unit-cards,.endian-wrap{grid-template-columns:1fr}
+    .byte-row,.pv-row{gap:5px}
+    header{padding:60px 0 30px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="kicker">交互式计算机科学入门</div>
+    <h1 class="hero"><span class="b">B</span><span class="b">Y</span><span class="b">T</span><span class="b">E</span></h1>
+    <div class="sub">字节 · 一切数据的基本计量单位<br><b>动手拨动每一个比特，看数字如何诞生</b></div>
+    <div class="scrollcue">向下滚动开始<span>↓</span></div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 0. BIT -->
+  <section>
+    <div class="secnum">00 / 起点</div>
+    <h2>一切都从一个<em>开关</em>开始</h2>
+    <p>计算机本质上是一大堆电子开关。每个开关只有两种状态：<b>通电</b>或<b>断电</b>。我们用 <code>1</code> 表示通电、<code>0</code> 表示断电。</p>
+    <p>这样一个「只能是 0 或 1」的最小信息单位，就叫做 <b class="hl-a">位（bit，比特）</b>。它是信息世界里不可再分的「原子」。</p>
+    <div class="panel">
+      <div class="panel-label">动手试试 · 点击切换这个开关</div>
+      <div class="bit-solo">
+        <button class="bit-switch" id="soloBit">0</button>
+        <div class="bit-state">当前状态：<b id="soloState">关闭（断电 / 0）</b></div>
+      </div>
+    </div>
+    <p>一个开关只能表达「是 / 否」两种可能——信息量太小了。于是我们把<b>多个开关排成一排</b>一起用，能表达的组合就会指数级增长。</p>
+  </section>
+
+  <!-- 1. BYTE -->
+  <section>
+    <div class="secnum">01 / 核心</div>
+    <h2>8 个开关 = 1 个<em>字节</em></h2>
+    <p>把 <b class="hl-a">8 位</b> 排成一排打包在一起，就构成了 <b class="hl">1 个字节（byte）</b>。字节是计算机存储和处理数据时最常用的「基本包装单位」——内存大小、文件大小，算的几乎都是字节。</p>
+    <p>下面是一个真实的字节。每一位都有自己的<b>权重（位权）</b>，从右到左依次是 1、2、4、8……最左边是 128。把所有「亮起」的位权加起来，就是这个字节代表的数值。<b>点击下面的方块拨动它们试试：</b></p>
+
+    <div class="panel">
+      <div class="panel-label">字节实验台 · 点击方块翻转比特</div>
+      <div class="pv-row" id="pvRow"></div>
+      <div class="byte-row" id="byteRow"></div>
+
+      <div class="readout">
+        <div class="ro acc"><div class="lab">十进制 DEC</div><div class="val" id="decVal">0</div></div>
+        <div class="ro"><div class="lab">二进制 BIN</div><div class="val" id="binVal">00000000</div></div>
+        <div class="ro acc2"><div class="lab">十六进制 HEX</div><div class="val" id="hexVal">0x00</div></div>
+        <div class="ro"><div class="lab" id="signLab">有符号值 SIGNED</div><div class="val" id="signVal">0</div></div>
+      </div>
+
+      <div class="sum" id="sumLine">数值 = 0</div>
+
+      <div class="byte-tools">
+        <button class="btn" id="randBtn">🎲 随机一个字节</button>
+        <button class="btn" id="maxBtn">全部置 1（最大值）</button>
+        <button class="btn" id="zeroBtn">全部清 0</button>
+      </div>
+    </div>
+
+    <p>试着把所有位都点亮：你会得到 <code>11111111</code>，也就是十进制的 <b class="hl-a">255</b>。再加 1 就「进位溢出」了。这说明：<b>一个字节能表示的最大无符号整数就是 255。</b></p>
+  </section>
+
+  <!-- 2. WHY 8 -->
+  <section>
+    <div class="secnum">02 / 为什么</div>
+    <h2>为什么偏偏是 <em>8</em> 位？</h2>
+    <p>8 这个数字并不是物理定律决定的，更多是<b>历史与工程权衡</b>的结果。早期计算机的字长五花八门（6 位、7 位、9 位都有过）。</p>
+    <p>真正让 8 位「定型」的关键，是 1960 年代 IBM System/360 的普及，以及一个现实需求：<b>用 8 位刚好能舒服地编码一个英文字符</b>（包括大小写字母、数字、标点和一些控制符）。</p>
+    <div class="callout">
+      <div class="t">关键直觉</div>
+      <p>8 位 = 2⁸ = <b>256</b> 种组合。当年的 ASCII 字符只需要 128 个编码，8 位绰绰有余还留了一倍余量。而且 8 是 2 的幂，方便对半切分（半字节 = 4 位 = 1 个十六进制位），电路设计很整齐。</p>
+    </div>
+    <p>从此，「<b>1 字节 = 8 位</b>」成了几乎所有现代计算机的事实标准。注意：严格的标准术语里，明确指 8 位的单位叫 <b class="hl">octet（八位组）</b>，在网络协议规范中常见。</p>
+  </section>
+
+  <!-- 3. BASES -->
+  <section>
+    <div class="secnum">03 / 进制</div>
+    <h2>二进制、十进制与<em>十六进制</em></h2>
+    <p>同一个数值，可以用不同的「进制」来书写。计算机内部是二进制，人类习惯十进制，而程序员最爱十六进制——因为<b>每 4 个二进制位刚好对应 1 个十六进制位</b>，一个字节正好写成 2 个十六进制字符（如 <code>0xFF</code>），简洁又不丢信息。</p>
+    <div class="panel">
+      <div class="panel-label">进制转换器 · 在任意一栏输入数字</div>
+      <div class="conv">
+        <div class="conv-row"><span class="tag">十进制</span><input id="cDec" value="65" inputmode="numeric" placeholder="0 – 255"></div>
+        <div class="conv-row"><span class="tag">二进制</span><input id="cBin" placeholder="只能输入 0 / 1"></div>
+        <div class="conv-row"><span class="tag">十六进制</span><input id="cHex" placeholder="0-9 / A-F"></div>
+      </div>
+    </div>
+    <p>试着输入 <code>255</code>，看二进制变成 <code>11111111</code>、十六进制变成 <code>FF</code>。再试 <code>16</code>，注意十六进制是 <code>10</code>——这正是「逢十六进一」。<span class="nbadge">本转换器以单字节（0–255）为范围演示</span></p>
+  </section>
+
+  <!-- 4. RANGE -->
+  <section>
+    <div class="secnum">04 / 容量</div>
+    <h2>n 个位能表示<em>多少种</em>东西？</h2>
+    <p>规律极其简单：<b>每多 1 位，组合数就翻一倍</b>。n 个位能表示 <code>2ⁿ</code> 种不同的状态。这就是为什么计算机里到处都是 2 的幂。</p>
+    <div class="panel">
+      <div class="panel-label">指数增长 · 2 的幂</div>
+      <table class="ptable">
+        <thead><tr><th>位数</th><th>组合数 2ⁿ</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>1 位</td><td class="big">2</td><td>是 / 否</td></tr>
+          <tr><td>2 位</td><td class="big">4</td><td>00 01 10 11</td></tr>
+          <tr><td>4 位</td><td class="big">16</td><td>半字节 = 1 个十六进制位</td></tr>
+          <tr><td>8 位</td><td class="big">256</td><td><b>1 字节</b> · 可表示 0–255</td></tr>
+          <tr><td>16 位</td><td class="big">65,536</td><td>2 字节 · 一个常见的「短整型」</td></tr>
+          <tr><td>32 位</td><td class="big">约 42.9 亿</td><td>4 字节 · IPv4 地址总数就是它</td></tr>
+          <tr><td>64 位</td><td class="big">约 1.8×10¹⁹</td><td>8 字节 · 现代 CPU 的主流字长</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>翻倍的力量很惊人：仅仅 64 位，能表示的数量就超过了地球上沙粒的总数。</p>
+  </section>
+
+  <!-- 5. SIGNED -->
+  <section>
+    <div class="secnum">05 / 负数</div>
+    <h2>负数怎么办？<em>补码</em>登场</h2>
+    <p>一个字节有 256 种组合。如果只表示非负整数，就是 0–255（<b class="hl-a">无符号 unsigned</b>）。但我们也需要负数，于是用其中一半组合表示负数——这就是<b class="hl">有符号 signed</b>。</p>
+    <p>现代计算机几乎都用 <b>补码（two's complement）</b>表示法：<b>最高位（最左边那位）当作符号位</b>。它为 0 时是正数，为 1 时表示负数，此时真实数值 = 无符号值 − 256。</p>
+    <div class="callout teal">
+      <div class="t">回到实验台验证</div>
+      <p>把上面字节实验台切到「有符号」模式，再点亮最高位（128 那位）。你会看到十进制还是越来越大，但「有符号值」却变成了负数（比如 <code>10000000</code> = 无符号 128，有符号 −128）。这正是补码的魔法：让加减法在硬件上能用同一套电路完成。</p>
+    </div>
+    <p>所以同样是 <code>11111111</code> 这 8 个位，解释成无符号是 <b>255</b>，解释成有符号补码却是 <b>−1</b>。<b>字节本身只是 0 和 1，怎么解读取决于约定。</b>这是理解数据类型的关键。</p>
+  </section>
+
+  <!-- 6. UNITS -->
+  <section>
+    <div class="secnum">06 / 单位</div>
+    <h2>KB、MB、GB：<em>1000</em> 还是 <em>1024</em>？</h2>
+    <p>字节往上是更大的单位。但这里藏着一个让无数人困惑的坑：<b>同样写「KB」，可能指 1000 字节，也可能指 1024 字节。</b></p>
+    <div class="unit-cards">
+      <div class="unit-card dec">
+        <h4>十进制（×1000）SI 标准</h4>
+        <ul>
+          <li><b>1 KB</b> = 1,000 字节</li>
+          <li><b>1 MB</b> = 1,000 KB</li>
+          <li><b>1 GB</b> = 1,000 MB</li>
+          <li><b>1 TB</b> = 1,000 GB</li>
+        </ul>
+      </div>
+      <div class="unit-card bin">
+        <h4>二进制（×1024）IEC 标准</h4>
+        <ul>
+          <li><b>1 KiB</b> = 1,024 字节</li>
+          <li><b>1 MiB</b> = 1,024 KiB</li>
+          <li><b>1 GiB</b> = 1,024 MiB</li>
+          <li><b>1 TiB</b> = 1,024 GiB</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout">
+      <div class="t">为什么硬盘「缩水」了？</div>
+      <p>因为 1024 = 2¹⁰，最接近 1000 又是 2 的幂，所以内存/操作系统常按 1024 计。而硬盘厂商按 1000 标注容量。于是标称 <b>1 TB</b> 的硬盘（10¹² 字节），在按 1024 换算的系统里只显示约 <b>931 GiB</b>——并没有少，只是<b>两套数法之差</b>。严谨写法应区分 <code>GB</code>（×1000）与 <code>GiB</code>（×1024）。</p>
+    </div>
+  </section>
+
+  <!-- 7. UTF-8 -->
+  <section>
+    <div class="secnum">07 / 文字</div>
+    <h2>文字是怎么变成<em>字节</em>的</h2>
+    <p>计算机只存字节，那「中」「あ」「A」「😀」这些字符是怎么存的？答案是<b>字符编码</b>：用一张约定好的表，把字符映射成字节序列。</p>
+    <p>早期的 <b>ASCII</b> 用 1 个字节表示一个英文字符。但世界上字符远超 256 个，于是有了能容纳全人类文字的 <b class="hl">Unicode</b>，给每个字符一个唯一编号（码点，如 <code>U+4E2D</code>）。而 <b class="hl-a">UTF-8</b> 是目前最主流的「把码点存成字节」的方案——它很巧妙：<b>英文字符仍占 1 字节，中文/日文汉字通常占 3 字节，emoji 多为 4 字节</b>。</p>
+
+    <div class="panel">
+      <div class="panel-label">UTF-8 拆解器 · 输入任意文字看它占多少字节</div>
+      <input class="utf-input" id="utfInput" value="中A😀" placeholder="输入中文、日文、emoji…">
+      <div class="utf-summary">
+        <span>字符数<b id="charCount">0</b></span>
+        <span>UTF-8 字节数<b id="byteCount">0</b></span>
+        <span>UTF-16 字节数<b id="u16Count">0</b></span>
+      </div>
+      <div class="char-list" id="charList"></div>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">对做游戏 / 处理日文很关键</div>
+      <p>「字符数」和「字节数」不是一回事。一句 10 个汉字的日文台词，在 UTF-8 里可能占 30 字节左右；如果按字节去截断字符串，很容易把一个汉字「切成两半」变成乱码（俗称 mojibake）。这也是为什么处理 CJK 文本时，要按<b>字符（码点）</b>而非<b>字节</b>来计算长度和切分。</p>
+    </div>
+  </section>
+
+  <!-- 8. ENDIAN -->
+  <section>
+    <div class="secnum">08 / 顺序</div>
+    <h2>多字节的<em>排列顺序</em>：大端与小端</h2>
+    <p>当一个数值需要多个字节存储时（比如 16 位整数 <code>0x1234</code> 要用 2 个字节），还有一个问题：<b>这两个字节谁先谁后？</b>这就是「字节序（endianness）」。</p>
+    <div class="endian-wrap">
+      <div class="endian-box big">
+        <h4>大端 Big-Endian</h4>
+        <div class="ebytes">
+          <div class="ebyte">12<small>高位在前</small></div>
+          <div class="ebyte">34<small>低位在后</small></div>
+        </div>
+      </div>
+      <div class="endian-box little">
+        <h4>小端 Little-Endian</h4>
+        <div class="ebytes">
+          <div class="ebyte">34<small>低位在前</small></div>
+          <div class="ebyte">12<small>高位在后</small></div>
+        </div>
+      </div>
+    </div>
+    <p style="margin-top:18px"><b>大端</b>把「最重要的字节」放在最前（像人类写数字的习惯），网络传输常用它。<b>小端</b>反过来，x86 / ARM 等主流 CPU 在内存里多用小端。读取二进制文件、网络协议或做引擎逆向时，搞错字节序会读出完全错误的数值——这是底层开发常见的坑。</p>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <h2 style="margin-bottom:30px">一分钟回顾</h2>
+    <div class="recap">
+      <div><div class="n">01</div><div class="x"><b>位 bit</b> 是 0/1 的最小单位</div></div>
+      <div><div class="n">02</div><div class="x"><b>8 位 = 1 字节</b>，可表示 0–255</div></div>
+      <div><div class="n">03</div><div class="x"><b>2ⁿ</b>：每多一位，可能性翻倍</div></div>
+      <div><div class="n">04</div><div class="x">同样的字节，<b>有/无符号</b>解读不同</div></div>
+      <div><div class="n">05</div><div class="x">KB 有 <b>1000 与 1024</b> 两套</div></div>
+      <div><div class="n">06</div><div class="x">UTF-8 里中文/日文常占 <b>3 字节</b></div></div>
+    </div>
+    <div class="sig">BYTE LAB · 01000010 01111001 01110100 01100101</div>
+  </div>
+</footer>
+
+<script>
+/* ---------- 0. solo bit ---------- */
+(function(){
+  const b=document.getElementById('soloBit'), s=document.getElementById('soloState');
+  let on=false;
+  b.addEventListener('click',()=>{
+    on=!on; b.classList.toggle('on',on); b.textContent=on?'1':'0';
+    s.textContent=on?'打开（通电 / 1）':'关闭（断电 / 0）';
+  });
+})();
+
+/* ---------- 1. byte explorer ---------- */
+const bits=[0,0,0,0,0,0,0,0];          // index 0 = MSB (128)
+const weights=[128,64,32,16,8,4,2,1];
+let signedMode=false;
+
+const byteRow=document.getElementById('byteRow');
+const pvRow=document.getElementById('pvRow');
+
+weights.forEach((w,i)=>{
+  const pv=document.createElement('div'); pv.className='pv'; pv.textContent=w; pvRow.appendChild(pv);
+  const cell=document.createElement('button');
+  cell.className='bitcell'; cell.textContent='0';
+  cell.innerHTML='0<span class="idx">'+(7-i)+'</span>';
+  cell.addEventListener('click',()=>{ bits[i]^=1; renderByte(); });
+  byteRow.appendChild(cell);
+});
+
+function renderByte(){
+  const cells=byteRow.children;
+  let dec=0, parts=[];
+  bits.forEach((v,i)=>{
+    cells[i].classList.toggle('on',!!v);
+    cells[i].innerHTML=(v?'1':'0')+'<span class="idx">'+(7-i)+'</span>';
+    if(v){dec+=weights[i]; parts.push(weights[i]);}
+  });
+  const bin=bits.join('');
+  const hex='0x'+dec.toString(16).toUpperCase().padStart(2,'0');
+  const signed = bits[0] ? dec-256 : dec;
+
+  document.getElementById('decVal').textContent=dec;
+  document.getElementById('binVal').textContent=bin;
+  document.getElementById('hexVal').textContent=hex;
+  document.getElementById('signVal').textContent= signedMode ? signed : dec;
+  document.getElementById('signLab').textContent= signedMode ? '有符号值 SIGNED' : '无符号值 UNSIGNED';
+
+  const sum=document.getElementById('sumLine');
+  if(parts.length===0){ sum.innerHTML='数值 = <span class="o">0</span>（所有位都是 0）'; }
+  else{ sum.innerHTML='数值 = '+parts.map(p=>'<span class="t">'+p+'</span>').join(' <span class="o">+</span> ')+' = <span class="t">'+dec+'</span>'; }
+}
+
+document.getElementById('randBtn').addEventListener('click',()=>{
+  for(let i=0;i<8;i++) bits[i]=Math.random()<0.5?1:0; renderByte();
+});
+document.getElementById('maxBtn').addEventListener('click',()=>{ bits.fill(1); renderByte(); });
+document.getElementById('zeroBtn').addEventListener('click',()=>{ bits.fill(0); renderByte(); });
+
+/* signed / unsigned toggle injected after sum tools */
+(function(){
+  const grp=document.createElement('div'); grp.className='toggle-grp';
+  grp.innerHTML='<button id="tgUns" class="active">无符号</button><button id="tgSig">有符号（补码）</button>';
+  document.querySelector('.byte-tools').after(grp);
+  grp.querySelector('#tgUns').addEventListener('click',()=>{signedMode=false;upd();});
+  grp.querySelector('#tgSig').addEventListener('click',()=>{signedMode=true;upd();});
+  function upd(){
+    grp.querySelector('#tgUns').classList.toggle('active',!signedMode);
+    grp.querySelector('#tgSig').classList.toggle('active',signedMode);
+    renderByte();
+  }
+})();
+renderByte();
+
+/* ---------- 3. base converter ---------- */
+(function(){
+  const dec=document.getElementById('cDec'), bin=document.getElementById('cBin'), hex=document.getElementById('cHex');
+  function setAll(n,except){
+    n=Math.max(0,Math.min(255,n|0));
+    if(except!=='dec') dec.value=n;
+    if(except!=='bin') bin.value=n.toString(2).padStart(8,'0');
+    if(except!=='hex') hex.value=n.toString(16).toUpperCase().padStart(2,'0');
+  }
+  function clean(el,ok){ el.classList.toggle('bad',!ok); }
+  dec.addEventListener('input',()=>{ const n=parseInt(dec.value,10); const ok=!isNaN(n)&&n>=0&&n<=255; clean(dec,ok||dec.value===''); if(ok) setAll(n,'dec'); });
+  bin.addEventListener('input',()=>{ const ok=/^[01]{1,8}$/.test(bin.value); clean(bin,ok||bin.value===''); if(ok) setAll(parseInt(bin.value,2),'bin'); });
+  hex.addEventListener('input',()=>{ const ok=/^[0-9a-fA-F]{1,2}$/.test(hex.value); clean(hex,ok||hex.value===''); if(ok) setAll(parseInt(hex.value,16),'hex'); });
+  setAll(65,'dec'); // init from default 65
+  bin.value=(65).toString(2).padStart(8,'0'); hex.value='41';
+})();
+
+/* ---------- 7. UTF-8 inspector ---------- */
+(function(){
+  const inp=document.getElementById('utfInput');
+  const list=document.getElementById('charList');
+  const enc=new TextEncoder();
+  function toHex(n){return n.toString(16).toUpperCase().padStart(2,'0');}
+  function render(){
+    const text=inp.value;
+    const chars=Array.from(text);            // splits by codepoint, handles emoji/surrogates
+    let totalBytes=0, u16=0;
+    list.innerHTML='';
+    chars.forEach(ch=>{
+      const bytes=enc.encode(ch);
+      totalBytes+=bytes.length;
+      const cp=ch.codePointAt(0);
+      u16 += cp>0xFFFF ? 4 : 2;
+      const card=document.createElement('div'); card.className='char-card';
+      const chips=[...bytes].map(b=>'<span class="bchip">'+toHex(b)+'</span>').join('');
+      card.innerHTML=
+        '<div class="char-glyph">'+(ch===' '?'␣':ch)+'</div>'+
+        '<div class="char-meta">'+
+          '<div class="cp">U+'+cp.toString(16).toUpperCase().padStart(4,'0')+'</div>'+
+          '<div class="bytes">'+chips+'<span class="nbadge">'+bytes.length+' 字节</span></div>'+
+        '</div>';
+      list.appendChild(card);
+    });
+    document.getElementById('charCount').textContent=chars.length;
+    document.getElementById('byteCount').textContent=totalBytes;
+    document.getElementById('u16Count').textContent=u16;
+  }
+  inp.addEventListener('input',render);
+  render();
+})();
+</script>
+</body>
+</html>

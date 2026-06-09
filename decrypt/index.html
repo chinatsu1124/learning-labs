@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>解密台 · 常见加密算法教学</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#070b16;          /* 最深台面 */
+  --surface:#0e1426;      /* 卡片表面 */
+  --surface-2:#161e38;    /* 抬升表面 */
+  --line:#243150;         /* 分隔线 */
+  --line-soft:#1a2440;
+  --plain:#ece6d6;        /* 明文：纸白 */
+  --plain-dim:#9aa0b0;    /* 次要文字 */
+  --muted:#5d6885;        /* 弱化文字 */
+  --cipher:#43e0c8;       /* 密文：青 */
+  --cipher-glow:rgba(67,224,200,.18);
+  --key:#f2b04a;          /* 密钥：琥珀 */
+  --key-glow:rgba(242,176,74,.16);
+  --danger:#ff6f5e;       /* 不安全/破解：珊瑚红 */
+  --danger-soft:rgba(255,111,94,.12);
+  --violet:#9a8cff;       /* 非对称强调 */
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --disp:'Space Grotesk',var(--han),sans-serif;
+  --han:'Noto Sans SC',sans-serif;
+  --serif:'Noto Serif SC',serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--ink);color:var(--plain);
+  font-family:var(--han);font-weight:300;line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(900px 500px at 12% -5%,rgba(67,224,200,.06),transparent 60%),
+    radial-gradient(800px 600px at 95% 8%,rgba(242,176,74,.05),transparent 55%);
+}
+::selection{background:var(--cipher);color:var(--ink)}
+a{color:var(--cipher);text-decoration:none}
+
+/* ---- 布局骨架 ---- */
+.wrap{max-width:980px;margin:0 auto;padding:0 24px}
+section{padding:90px 0;border-top:1px solid var(--line-soft)}
+section:first-of-type{border-top:none}
+
+/* ---- 顶栏 ---- */
+.topbar{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);
+  background:rgba(7,11,22,.78);border-bottom:1px solid var(--line-soft)}
+.topbar .wrap{display:flex;align-items:center;justify-content:space-between;
+  height:58px;padding-top:0;padding-bottom:0}
+.brand{font-family:var(--mono);font-weight:700;font-size:14px;letter-spacing:.5px;
+  color:var(--plain);display:flex;align-items:center;gap:9px}
+.brand .dot{width:9px;height:9px;border-radius:2px;background:var(--cipher);
+  box-shadow:0 0 14px var(--cipher);animation:blink 2.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.nav{display:flex;gap:4px;font-family:var(--mono);font-size:12.5px}
+.nav a{color:var(--muted);padding:6px 11px;border-radius:6px;transition:.2s}
+.nav a:hover{color:var(--plain);background:var(--surface-2)}
+@media(max-width:760px){.nav{display:none}}
+
+/* ---- HERO ---- */
+.hero{padding:84px 0 70px;position:relative}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:3px;
+  text-transform:uppercase;color:var(--key);margin-bottom:22px}
+.hero h1{font-family:var(--disp);font-weight:700;letter-spacing:-1px;
+  font-size:clamp(38px,7vw,68px);line-height:1.04;margin:0 0 8px}
+.hero h1 .han{font-family:var(--han);font-weight:700}
+.hero h1 em{font-style:normal;color:var(--cipher);text-shadow:0 0 30px var(--cipher-glow)}
+.hero .lead{font-size:clamp(16px,2.4vw,19px);color:var(--plain-dim);max-width:620px;
+  margin:26px 0 0;font-weight:300}
+
+/* ---- HERO 实时加密台 ---- */
+.desk{margin-top:46px;border:1px solid var(--line);border-radius:16px;
+  background:linear-gradient(180deg,var(--surface),var(--ink));overflow:hidden;
+  box-shadow:0 30px 80px -40px rgba(0,0,0,.9)}
+.desk-head{display:flex;align-items:center;gap:10px;padding:13px 18px;
+  border-bottom:1px solid var(--line-soft);font-family:var(--mono);font-size:12px;color:var(--muted)}
+.desk-head .pip{width:10px;height:10px;border-radius:50%}
+.desk-body{padding:26px 24px}
+.track{display:grid;grid-template-columns:78px 1fr;align-items:center;gap:16px;padding:14px 0}
+.track + .track{border-top:1px dashed var(--line-soft)}
+.track .tag{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;
+  text-transform:uppercase;text-align:right}
+.tag.plain{color:var(--plain-dim)}
+.tag.ciph{color:var(--cipher)}
+.io{font-family:var(--mono);font-size:clamp(15px,3vw,21px);font-weight:500;
+  word-break:break-all;letter-spacing:.5px;min-height:1.4em}
+.io.plain{color:var(--plain)}
+.io.ciph{color:var(--cipher);text-shadow:0 0 18px var(--cipher-glow)}
+.io.plain input{all:unset;width:100%;font-family:var(--mono);font-weight:500;
+  color:var(--plain);font-size:inherit;letter-spacing:.5px}
+.io.plain input::placeholder{color:var(--muted)}
+.wheel-row{display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+  padding:20px 0 4px;border-top:1px dashed var(--line-soft);margin-top:6px}
+.shift-ctl{display:flex;align-items:center;gap:14px}
+.shift-ctl label{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--key)}
+.shift-ctl input[type=range]{accent-color:var(--key);width:170px}
+.shift-val{font-family:var(--mono);font-weight:700;font-size:22px;color:var(--key);
+  min-width:2ch;text-align:center;text-shadow:0 0 16px var(--key-glow)}
+
+/* ---- 概念三卡 ---- */
+.kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:2.5px;
+  text-transform:uppercase;color:var(--key);margin-bottom:14px}
+h2{font-family:var(--disp);font-weight:600;font-size:clamp(26px,4.5vw,40px);
+  letter-spacing:-.5px;margin:0 0 6px;line-height:1.12}
+h2 .han{font-family:var(--han);font-weight:700}
+.sub{color:var(--plain-dim);max-width:640px;margin:0 0 38px;font-size:16px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:760px){.cards{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);border-radius:13px;padding:24px 22px;
+  background:var(--surface);transition:.25s}
+.card:hover{border-color:var(--line);transform:translateY(-3px);
+  box-shadow:0 20px 40px -30px rgba(0,0,0,.8)}
+.card .num{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:2px}
+.card h3{font-family:var(--disp);font-size:20px;font-weight:600;margin:12px 0 4px}
+.card .zh{font-family:var(--han);font-weight:500;font-size:14px;color:var(--plain-dim);margin-bottom:14px}
+.card p{font-size:14.5px;color:var(--plain-dim);margin:0 0 14px;font-weight:300}
+.card .meta{font-family:var(--mono);font-size:11.5px;color:var(--muted);
+  border-top:1px solid var(--line-soft);padding-top:13px;line-height:1.9}
+.card .meta b{color:var(--cipher);font-weight:500}
+.card.sym{border-top:2px solid var(--cipher)}
+.card.asym{border-top:2px solid var(--violet)}
+.card.hash{border-top:2px solid var(--key)}
+
+/* ---- 通用：算法模块 ---- */
+.algo-head{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+.algo-head .badge{font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:20px;
+  letter-spacing:1px;text-transform:uppercase;border:1px solid var(--line)}
+.badge.sym{color:var(--cipher);border-color:rgba(67,224,200,.4)}
+.badge.asym{color:var(--violet);border-color:rgba(154,140,255,.4)}
+.badge.hash{color:var(--key);border-color:rgba(242,176,74,.4)}
+.prose{font-size:16px;color:var(--plain-dim);max-width:680px;font-weight:300}
+.prose strong{color:var(--plain);font-weight:500}
+.prose code{font-family:var(--mono);font-size:.88em;background:var(--surface-2);
+  padding:2px 6px;border-radius:5px;color:var(--cipher)}
+
+/* ---- 交互台面 ---- */
+.lab{margin-top:30px;border:1px solid var(--line);border-radius:14px;
+  background:var(--surface);overflow:hidden}
+.lab-bar{display:flex;align-items:center;gap:8px;padding:11px 18px;
+  background:var(--surface-2);border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:11.5px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--muted)}
+.lab-bar::before{content:"▸";color:var(--cipher)}
+.lab-body{padding:24px 22px}
+.field{margin-bottom:18px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--key);margin-bottom:9px}
+.field input[type=text],.field input[type=number],.field textarea{
+  width:100%;background:var(--ink);border:1px solid var(--line);border-radius:9px;
+  color:var(--plain);font-family:var(--mono);font-size:15px;padding:12px 14px;
+  resize:vertical;transition:.2s}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--cipher);
+  box-shadow:0 0 0 3px var(--cipher-glow)}
+.out{background:var(--ink);border:1px solid var(--line-soft);border-radius:9px;
+  padding:14px;font-family:var(--mono);font-size:14.5px;word-break:break-all;
+  min-height:1.5em;line-height:1.7}
+.out.ciph{color:var(--cipher)}
+.out.key{color:var(--key)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:620px){.grid2{grid-template-columns:1fr}}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+button.act{font-family:var(--mono);font-size:13px;letter-spacing:.5px;cursor:pointer;
+  background:var(--cipher);color:var(--ink);border:none;border-radius:8px;
+  padding:10px 18px;font-weight:700;transition:.18s}
+button.act:hover{filter:brightness(1.12);transform:translateY(-1px)}
+button.act.ghost{background:transparent;color:var(--plain-dim);border:1px solid var(--line)}
+button.act.ghost:hover{color:var(--plain);border-color:var(--cipher)}
+button.act.key{background:var(--key)}
+button.act:focus-visible,a:focus-visible,input:focus-visible{
+  outline:2px solid var(--cipher);outline-offset:2px}
+
+/* ---- 维吉尼亚字母对齐 ---- */
+.vig-rows{font-family:var(--mono);font-size:14px;line-height:2.1;letter-spacing:2px;
+  background:var(--ink);border:1px solid var(--line-soft);border-radius:9px;
+  padding:14px;overflow-x:auto;white-space:nowrap}
+.vig-rows .r{display:block}
+.vig-rows .lab{color:var(--muted);display:inline-block;width:56px}
+.vig-rows .p{color:var(--plain)}
+.vig-rows .k{color:var(--key)}
+.vig-rows .c{color:var(--cipher)}
+
+/* ---- 雪崩效应位差 ---- */
+.bits{font-family:var(--mono);font-size:13px;word-break:break-all;line-height:1.8}
+.bits .diff{color:var(--danger);background:var(--danger-soft);font-weight:700;border-radius:2px}
+.bits .same{color:var(--muted)}
+.avalanche{display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap}
+.aval-meter{flex:1;min-width:160px;height:8px;background:var(--surface-2);
+  border-radius:5px;overflow:hidden}
+.aval-fill{height:100%;background:linear-gradient(90deg,var(--key),var(--danger));
+  width:0;transition:width .5s ease}
+.aval-num{font-family:var(--mono);font-weight:700;color:var(--danger);font-size:15px}
+
+/* ---- RSA / DH 数学步骤 ---- */
+.steps{display:grid;gap:10px;margin-top:8px}
+.step{display:grid;grid-template-columns:30px 1fr;gap:14px;align-items:start;
+  background:var(--ink);border:1px solid var(--line-soft);border-radius:9px;padding:13px 16px}
+.step .n{font-family:var(--mono);font-weight:700;color:var(--violet);font-size:13px}
+.step .t{font-size:14px;color:var(--plain-dim)}
+.step .t b{color:var(--plain);font-weight:500}
+.step .t .v{font-family:var(--mono);color:var(--cipher);font-weight:500}
+.step .t .vk{font-family:var(--mono);color:var(--key);font-weight:500}
+
+/* ---- DH 颜色混合 ---- */
+.dh-mix{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:8px}
+@media(max-width:620px){.dh-mix{grid-template-columns:1fr}}
+.dh-party{border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--ink)}
+.dh-party h4{font-family:var(--mono);font-size:13px;margin:0 0 14px;letter-spacing:1px}
+.dh-party.alice h4{color:var(--cipher)}
+.dh-party.bob h4{color:var(--key)}
+.swatch{height:34px;border-radius:7px;border:1px solid var(--line);margin:6px 0;
+  display:flex;align-items:center;padding:0 12px;font-family:var(--mono);font-size:11px;
+  color:rgba(255,255,255,.85);transition:background .5s}
+.dh-shared{margin-top:18px;text-align:center}
+.dh-shared .sw{height:54px;border-radius:10px;border:2px solid var(--plain);
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);
+  font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.6);transition:background .6s}
+
+/* ---- 警示框 ---- */
+.warn{margin-top:28px;border:1px solid rgba(255,111,94,.35);border-left:3px solid var(--danger);
+  border-radius:11px;background:var(--danger-soft);padding:20px 22px}
+.warn h4{font-family:var(--mono);font-size:13px;letter-spacing:1px;color:var(--danger);
+  margin:0 0 8px;text-transform:uppercase}
+.warn p{margin:0;font-size:14.5px;color:var(--plain-dim)}
+.note{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.8}
+
+/* ---- 表 ---- */
+.cmp{width:100%;border-collapse:collapse;margin-top:28px;font-size:14px}
+.cmp th,.cmp td{text-align:left;padding:13px 14px;border-bottom:1px solid var(--line-soft)}
+.cmp th{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--key);font-weight:500}
+.cmp td:first-child{font-family:var(--mono);color:var(--plain);font-weight:500}
+.cmp .t-sym{color:var(--cipher)}
+.cmp .t-asym{color:var(--violet)}
+.cmp .t-hash{color:var(--key)}
+
+/* ---- 页脚 ---- */
+footer{border-top:1px solid var(--line-soft);padding:46px 0 70px;
+  font-family:var(--mono);font-size:12.5px;color:var(--muted);line-height:2}
+footer b{color:var(--plain-dim);font-weight:400}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="wrap">
+  <div class="brand"><span class="dot"></span>CIPHER·DESK</div>
+  <nav class="nav">
+    <a href="#concept">三种范式</a>
+    <a href="#caesar">古典</a>
+    <a href="#aes">对称 AES</a>
+    <a href="#rsa">非对称 RSA</a>
+    <a href="#hash">哈希</a>
+    <a href="#dh">密钥交换</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">明文 → 密文 → 明文</div>
+  <h1><span class="han">把秘密</span><em>锁起来</em><br>的几种方式</h1>
+  <p class="lead">加密的全部任务，是让一段信息只有持有正确「钥匙」的人才能读懂。
+  下面这台机器正在实时运转——改动文字或拨动转盘，看明文如何被搅乱成密文。</p>
+
+  <div class="desk">
+    <div class="desk-head">
+      <span class="pip" style="background:#ff6f5e"></span>
+      <span class="pip" style="background:#f2b04a"></span>
+      <span class="pip" style="background:#43e0c8"></span>
+      <span style="margin-left:8px">caesar_cipher.live — 凯撒移位机</span>
+    </div>
+    <div class="desk-body">
+      <div class="track">
+        <div class="tag plain">明文</div>
+        <div class="io plain"><input id="heroIn" value="Attack at dawn" autocomplete="off" spellcheck="false" aria-label="输入明文"></div>
+      </div>
+      <div class="track">
+        <div class="tag ciph">密文</div>
+        <div class="io ciph" id="heroOut">—</div>
+      </div>
+      <div class="wheel-row">
+        <div class="shift-ctl">
+          <label for="heroShift">位移 KEY</label>
+          <input type="range" id="heroShift" min="0" max="25" value="3">
+          <span class="shift-val" id="heroShiftVal">3</span>
+        </div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--muted)">
+          每个字母向后挪 <span id="heroShiftN" style="color:var(--key)">3</span> 位 · A→D · B→E …
+        </div>
+      </div>
+    </div>
+  </div>
+</div></header>
+
+<!-- ============ 概念 ============ -->
+<section id="concept"><div class="wrap">
+  <div class="kicker">先分清楚 · The Three Paradigms</div>
+  <h2>加密，<span class="han">大致只有三种思路</span></h2>
+  <p class="sub">几乎所有你听过的算法都能归进这三类。先建立这张地图，后面每个算法都能立刻对号入座。</p>
+  <div class="cards">
+    <div class="card sym">
+      <div class="num">01 / 可逆 · 同一把钥匙</div>
+      <h3>Symmetric</h3>
+      <div class="zh">对称加密</div>
+      <p>加密和解密用<strong style="color:var(--plain)">同一把密钥</strong>。速度快，适合加密大量数据。难点在于：怎么安全地把这把钥匙交给对方？</p>
+      <div class="meta">代表：<b>AES · ChaCha20 · DES</b><br>钥匙：1 把，双方共享<br>用途：磁盘 / 通信内容加密</div>
+    </div>
+    <div class="card asym">
+      <div class="num">02 / 可逆 · 一对钥匙</div>
+      <h3>Asymmetric</h3>
+      <div class="zh">非对称 / 公钥加密</div>
+      <p>每人有<strong style="color:var(--plain)">公钥 + 私钥</strong>一对。公钥随便发，谁都能用它加密；只有对应私钥能解开。慢，但解决了「钥匙怎么送」的难题。</p>
+      <div class="meta">代表：<b>RSA · ECC · Diffie-Hellman</b><br>钥匙：1 对，公开 + 私藏<br>用途：密钥交换 / 数字签名</div>
+    </div>
+    <div class="card hash">
+      <div class="num">03 / 不可逆 · 没有钥匙</div>
+      <h3>Hash</h3>
+      <div class="zh">哈希 / 摘要函数</div>
+      <p>把任意数据压成<strong style="color:var(--plain)">固定长度的指纹</strong>。<strong style="color:var(--plain)">无法逆推</strong>回原文——它不是加密，而是用来验证完整性和存口令。</p>
+      <div class="meta">代表：<b>SHA-256 · SHA-3 · MD5</b><br>钥匙：无<br>用途：校验 / 密码存储 / 签名</div>
+    </div>
+  </div>
+  <p class="note">易混点：哈希<b style="color:var(--danger)">不是加密</b>，因为它不可逆、也没打算让你解回去；Base64 <b style="color:var(--danger)">更不是加密</b>，那只是一种编码，任何人都能直接还原。本页把哈希一并讲，是因为它在密码学里几乎无处不在。</p>
+</div></section>
+
+<!-- ============ 凯撒 + 维吉尼亚 ============ -->
+<section id="caesar"><div class="wrap">
+  <div class="algo-head">
+    <span class="badge sym">古典 · 替换密码</span>
+    <h2 style="margin:0">Caesar &amp; Vigenère</h2>
+  </div>
+  <p class="prose">从最古老的密码开始，因为它们的「机制看得见」。<strong>凯撒密码</strong>把每个字母在字母表里向后挪固定的几位——位移量就是密钥。它的死穴是：只有 25 种可能，挨个试一遍就破了（暴力破解），而且<strong>不改变字母频率</strong>，英文里最常见的 e 加密后仍然最常见，统计一下就露馅。</p>
+
+  <div class="lab">
+    <div class="lab-bar">caesar · 单字母移位</div>
+    <div class="lab-body">
+      <div class="grid2">
+        <div class="field"><label for="cIn">明文</label>
+          <input type="text" id="cIn" value="Hello, World" autocomplete="off" spellcheck="false"></div>
+        <div class="field"><label for="cShift">位移密钥 (0–25)</label>
+          <input type="number" id="cShift" value="3" min="0" max="25"></div>
+      </div>
+      <div class="field"><label>密文</label><div class="out ciph" id="cOut">—</div></div>
+      <div class="note" id="cBrute">破解演示：25 种位移全部列出，肉眼就能挑出哪句是人话。</div>
+    </div>
+  </div>
+
+  <p class="prose" style="margin-top:34px"><strong>维吉尼亚密码</strong>是凯撒的升级：不再用一个固定位移，而是用一个<strong>密钥词</strong>循环套在明文上，每个字母按密钥对应字母的位置移动。这样同一个明文字母在不同位置会变成不同密文，频率分析失效了好几百年——直到有人发现密钥长度可以被推断出来。</p>
+
+  <div class="lab">
+    <div class="lab-bar">vigenère · 多表替换</div>
+    <div class="lab-body">
+      <div class="grid2">
+        <div class="field"><label for="vIn">明文</label>
+          <input type="text" id="vIn" value="ATTACKATDAWN" autocomplete="off" spellcheck="false"></div>
+        <div class="field"><label for="vKey">密钥词</label>
+          <input type="text" id="vKey" value="LEMON" autocomplete="off" spellcheck="false"></div>
+      </div>
+      <div class="field"><label>逐字母对齐（明文 / 密钥 / 密文）</label>
+        <div class="vig-rows" id="vRows"></div></div>
+    </div>
+  </div>
+  <p class="note">这两种都是<b style="color:var(--danger)">教学玩具</b>，今天没有任何场景该用它们保护真实数据。它们的价值在于让你直观理解「位移」「密钥」「频率分析」这些概念。</p>
+</div></section>
+
+<!-- ============ AES ============ -->
+<section id="aes"><div class="wrap">
+  <div class="algo-head">
+    <span class="badge sym">对称 · 现代主力</span>
+    <h2 style="margin:0">AES</h2>
+  </div>
+  <p class="prose">高级加密标准（Advanced Encryption Standard）是今天对称加密的事实标准，HTTPS、磁盘加密、微信消息几乎都在用它。它把数据切成 <strong>128 位的块</strong>，在一个 4×4 字节矩阵上反复做<strong>字节替换、行移位、列混淆、轮密钥加</strong>四步，重复 10/12/14 轮（对应 128/192/256 位密钥）。每一轮都让数据更彻底地「扩散和混淆」，最终任何人没有密钥都无从下手。</p>
+  <p class="prose" style="margin-top:14px">下面这台是<strong>真加密</strong>——调用浏览器原生的 Web Crypto，用 <code>AES-GCM</code> 模式。你的口令会经 <code>PBKDF2</code> 派生成 256 位密钥，每次加密还会生成随机 <code>IV</code>，所以同样的明文每次密文都不同（这是好事）。</p>
+
+  <div class="lab">
+    <div class="lab-bar">aes-gcm · 浏览器原生真实加密</div>
+    <div class="lab-body">
+      <div class="field"><label for="aMsg">明文消息</label>
+        <textarea id="aMsg" rows="2" spellcheck="false">在黎明时发动进攻。</textarea></div>
+      <div class="field"><label for="aPass">口令（用于派生密钥）</label>
+        <input type="text" id="aPass" value="correct horse battery staple" autocomplete="off" spellcheck="false"></div>
+      <div class="btnrow">
+        <button class="act" id="aEnc">加密 →</button>
+        <button class="act ghost" id="aDec">← 用相同口令解密</button>
+      </div>
+      <div class="field" style="margin-top:18px"><label>密文（Base64，含 IV）</label>
+        <div class="out ciph" id="aOut">—</div></div>
+      <div class="field"><label>解密还原</label>
+        <div class="out" id="aBack">—</div></div>
+      <div class="note">试试：用错误口令解密，或把密文改一个字符——GCM 会检测到篡改并直接拒绝，这就是「认证加密」。</div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ RSA ============ -->
+<section id="rsa"><div class="wrap">
+  <div class="algo-head">
+    <span class="badge asym">非对称 · 公钥</span>
+    <h2 style="margin:0">RSA</h2>
+  </div>
+  <p class="prose">RSA 的安全建立在一个朴素事实上：<strong>两个大素数相乘很容易，但把乘积分解回去极难</strong>。它造出一对钥匙——公钥 <code>(n, e)</code> 公开给所有人加密，私钥 <code>(n, d)</code> 自己留着解密。下面用<strong>很小的素数</strong>把整个数学骨架拆给你看（真实 RSA 的 n 有 600 多位数字，这里只是为了看清原理）。</p>
+
+  <div class="lab">
+    <div class="lab-bar">rsa · 小素数原理演示</div>
+    <div class="lab-body">
+      <div class="grid2">
+        <div class="field"><label for="rP">素数 p</label>
+          <input type="number" id="rP" value="61" min="2"></div>
+        <div class="field"><label for="rQ">素数 q</label>
+          <input type="number" id="rQ" value="53" min="2"></div>
+      </div>
+      <div class="field"><label for="rM">要加密的数字 m（需 &lt; n）</label>
+        <input type="number" id="rM" value="42" min="0"></div>
+      <div class="steps" id="rSteps"></div>
+      <div class="note">公钥可以贴在任何地方，谁都能用它加密发给你；可没有私钥 d，密文就是一堆死数字。d 的安全，靠的就是「分解 n 太难」。</div>
+    </div>
+  </div>
+  <div class="warn">
+    <h4>⚠ 为什么不能自己写加密算法</h4>
+    <p>上面的演示省略了填充（padding）、随机化、防侧信道等一切真实工程要素。自实现的密码学几乎必然存在可被利用的漏洞。<strong>原则：理解原理，但永远调用经过审计的成熟库</strong>（如 libsodium、浏览器 Web Crypto、OpenSSL）。</p>
+  </div>
+</div></section>
+
+<!-- ============ 哈希 ============ -->
+<section id="hash"><div class="wrap">
+  <div class="algo-head">
+    <span class="badge hash">不可逆 · 摘要</span>
+    <h2 style="margin:0">SHA-256</h2>
+  </div>
+  <p class="prose">哈希函数把任意长度的输入压成一个<strong>固定长度的指纹</strong>（SHA-256 永远输出 256 位 / 64 个十六进制字符）。它有几个关键性质：<strong>同样输入永远得同样输出</strong>、<strong>无法从指纹反推原文</strong>、<strong>极难找到两个不同输入产生相同指纹</strong>。下面也是真实计算（Web Crypto）。</p>
+  <p class="prose" style="margin-top:14px">最迷人的性质是<strong>雪崩效应</strong>：输入哪怕只改一个字，输出会有大约一半的二进制位翻转，且毫无规律。改下面任一框里的文字，看看两个指纹的差异有多剧烈。</p>
+
+  <div class="lab">
+    <div class="lab-bar">sha-256 · 雪崩效应对照</div>
+    <div class="lab-body">
+      <div class="grid2">
+        <div class="field"><label for="hA">输入 A</label>
+          <input type="text" id="hA" value="hello" autocomplete="off" spellcheck="false"></div>
+        <div class="field"><label for="hB">输入 B（试试只改一个字母）</label>
+          <input type="text" id="hB" value="Hello" autocomplete="off" spellcheck="false"></div>
+      </div>
+      <div class="field"><label>SHA-256(A)</label><div class="out key" id="hOutA">—</div></div>
+      <div class="field"><label>SHA-256(B) · 红色为与 A 不同的十六进制位</label>
+        <div class="out bits" id="hOutB">—</div></div>
+      <div class="avalanche">
+        <span style="font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--muted)">二进制位差异</span>
+        <div class="aval-meter"><div class="aval-fill" id="hFill"></div></div>
+        <span class="aval-num" id="hPct">—</span>
+      </div>
+    </div>
+  </div>
+  <p class="note">应用：网站不该存你的明文密码，而是存密码的哈希（还要加盐 + 慢哈希如 bcrypt/Argon2）。下载文件后比对 SHA-256，能确认它没被篡改或损坏。</p>
+</div></section>
+
+<!-- ============ Diffie-Hellman ============ -->
+<section id="dh"><div class="wrap">
+  <div class="algo-head">
+    <span class="badge asym">非对称 · 密钥交换</span>
+    <h2 style="margin:0">Diffie–Hellman</h2>
+  </div>
+  <p class="prose">对称加密又快又好，但「怎么把那把共享钥匙安全送给对方」是个死结——网络上全是窃听者。DH 密钥交换巧妙地解决了它：双方<strong>在公开信道上喊话，却能各自算出一个只有他俩知道的共享密钥</strong>，窃听者全程听着也算不出来。</p>
+  <p class="prose" style="margin-top:14px">经典的颜色比喻：双方公开一种<strong>共享底色</strong>，各自偷偷加一种<strong>私密色</strong>混合后交换，再把对方的混合色和自己的私密色再混一次——两人最终得到<strong>同一种颜色</strong>，而旁观者拿到两份混合色也调不出它，因为「把颜色分离回去」做不到。</p>
+
+  <div class="lab">
+    <div class="lab-bar">diffie-hellman · 颜色比喻 + 真实数学</div>
+    <div class="lab-body">
+      <div class="grid2">
+        <div class="field"><label for="dhA">Alice 的私密数 a</label>
+          <input type="number" id="dhA" value="6" min="1" max="50"></div>
+        <div class="field"><label for="dhB">Bob 的私密数 b</label>
+          <input type="number" id="dhB" value="15" min="1" max="50"></div>
+      </div>
+      <div class="dh-mix">
+        <div class="dh-party alice">
+          <h4>ALICE</h4>
+          <div class="swatch" id="swABase">公开底色</div>
+          <div class="swatch" id="swASecret">＋ 私密色 a</div>
+          <div class="swatch" id="swAMix">＝ 公开发出 A</div>
+        </div>
+        <div class="dh-party bob">
+          <h4>BOB</h4>
+          <div class="swatch" id="swBBase">公开底色</div>
+          <div class="swatch" id="swBSecret">＋ 私密色 b</div>
+          <div class="swatch" id="swBMix">＝ 公开发出 B</div>
+        </div>
+      </div>
+      <div class="dh-shared">
+        <div class="sw" id="dhSharedSw">两人算出同一把共享密钥</div>
+      </div>
+      <div class="steps" id="dhSteps" style="margin-top:18px"></div>
+    </div>
+  </div>
+  <p class="note">真实 DH 用大素数下的模幂运算（离散对数难题）替代「混颜色」。算出共享密钥后，双方再用它做 AES 这种快速对称加密——这正是 HTTPS 握手每天在做的事。</p>
+</div></section>
+
+<!-- ============ 对比表 ============ -->
+<section id="cmp"><div class="wrap">
+  <div class="kicker">速查 · Cheat Sheet</div>
+  <h2><span class="han">一张表收尾</span></h2>
+  <table class="cmp">
+    <thead><tr><th>算法</th><th>类别</th><th>钥匙</th><th>可逆</th><th>典型用途</th></tr></thead>
+    <tbody>
+      <tr><td>Caesar / Vigenère</td><td class="t-sym">对称(古典)</td><td>位移 / 密钥词</td><td>是</td><td>仅教学</td></tr>
+      <tr><td>AES</td><td class="t-sym">对称</td><td>1 把共享</td><td>是</td><td>数据 / 通信内容</td></tr>
+      <tr><td>ChaCha20</td><td class="t-sym">对称</td><td>1 把共享</td><td>是</td><td>移动端 / 流加密</td></tr>
+      <tr><td>RSA</td><td class="t-asym">非对称</td><td>公钥 + 私钥</td><td>是</td><td>密钥传输 / 签名</td></tr>
+      <tr><td>ECC (椭圆曲线)</td><td class="t-asym">非对称</td><td>公钥 + 私钥</td><td>是</td><td>同 RSA，更短更快</td></tr>
+      <tr><td>Diffie-Hellman</td><td class="t-asym">非对称</td><td>公钥 + 私钥</td><td>—</td><td>协商共享密钥</td></tr>
+      <tr><td>SHA-256 / SHA-3</td><td class="t-hash">哈希</td><td>无</td><td>否</td><td>校验 / 签名摘要</td></tr>
+      <tr><td>bcrypt / Argon2</td><td class="t-hash">哈希(慢)</td><td>无(加盐)</td><td>否</td><td>密码存储</td></tr>
+      <tr><td>MD5</td><td class="t-hash">哈希(已破)</td><td>无</td><td>否</td><td>仅校验，勿用于安全</td></tr>
+    </tbody>
+  </table>
+  <div class="warn" style="margin-top:32px">
+    <h4>⚠ 三条铁律</h4>
+    <p>① 别自己造加密算法，调用成熟库。② 哈希存密码必须加盐 + 用慢哈希。③ 现实里几乎都是<strong>组合拳</strong>：非对称协商密钥 → 对称加密内容 → 哈希做完整性校验，HTTPS 就是这个套路。</p>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  CIPHER·DESK — 常见加密算法交互教学<br>
+  <b>本页所有「真实」演示（AES-GCM / SHA-256）均在你的浏览器本地运行，使用原生 Web Crypto API，数据不离开本机。</b><br>
+  <b>古典密码与 RSA 小素数演示仅用于理解原理，切勿用于任何真实场景。</b>
+</div></footer>
+
+<script src="app.js"></script>
+</body>
+</html>
