@@ -60,7 +60,7 @@ function renderVigenere(){
   const plain = $('vIn').value.toUpperCase().replace(/[^A-Z]/g, '');
   const key   = $('vKey').value.toUpperCase().replace(/[^A-Z]/g, '');
   const box = $('vRows');
-  if (!key){ box.innerHTML = '<span class="r"><span class="lab">密钥</span><span class="k">请输入密钥词</span></span>'; return; }
+  if (!key){ box.innerHTML = '<span class="r"><span class="vlab">密钥</span><span class="k">请输入密钥词</span></span>'; return; }
   let pRow = '', kRow = '', cRow = '';
   for (let i = 0; i < plain.length; i++){
     const p = plain.charCodeAt(i) - 65;
@@ -74,9 +74,9 @@ function renderVigenere(){
   // 每个字母放进等宽格子里居中，逐列对齐不依赖字体度量
   const cells = s => s ? [...s].map(c => `<span class="ch">${c}</span>`).join('') : '—';
   box.innerHTML =
-    `<span class="r"><span class="lab">明文</span><span class="p">${cells(pRow)}</span></span>` +
-    `<span class="r"><span class="lab">密钥</span><span class="k">${cells(kRow)}</span></span>` +
-    `<span class="r"><span class="lab">密文</span><span class="c">${cells(cRow)}</span></span>`;
+    `<span class="r"><span class="vlab">明文</span><span class="p">${cells(pRow)}</span></span>` +
+    `<span class="r"><span class="vlab">密钥</span><span class="k">${cells(kRow)}</span></span>` +
+    `<span class="r"><span class="vlab">密文</span><span class="c">${cells(cRow)}</span></span>`;
 }
 ['vIn','vKey'].forEach(id => $(id).addEventListener('input', renderVigenere));
 renderVigenere();

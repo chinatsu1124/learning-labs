@@ -179,16 +179,16 @@ button.act:focus-visible,a:focus-visible,input:focus-visible{
   outline:2px solid var(--cipher);outline-offset:2px}
 
 /* ---- 维吉尼亚字母对齐 ---- */
-.vig-rows{font-family:var(--mono);font-size:15px;
+.vig-rows{font-family:var(--mono);font-size:15px;line-height:1;
   background:var(--ink);border:1px solid var(--line-soft);border-radius:9px;
   padding:14px;overflow-x:auto}
-.vig-rows .r{display:flex;align-items:center;gap:14px;white-space:nowrap}
+.vig-rows .r{display:grid;grid-template-columns:52px auto;align-items:center;column-gap:14px;white-space:nowrap}
 .vig-rows .r + .r{margin-top:8px}
-.vig-rows .lab{flex:none;width:52px;font-family:var(--han);
+.vig-rows .vlab{width:52px;margin:0;font-family:var(--han);
   font-size:11px;font-weight:500;color:var(--plain-dim);text-align:center;
   background:var(--surface-2);border:1px solid var(--line-soft);border-radius:20px;
-  padding:4px 0;line-height:1}
-.vig-rows .ch{display:inline-block;width:1.6ch;text-align:center}
+  padding:5px 0;line-height:1}
+.vig-rows .ch{display:inline-block;width:1.6ch;text-align:center;line-height:1;vertical-align:middle}
 .vig-rows .p{color:var(--plain)}
 .vig-rows .k{color:var(--key)}
 .vig-rows .c{color:var(--cipher)}
