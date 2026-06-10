@@ -3,3 +3,20 @@
  * 新 lab 起步：引入 /assets/base.css + /assets/fonts.css + /assets/term.js。 */
 *{box-sizing:border-box}
 body{margin:0;-webkit-font-smoothing:antialiased}
+
+/* .lab-home — 子页面左上角固定的「返回首页」入口。
+ * 用法：<body> 后加 <a class="lab-home" href="/">←&nbsp;~/labs</a>。
+ * 已有吸顶顶栏的页面（如 /decrypt/）请把链接放进顶栏，避免遮挡。 */
+.lab-home{
+  position:fixed;top:14px;left:14px;z-index:999;
+  font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:12px;letter-spacing:.04em;line-height:1;
+  color:#9aa1b5;text-decoration:none;
+  background:rgba(10,12,18,.72);
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:999px;padding:8px 14px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:color .18s ease,border-color .18s ease,background .18s ease;
+}
+.lab-home:hover{color:#e6e8ee;border-color:rgba(255,255,255,.3);background:rgba(16,19,29,.92)}
+@media (max-width:560px){.lab-home{top:10px;left:10px;padding:7px 12px}}
