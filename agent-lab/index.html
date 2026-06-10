@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script defer src="/assets/term.js"></script>
 <style>
   :root{
     --bg:#0a0b10;
@@ -250,7 +251,7 @@
   <section id="what">
     <div class="secnum">01 / WHAT IS AN AGENT</div>
     <h2>聊天机器人、工作流、智能体，<em>差在哪？</em></h2>
-    <p>都用大模型（LLM），但自主程度完全不同。一句话区分：
+    <p>都用<span class="term" data-name="LLM · Large Language Model" data-tip="大语言模型，如 GPT、Claude。本质是读入一段文字、不断预测『下一个词』的超大神经网络，聊天、写代码都是这个机制长出来的。">大模型（LLM）</span>，但自主程度完全不同。一句话区分：
        <span class="hl-v">聊天机器人是"你问我答"</span>，
        <span class="hl-a">工作流是"按写死的流程图走"</span>，
        <span class="hl">Agent 是"给个目标，自己决定下一步干什么"</span>。
@@ -338,7 +339,7 @@
   <section id="tools">
     <div class="secnum">03 / TOOL USE</div>
     <h2>工具调用：<em>模型怎么"伸出手"？</em></h2>
-    <p>LLM 本身只会输出文字，它"调用工具"的真相是：开发者把每个工具的<b>名字、用途、参数格式（JSON Schema）</b>写进上下文，模型在需要时输出一段<span class="hl-a">结构化的 JSON</span>，由你的代码真正去执行，再把结果喂回去。模型从头到尾没碰过 API——它只是个非常会"填表"的大脑。点击不同的用户问题，看模型会生成什么👇</p>
+    <p>LLM 本身只会输出文字，它"调用工具"的真相是：开发者把每个工具的<b>名字、用途、参数格式（<span class="term" data-name="JSON Schema" data-tip="一种描述 JSON 数据格式的『表格模板』：规定有哪些字段、什么类型、哪些必填。模型照着模板填，你的代码就能放心解析。">JSON Schema</span>）</b>写进上下文，模型在需要时输出一段<span class="hl-a">结构化的 <span class="term" data-name="JSON" data-tip="一种通用的数据书写格式，用大括号和键值对表示，如 {&quot;city&quot;: &quot;北京&quot;}。人能读懂，程序也能直接解析。">JSON</span></span>，由你的代码真正去执行，再把结果喂回去。模型从头到尾没碰过 <span class="term" data-name="API" data-tip="应用程序接口：程序之间互相调用的『服务窗口』。比如天气 API 就是一个网址，发个请求过去就返回天气数据。">API</span>——它只是个非常会"填表"的大脑。点击不同的用户问题，看模型会生成什么👇</p>
 
     <div class="panel">
       <div class="panel-label">demo · 同样的工具，不同的问题</div>
@@ -360,7 +361,7 @@
   <section id="context">
     <div class="secnum">04 / CONTEXT &amp; MEMORY</div>
     <h2>上下文窗口：<em>Agent 的全部世界</em></h2>
-    <p>模型每一轮"看到"的，只有上下文窗口里的内容——它没有别的感官。窗口是有限的（几十万 token 也会用完），而且<b>每一轮工具结果都在往里堆</b>，所以上下文管理是 Agent 工程的核心难题。点击下面的区块，看一个典型 Agent 的上下文里都装了什么👇</p>
+    <p>模型每一轮"看到"的，只有上下文窗口里的内容——它没有别的感官。窗口是有限的（几十万 <span class="term" data-name="Token" data-tip="模型眼里的『字块』，是它读写文字的最小单位：一个英文单词约 1~2 个 token，一个汉字约 1~2 个 token。模型按 token 计费、按 token 限长。">token</span> 也会用完），而且<b>每一轮工具结果都在往里堆</b>，所以上下文管理是 Agent 工程的核心难题。点击下面的区块，看一个典型 Agent 的上下文里都装了什么👇</p>
 
     <div class="panel">
       <div class="panel-label">anatomy · 点击查看每一块的作用</div>
@@ -370,7 +371,7 @@
 
     <div class="callout amber">
       <div class="t">窗口装不下怎么办？</div>
-      <p>三板斧：<b>① 压缩</b>——把早期对话总结成摘要再继续；<b>② 外挂记忆</b>——把重要信息写进文件/数据库，需要时再检索回来（长期记忆）；<b>③ 检索增强（RAG）</b>——别把整个知识库塞进去，只在用的时候按需取最相关的几段。</p>
+      <p>三板斧：<b>① 压缩</b>——把早期对话总结成摘要再继续；<b>② 外挂记忆</b>——把重要信息写进文件/数据库，需要时再检索回来（长期记忆）；<b>③ 检索增强（<span class="term" data-name="RAG · Retrieval-Augmented Generation" data-tip="检索增强生成：回答前先去知识库里搜出最相关的几段资料，连同问题一起交给模型。第 06 节会详细讲。">RAG</span>）</b>——别把整个知识库塞进去，只在用的时候按需取最相关的几段。</p>
     </div>
   </section>
 
@@ -401,8 +402,8 @@
           <h3>RAG · 检索增强生成</h3>
           <div class="sq">解决"模型不知道你的数据"</div>
           <ul>
-            <li><b>原理</b>：把文档切块 → 向量化存入数据库 → 提问时检索最相关的几块 → 塞进上下文一起回答</li>
-            <li><b>解决</b>：知识过时、私有数据、减少幻觉（答案有出处）</li>
+            <li><b>原理</b>：把文档切块 → <span class="term" data-name="向量化 · Embedding" data-tip="把一段文字变成一串数字坐标，意思相近的文字坐标也相近。这样『搜索』就变成了『找坐标最近的邻居』，能搜到换了说法的同义内容。">向量化</span>存入数据库 → 提问时检索最相关的几块 → 塞进上下文一起回答</li>
+            <li><b>解决</b>：知识过时、私有数据、减少<span class="term" data-name="幻觉 · Hallucination" data-tip="模型一本正经地编造不存在的事实（假论文、假 API、假数据）。它在『预测下一个词』，不知道自己在胡说，所以重要结论要可验证、有出处。">幻觉</span>（答案有出处）</li>
             <li><b>Agent 视角</b>：检索本身也可以是一个工具，让模型自己决定"什么时候去查、查什么关键词"——这叫 Agentic RAG</li>
           </ul>
         </div>
@@ -433,7 +434,7 @@
 
     <div class="callout rose">
       <div class="t">护栏 Guardrails</div>
-      <p><b>权限最小化</b>：只给任务必需的工具和数据；<b>高危操作要确认</b>：删库、转账、发邮件这类不可逆动作，必须人类点头（human-in-the-loop）；<b>限制循环步数与花费</b>：防止 Agent 失控空转烧钱。</p>
+      <p><b>权限最小化</b>：只给任务必需的工具和数据；<b>高危操作要确认</b>：删库、转账、发邮件这类不可逆动作，必须人类点头（<span class="term" data-name="Human-in-the-Loop" data-tip="『人在回路中』：自动化流程里的关键节点保留人工确认，AI 提议、人类拍板。是 Agent 安全设计里最朴素也最有效的一道闸。">human-in-the-loop</span>）；<b>限制循环步数与花费</b>：防止 Agent 失控空转烧钱。</p>
     </div>
 
     <div class="callout amber">
@@ -443,7 +444,7 @@
 
     <div class="callout teal">
       <div class="t">评估 Evals</div>
-      <p>Agent 输出是开放的，没法用单元测试断言。常用做法：<b>建一组真实任务的测试集</b>，定义成功标准（任务完成率、工具调错率、步数、成本），每次改 prompt 或换模型都跑一遍——没有 eval 的 Agent 优化全靠玄学。</p>
+      <p>Agent 输出是开放的，没法用单元测试断言。常用做法：<b>建一组真实任务的测试集</b>，定义成功标准（任务完成率、工具调错率、步数、成本），每次改 <span class="term" data-name="Prompt · 提示词" data-tip="发给模型的全部输入文字，包括系统指令和用户的话。模型的行为完全由 prompt 塑造，所以调 prompt 是 Agent 开发的日常。">prompt</span> 或换模型都跑一遍——没有 eval 的 Agent 优化全靠玄学。</p>
     </div>
   </section>
 
@@ -580,7 +581,7 @@ const patterns = [
    when:'质量敏感的产出 · 写代码/写报告 · 有可执行的检验手段（如跑测试）时效果最好'},
   {icon:'👥', name:'Multi-Agent', tag:'多智能体协作',
    flow:'编排者 → 分派给 [研究员 | 程序员 | 审核员] → 汇总结果',
-   d:'多个各有分工的 Agent 协作：常见拓扑有<b>主管-下属</b>（orchestrator 分派子任务）和<b>流水线</b>（产出依次传递）。每个 Agent 上下文更聚焦、可以并行；但通信成本高，容易"开会开崩"。',
+   d:'多个各有分工的 Agent 协作：常见拓扑有<b>主管-下属</b>（<span class="term" data-name="Orchestrator · 编排者" data-tip="多智能体系统里的『项目经理』：自己不干具体活，负责拆解任务、分派给合适的子 Agent、汇总结果。">orchestrator</span> 分派子任务）和<b>流水线</b>（产出依次传递）。每个 Agent 上下文更聚焦、可以并行；但通信成本高，容易"开会开崩"。',
    when:'任务能清晰分块 · 子任务需要不同工具/人设 · 单个上下文装不下的大型任务'}
 ];
 const patGrid = document.getElementById('pat-grid');
