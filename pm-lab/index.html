@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script defer src="/assets/term.js"></script>
 <style>
   :root{
     --bg:#0a0b10;
@@ -271,11 +272,11 @@
           <h3>产品经理 PM</h3>
           <div class="rq">"我们应该造一个什么样的产品？"</div>
           <ul>
-            <li><b>需求洞察</b>：用户访谈、竞品分析、找到真问题</li>
-            <li><b>方案设计</b>：PRD、原型、用户故事、信息架构</li>
-            <li><b>优先级排序</b>：需求池管理，RICE / KANO / MoSCoW</li>
+            <li><b>需求洞察</b>：用户访谈、<span class="term" data-name="Competitive Analysis" data-tip="系统地研究同类产品：它们有什么功能、定价多少、用户夸什么骂什么。就像开餐馆前先去隔壁几家店吃一圈，弄清自己该做什么不一样的菜。">竞品分析</span>、找到真问题</li>
+            <li><b>方案设计</b>：<span class="term" data-name="PRD · Product Requirements Document" data-tip="产品需求文档，PM 写给设计师和工程师看的『施工说明书』：要做什么功能、长什么样、各种情况怎么处理，都写清楚。">PRD</span>、<span class="term" data-name="Prototype" data-tip="产品的『草稿版』，通常是可以点来点去的界面示意图，没有真实功能。先用纸壳模型验证房子格局，再动工砌墙。">原型</span>、<span class="term" data-name="User Story" data-tip="用一句固定格式描述需求：作为某类用户，我想要某功能，以便达成某目的。强迫你站在用户角度说话，而不是只罗列功能。">用户故事</span>、<span class="term" data-name="Information Architecture" data-tip="规划产品里的内容和功能如何分类、放在哪个菜单哪个页面。就像超市规划货架：让用户凭直觉就能找到想要的东西。">信息架构</span></li>
+            <li><b>优先级排序</b>：<span class="term" data-name="Backlog" data-tip="把所有收集到的需求集中存放的清单，像一个候车室：需求先在这里排队，等 PM 定期评估，决定谁先『上车』进开发。">需求池</span>管理，RICE / KANO / <span class="term" data-name="MoSCoW" data-tip="一种简单的需求分级法，把需求分成四档：必须有（Must）、应该有（Should）、可以有（Could）、这次不做（Won't）。">MoSCoW</span></li>
             <li><b>项目推进</b>：跟研发、设计、测试协作，跟进上线</li>
-            <li><b>效果验证</b>：定义成功指标，复盘迭代</li>
+            <li><b>效果验证</b>：定义成功指标，<span class="term" data-name="Retrospective" data-tip="事情做完后开会回看：目标达成了吗？哪里做得好、哪里踩坑了、下次怎么改进。类似球队赛后一起看录像总结。">复盘</span>迭代</li>
           </ul>
         </div>
         <div class="role-card op">
@@ -285,8 +286,8 @@
             <li><b>用户运营</b>：分层、召回、社群、会员体系</li>
             <li><b>内容运营</b>：选题、生产、分发、内容生态</li>
             <li><b>活动运营</b>：策划拉新/促活活动，落地与复盘</li>
-            <li><b>数据运营</b>：埋点、看板、漏斗分析、A/B 实验</li>
-            <li><b>渠道增长</b>：投放、SEO/ASO、裂变、转介绍</li>
+            <li><b>数据运营</b>：<span class="term" data-name="Event Tracking" data-tip="在产品里预先装好『记录器』，用户每点一个按钮、看一个页面都被记下来，之后才有数据可分析。就像在商场各个门口装计数器。">埋点</span>、看板、<span class="term" data-name="Funnel Analysis" data-tip="把用户完成目标要经过的几步排成一个漏斗，看每一步流失了多少人，找出『漏水』最严重的环节去修。">漏斗分析</span>、A/B 实验</li>
+            <li><b>渠道增长</b>：投放、<span class="term" data-name="SEO / ASO" data-tip="让产品在搜索结果里排得更靠前：SEO 针对百度、谷歌等搜索引擎，ASO 针对应用商店。相当于把店开到人流最大的路口。">SEO/ASO</span>、<span class="term" data-name="Viral Growth" data-tip="设计让用户拉用户的玩法，比如『邀请好友各得红包』『拼团更便宜』，让用户像细胞分裂一样一传二、二传四地增长。">裂变</span>、<span class="term" data-name="Referral" data-tip="老用户主动把产品推荐给亲友。因为有熟人背书，这类新用户的信任度和留存通常最高，获客成本却几乎为零。">转介绍</span></li>
           </ul>
         </div>
       </div>
@@ -464,7 +465,7 @@
 <script>
 /* ============ 02 lifecycle ============ */
 const STAGES = [
-  {k:'探索期', e:'0 → 1', pm:'验证问题是否真实存在：用户访谈、MVP（最小可行产品）、快速试错。砍掉一切非核心功能。', op:'手动运营、种子用户社群（哪怕只有 50 人）、创始人亲自答疑，收集第一手反馈喂给 PM。', metric:'PMF 信号 · 留存曲线是否变平'},
+  {k:'探索期', e:'0 → 1', pm:'验证问题是否真实存在：用户访谈、<span class="term" data-name="Minimum Viable Product" data-tip="最小可行产品：只做最核心功能的『毛坯版』，先拿给真实用户试用，验证有没有人要，再决定要不要精装修。想卖蛋糕，先卖一块小蛋糕试试，而不是先建整座蛋糕工厂。">MVP</span>（最小可行产品）、快速试错。砍掉一切非核心功能。', op:'手动运营、种子用户社群（哪怕只有 50 人）、创始人亲自答疑，收集第一手反馈喂给 PM。', metric:'<span class="term" data-name="Product-Market Fit" data-tip="产品与市场匹配：产品真的解决了一群人的真实需求，用户用了还想用。最硬的信号是留存曲线不再下滑、趋于平稳——说明有一批人离不开它了。">PMF</span> 信号 · 留存曲线是否变平'},
   {k:'成长期', e:'1 → 10', pm:'打磨核心路径体验、补齐基本型需求、搭建数据埋点体系，开始做规模化的功能。', op:'放大获客渠道、搭建 AARRR 漏斗看板、上线增长活动（裂变/邀请）、建立用户分层。', metric:'新增用户 · 激活率 · 周留存'},
   {k:'成熟期', e:'10 → 100', pm:'精细化迭代、做第二曲线探索、平台化/生态化，警惕功能膨胀。', op:'精细化用户运营（RFM 分层、会员体系）、商业化变现、品牌活动、防流失召回。', metric:'DAU/MAU · ARPU · NPS'},
   {k:'衰退期', e:'保卫战', pm:'决策"延寿还是转型"：找新场景、新人群,或者体面地维护存量。', op:'存量用户价值挖掘、降本增效、把老用户迁移到新产品线。', metric:'流失率 · 单用户成本'},
@@ -591,7 +592,7 @@ document.querySelectorAll('#abtest .btn').forEach(btn=>{
     const sig=Math.abs(z)>=1.96;
     let msg;
     if(rb<=ra) msg=`这次抽样里 B 反而 <span class="warn">没赢</span>（z=${z.toFixed(2)}）—— 小样本的随机波动完全可能掩盖真实差异。再加大样本试试。`;
-    else if(sig) msg=`B 胜出且 <b>统计显著</b>（z=${z.toFixed(2)} ≥ 1.96，置信度 95%+）。可以放量上线 B 了 🎉`;
+    else if(sig) msg=`B 胜出且 <b><span class="term" data-name="Statistical Significance" data-tip="统计学的判定：两组的差距大到几乎不可能是运气造成的，才算『真的赢了』。就像抛硬币 10 次出 6 次正面说明不了什么，抛 1 万次出 6 千次正面才能断定硬币有问题。">统计显著</span></b>（z=${z.toFixed(2)} ≥ 1.96，<span class="term" data-name="Confidence Level" data-tip="这个结论有多大把握是对的。95% 置信度意思是：照这个标准下结论，100 次里大约只有 5 次会冤枉了随机波动。">置信度</span> 95%+）。可以放量上线 B 了 🎉`;
     else msg=`B 领先但 <span class="warn">不显著</span>（z=${z.toFixed(2)} < 1.96）—— 现在宣布胜利还太早，继续跑或加大样本。`;
     document.getElementById('ab-result').innerHTML=msg;
   };

@@ -12,6 +12,7 @@
 | `/byte-lab/` | 字节实验室 | 字节、编码、表示形式 |
 | `/net-lab/` | 网络实验室 | 计算机网络（分层/封装/IP/TCP/DNS/HTTP） |
 | `/pm-lab/` | 产品实验室 | 产品经理 & 产品运营（RICE/KANO/AARRR/AB 实验） |
+| `/agent-lab/` | 智能体实验室 | AI Agent（循环/工具调用/上下文/ReAct/RAG/MCP） |
 
 ## 加新 lab
 

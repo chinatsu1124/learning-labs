@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script defer src="/assets/term.js"></script>
 <style>
   :root{
     --bg:#0a0b10;
@@ -316,9 +317,9 @@
     <p>这套约定好的规则，就叫 <b class="hl-b">协议（protocol）</b>。你听过的 HTTP、TCP、IP、DNS、Wi-Fi……全都是协议。计算机网络的本质，就是<b>一大堆协议互相配合</b>，让数据可靠地从一台机器搬到另一台机器。</p>
     <div class="callout">
       <div class="t">一个直觉类比</div>
-      <p>网络通信很像<b>寄快递</b>：你写好信（数据），装进信封写上地址（加上头部信息），交给快递网络层层转运（路由器转发），对方收到后拆开信封读信（解析数据）。这个类比会贯穿整页。</p>
+      <p>网络通信很像<b>寄快递</b>：你写好信（数据），装进信封写上地址（加上头部信息），交给快递网络层层转运（<span class="term" data-name="Router" data-tip="网络世界的『快递分拣中心』：每个数据包到达后，它查看包上的目的地址，决定下一程往哪个方向送。家里的『路由器』和互联网骨干上的大路由器干的是同一类活。">路由器</span>转发），对方收到后拆开信封读信（解析数据）。这个类比会贯穿整页。</p>
     </div>
-    <p>问题来了：通信涉及的事情太多——电信号怎么传？地址怎么编？丢包了怎么补发？网页格式长什么样？把这些全塞进一个协议会复杂到无法维护。于是工程师们用了一招经典手法：<b class="hl">分层</b>。</p>
+    <p>问题来了：通信涉及的事情太多——电信号怎么传？地址怎么编？<span class="term" data-name="Packet Loss" data-tip="数据包在半路弄丢了，就像快递在运输途中遗失。网络本身不保证每个包都能到，所以需要有人负责发现丢失并补发。">丢包</span>了怎么补发？网页格式长什么样？把这些全塞进一个协议会复杂到无法维护。于是工程师们用了一招经典手法：<b class="hl">分层</b>。</p>
   </section>
 
   <!-- 01. LAYERS -->
@@ -363,7 +364,7 @@
       </div>
     </div>
 
-    <p>注意每层打包后的<b>名字会变</b>：应用层叫<b>数据</b>，加上 TCP 头叫<b class="hl-a">段（segment）</b>，加上 IP 头叫<b class="hl">包（packet）</b>，加上帧头帧尾叫<b class="hl-b">帧（frame）</b>，最后变成线缆上的<b>比特流</b>。面试和抓包工具里这些词会反复出现。</p>
+    <p>注意每层打包后的<b>名字会变</b>：应用层叫<b>数据</b>，加上 TCP 头叫<b class="hl-a">段（segment）</b>，加上 IP 头叫<b class="hl">包（packet）</b>，加上帧头帧尾叫<b class="hl-b">帧（frame）</b>，最后变成线缆上的<b>比特流</b>。面试和<span class="term" data-name="Packet Capture" data-tip="用工具（如 Wireshark）把经过网卡的数据包原样截获下来观察，相当于把路过的快递逐个拆开看里面每层包装写了什么。">抓包</span>工具里这些词会反复出现。</p>
   </section>
 
   <!-- 03. IP -->
@@ -388,9 +389,9 @@
         <span class="lg"><span class="sq" style="background:var(--amber-dim);border:1px solid var(--amber)"></span>主机位（门牌）</span>
       </div>
       <div class="readout">
-        <div class="ro acc"><div class="lab">子网掩码</div><div class="val" id="roMask">—</div></div>
+        <div class="ro acc"><div class="lab"><span class="term" data-name="Subnet Mask" data-tip="一串用来『划分界线』的二进制数：为 1 的位对应网络位、为 0 的位对应主机位。拿它和 IP 做与运算，就能从地址里抠出『小区编号』。">子网掩码</span></div><div class="val" id="roMask">—</div></div>
         <div class="ro acc2"><div class="lab">网络地址</div><div class="val" id="roNet">—</div></div>
-        <div class="ro"><div class="lab">广播地址</div><div class="val" id="roBcast">—</div></div>
+        <div class="ro"><div class="lab"><span class="term" data-name="Broadcast Address" data-tip="本网络的『大喇叭』：发往这个地址的包，子网内所有设备都会收到。它固定是每个子网的最后一个地址，不能分配给具体机器。">广播地址</span></div><div class="val" id="roBcast">—</div></div>
         <div class="ro acc3"><div class="lab">可用主机数</div><div class="val" id="roHosts">—</div></div>
         <div class="ro"><div class="lab">第一个可用</div><div class="val" id="roFirst">—</div></div>
         <div class="ro"><div class="lab">最后一个可用</div><div class="val" id="roLast">—</div></div>
@@ -400,7 +401,7 @@
     <p>试着把前缀从 <code>/24</code> 拖到 <code>/16</code>：网络位变少、主机位变多，这个网络能容纳的设备从 254 台暴涨到 6 万多台。<b>同一网络内的机器可以直接互相通信；跨网络则必须经过路由器转发。</b></p>
     <div class="callout amber">
       <div class="t">为什么还有 IPv6？</div>
-      <p>32 位只有约 <b>42.9 亿</b>个地址，早就不够全人类用了。IPv6 把地址扩到 <b>128 位</b>（如 <code>2001:db8::1</code>），数量多到可以给地球上每粒沙子分配无数个。过渡期内两者并存，家用网络还普遍靠 <b>NAT</b>（让全家共用一个公网 IPv4）续命。</p>
+      <p>32 位只有约 <b>42.9 亿</b>个地址，早就不够全人类用了。IPv6 把地址扩到 <b>128 位</b>（如 <code>2001:db8::1</code>），数量多到可以给地球上每粒沙子分配无数个。过渡期内两者并存，家用网络还普遍靠 <b><span class="term" data-name="Network Address Translation · 网络地址转换" data-tip="像小区的总前台：全家设备共用一个公网地址对外联系，路由器记下『哪台设备发了哪个请求』，回信到达时再转交给对应设备。">NAT</span></b>（让全家共用一个公网 IPv4）续命。</p>
     </div>
   </section>
 
@@ -427,7 +428,7 @@
     <p>为什么是三次而不是两次？因为<b>双方都需要确认「我能发出去、也能收到对方的回应」</b>。两次只能证明一个方向通畅；三次刚好让双方各完成一次「发送 + 收到确认」。</p>
     <div class="callout teal">
       <div class="t">对应的告别：四次挥手</div>
-      <p>断开连接要<b>四次挥手</b>（FIN → ACK → FIN → ACK）。多出一次是因为 TCP 是全双工的：一方说「我说完了」（FIN）后，另一方可能还有数据要发，所以「确认收到」和「我也说完了」要分开发送。</p>
+      <p>断开连接要<b>四次挥手</b>（FIN → ACK → FIN → ACK）。多出一次是因为 TCP 是<span class="term" data-name="Full Duplex" data-tip="双方可以同时发送和接收、互不干扰——像打电话两人能同时说话；对讲机那种一次只能一方说的叫半双工。">全双工</span>的：一方说「我说完了」（FIN）后，另一方可能还有数据要发，所以「确认收到」和「我也说完了」要分开发送。</p>
     </div>
   </section>
 
@@ -450,7 +451,7 @@
 
     <div class="callout">
       <div class="t">缓存无处不在</div>
-      <p>完整的递归查询其实很少发生：浏览器、操作系统、路由器、运营商的解析器都会按 <b>TTL</b>（生存时间）缓存结果。这也是为什么改了域名解析后「要等一会儿才生效」——旧记录还在各级缓存里没过期。</p>
+      <p>完整的<span class="term" data-name="Recursive Query" data-tip="你只问一次，解析器替你把根、顶级域、权威服务器一路问到底，再把最终答案带回来——像把跑腿全流程外包给管家。">递归查询</span>其实很少发生：浏览器、操作系统、路由器、运营商的解析器都会按 <b><span class="term" data-name="Time To Live" data-tip="这条记录的『保质期』，单位是秒：没过期就直接用缓存里的答案，过期了才重新去查。">TTL</span></b>（生存时间）缓存结果。这也是为什么改了域名解析后「要等一会儿才生效」——旧记录还在各级缓存里没过期。</p>
     </div>
   </section>
 
@@ -495,9 +496,9 @@
         <thead><tr><th>端口</th><th>协议 / 服务</th><th>干什么的</th></tr></thead>
         <tbody>
           <tr><td>80</td><td class="big">HTTP</td><td>明文网页</td></tr>
-          <tr><td>443</td><td class="big">HTTPS</td><td>加密网页（HTTP over TLS）</td></tr>
+          <tr><td>443</td><td class="big">HTTPS</td><td>加密网页（HTTP over <span class="term" data-name="Transport Layer Security" data-tip="给通信加密的协议，相当于把信装进只有收件人能打开的保险箱：路上谁都偷看不了、也改不了。HTTPS 的 S 就来自它。">TLS</span>）</td></tr>
           <tr><td>53</td><td class="big">DNS</td><td>域名解析</td></tr>
-          <tr><td>22</td><td class="big">SSH</td><td>远程登录服务器</td></tr>
+          <tr><td>22</td><td class="big"><span class="term" data-name="Secure Shell" data-tip="加密的远程命令行：让你像坐在那台服务器面前一样敲命令操作它，全程加密防偷听，是运维和程序员的日常工具。">SSH</span></td><td>远程登录服务器</td></tr>
           <tr><td>25 / 465</td><td class="big">SMTP</td><td>发送邮件</td></tr>
           <tr><td>3306</td><td class="big">MySQL</td><td>数据库</td></tr>
           <tr><td>6379</td><td class="big">Redis</td><td>缓存数据库</td></tr>
@@ -555,13 +556,13 @@
        role:'定义<b>内容的格式与语义</b>——网页长什么样、邮件怎么写、域名怎么查。程序员日常打交道最多的一层。',
        protos:['HTTP','HTTPS','DNS','SMTP','WebSocket','SSH'],dev:'浏览器、App、服务器程序'},
       {n:'3',name:'传输层',en:'Transport',pdu:'段 segment',
-       role:'提供<b>端到端</b>（进程到进程）的传输：用<b>端口号</b>区分程序；TCP 提供可靠有序传输，UDP 提供轻量快速传输。',
+       role:'提供<b>端到端</b>（进程到进程）的传输：用<b><span class="term" data-name="Port" data-tip="同一台机器上区分不同程序的编号，像大楼里的房间号：IP 地址找到大楼，端口号才能敲对那扇门。">端口号</span></b>区分程序；TCP 提供可靠有序传输，<span class="term" data-name="User Datagram Protocol" data-tip="与 TCP 相对的『不保证送达』传输方式：像寄明信片，发出去就不管了，胜在轻快，适合视频通话、游戏这类宁丢勿等的场景。">UDP</span> 提供轻量快速传输。',
        protos:['TCP','UDP','QUIC'],dev:'操作系统内核、防火墙'},
       {n:'2',name:'网络层',en:'Internet',pdu:'包 packet',
        role:'用 <b>IP 地址</b>在全球范围内寻址，由路由器一跳一跳<b>转发（路由）</b>。只管方向，不保证送达。',
        protos:['IP','ICMP (ping)','ARP*'],dev:'路由器'},
       {n:'1',name:'网络接口层',en:'Link / Network Interface',pdu:'帧 frame · 比特 bit',
-       role:'解决<b>相邻两个设备之间</b>怎么传：用 <b>MAC 地址</b>标识网卡，把帧变成电信号 / 光信号 / 无线电波。',
+       role:'解决<b>相邻两个设备之间</b>怎么传：用 <b><span class="term" data-name="Media Access Control Address" data-tip="出厂时烧录在网卡里的全球唯一硬件编号，像设备的『身份证号』；它只负责相邻一跳的投递，跨网络的全程寻址交给 IP 地址。">MAC 地址</span></b>标识网卡，把帧变成电信号 / 光信号 / 无线电波。',
        protos:['Ethernet','Wi-Fi (802.11)','PPP'],dev:'交换机、网卡、网线、光纤'}
     ],
     osi:[
@@ -855,7 +856,7 @@
     {c:'403',k:'err',t:'403 Forbidden',d:'<b>禁止访问</b>。服务器认识你，但你没有权限看这个资源。和 401（未登录 / 未认证）是两回事。'},
     {c:'404',k:'err',t:'404 Not Found',d:'<b>找不到</b>。互联网最著名的数字：URL 指向的资源不存在。注意：这说明服务器是通的，只是没这个东西。'},
     {c:'500',k:'err',t:'500 Internal Server Error',d:'<b>服务器内部错误</b>。锅在服务端：代码抛了异常、配置错了。用户端通常无能为力。'},
-    {c:'502',k:'err',t:'502 Bad Gateway',d:'<b>坏网关</b>。前面的代理 / 负载均衡器（如 Nginx）找后端服务要数据，后端挂了或返回了无效响应。'},
+    {c:'502',k:'err',t:'502 Bad Gateway',d:'<b>坏网关</b>。前面的代理 / <span class="term" data-name="Load Balancer" data-tip="流量的『叫号分诊台』：把涌进来的大量请求分摊给后面多台服务器处理，避免某一台被挤爆。">负载均衡器</span>（如 Nginx）找后端服务要数据，后端挂了或返回了无效响应。'},
     {c:'418',k:'warn',t:"418 I'm a teapot",d:'<b>我是茶壶 🫖</b>。1998 年愚人节 RFC 的彩蛋：「拒绝用茶壶煮咖啡」。真实存在于标准文档中，是程序员式幽默的化石。'}
   ];
   const chipsEl=document.getElementById('statusChips');

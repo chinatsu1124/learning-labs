@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script defer src="/assets/term.js"></script>
 <style>
   :root{
     --bg:#0a0b10;
@@ -260,7 +261,7 @@
   <section>
     <div class="secnum">01 / 核心</div>
     <h2>8 个开关 = 1 个<em>字节</em></h2>
-    <p>把 <b class="hl-a">8 位</b> 排成一排打包在一起，就构成了 <b class="hl">1 个字节（byte）</b>。字节是计算机存储和处理数据时最常用的「基本包装单位」——内存大小、文件大小，算的几乎都是字节。</p>
+    <p>把 <b class="hl-a">8 位</b> 排成一排打包在一起，就构成了 <b class="hl">1 个字节（byte）</b>。字节是计算机存储和处理数据时最常用的「基本包装单位」——<span class="term" data-name="Memory / RAM" data-tip="计算机临时存放正在使用的数据的地方，像一张工作时摊开东西的桌子。桌子越大（内存越大），能同时摊开干的活就越多，断电后桌面会被清空。">内存</span>大小、文件大小，算的几乎都是字节。</p>
     <p>下面是一个真实的字节。每一位都有自己的<b>权重（位权）</b>，从右到左依次是 1、2、4、8……最左边是 128。把所有「亮起」的位权加起来，就是这个字节代表的数值。<b>点击下面的方块拨动它们试试：</b></p>
 
     <div class="panel">
@@ -284,20 +285,20 @@
       </div>
     </div>
 
-    <p>试着把所有位都点亮：你会得到 <code>11111111</code>，也就是十进制的 <b class="hl-a">255</b>。再加 1 就「进位溢出」了。这说明：<b>一个字节能表示的最大无符号整数就是 255。</b></p>
+    <p>试着把所有位都点亮：你会得到 <code>11111111</code>，也就是十进制的 <b class="hl-a">255</b>。再加 1 就「<span class="term" data-name="Overflow" data-tip="数值超出了存储空间能装下的范围，就像里程表只有三位数，999 公里再开 1 公里会跳回 000。计算机里溢出会让结果突然变成错误的数，是很多 bug 的源头。">进位溢出</span>」了。这说明：<b>一个字节能表示的最大无符号整数就是 255。</b></p>
   </section>
 
   <!-- 2. WHY 8 -->
   <section>
     <div class="secnum">02 / 为什么</div>
     <h2>为什么偏偏是 <em>8</em> 位？</h2>
-    <p>8 这个数字并不是物理定律决定的，更多是<b>历史与工程权衡</b>的结果。早期计算机的字长五花八门（6 位、7 位、9 位都有过）。</p>
-    <p>真正让 8 位「定型」的关键，是 1960 年代 IBM System/360 的普及，以及一个现实需求：<b>用 8 位刚好能舒服地编码一个英文字符</b>（包括大小写字母、数字、标点和一些控制符）。</p>
+    <p>8 这个数字并不是物理定律决定的，更多是<b>历史与工程权衡</b>的结果。早期计算机的<span class="term" data-name="Word Length" data-tip="计算机一次能处理的数据宽度，好比一辆卡车一趟能装多少箱货。字长越大，一次能搬运和计算的数就越大，常说的 32 位、64 位电脑指的就是它。">字长</span>五花八门（6 位、7 位、9 位都有过）。</p>
+    <p>真正让 8 位「定型」的关键，是 1960 年代 <span class="term" data-name="IBM System/360" data-tip="IBM 在 1964 年推出的一个划时代大型计算机系列，影响力相当于计算机界的『福特 T 型车』。它把 8 位一字节等许多设计变成了后来全行业的惯例。">IBM System/360</span> 的普及，以及一个现实需求：<b>用 8 位刚好能舒服地编码一个英文字符</b>（包括大小写字母、数字、标点和一些<span class="term" data-name="Control Character" data-tip="不显示成文字、而是用来指挥行为的特殊字符，比如『换行』『退格』就是控制符。可以理解为乐谱里的休止符：看不见具体音符，但指挥着演奏。">控制符</span>）。</p>
     <div class="callout">
       <div class="t">关键直觉</div>
-      <p>8 位 = 2⁸ = <b>256</b> 种组合。当年的 ASCII 字符只需要 128 个编码，8 位绰绰有余还留了一倍余量。而且 8 是 2 的幂，方便对半切分（半字节 = 4 位 = 1 个十六进制位），电路设计很整齐。</p>
+      <p>8 位 = 2⁸ = <b>256</b> 种组合。当年的 <span class="term" data-name="ASCII" data-tip="最早流行的字符编码表，给英文字母、数字、标点各分配一个 0~127 的编号，相当于一本只收录英文的『字符字典』。比如大写 A 的编号是 65。">ASCII</span> 字符只需要 128 个编码，8 位绰绰有余还留了一倍余量。而且 8 是 2 的幂，方便对半切分（半字节 = 4 位 = 1 个十六进制位），电路设计很整齐。</p>
     </div>
-    <p>从此，「<b>1 字节 = 8 位</b>」成了几乎所有现代计算机的事实标准。注意：严格的标准术语里，明确指 8 位的单位叫 <b class="hl">octet（八位组）</b>，在网络协议规范中常见。</p>
+    <p>从此，「<b>1 字节 = 8 位</b>」成了几乎所有现代计算机的事实标准。注意：严格的标准术语里，明确指 8 位的单位叫 <b class="hl">octet（八位组）</b>，在<span class="term" data-name="Network Protocol" data-tip="计算机之间通信时共同遵守的『对话规则』，规定了数据怎么打包、按什么顺序发送，就像寄快递要按统一格式写地址单。常见的 HTTP、TCP 都是网络协议。">网络协议</span>规范中常见。</p>
   </section>
 
   <!-- 3. BASES -->
@@ -330,9 +331,9 @@
           <tr><td>2 位</td><td class="big">4</td><td>00 01 10 11</td></tr>
           <tr><td>4 位</td><td class="big">16</td><td>半字节 = 1 个十六进制位</td></tr>
           <tr><td>8 位</td><td class="big">256</td><td><b>1 字节</b> · 可表示 0–255</td></tr>
-          <tr><td>16 位</td><td class="big">65,536</td><td>2 字节 · 一个常见的「短整型」</td></tr>
-          <tr><td>32 位</td><td class="big">约 42.9 亿</td><td>4 字节 · IPv4 地址总数就是它</td></tr>
-          <tr><td>64 位</td><td class="big">约 1.8×10¹⁹</td><td>8 字节 · 现代 CPU 的主流字长</td></tr>
+          <tr><td>16 位</td><td class="big">65,536</td><td>2 字节 · 一个常见的「<span class="term" data-name="short int" data-tip="编程语言里一种占 2 个字节的整数类型，像一个容量较小的数字盒子。装得下的范围有限（无符号最多 65535），但更省空间。">短整型</span>」</td></tr>
+          <tr><td>32 位</td><td class="big">约 42.9 亿</td><td>4 字节 · <span class="term" data-name="IPv4" data-tip="互联网上给每台设备分配的『门牌号』的第 4 版格式，由 4 个字节组成，比如 192.168.1.1。因为只有约 42.9 亿个号码，如今已经不够用，所以才有了更长的 IPv6。">IPv4</span> 地址总数就是它</td></tr>
+          <tr><td>64 位</td><td class="big">约 1.8×10¹⁹</td><td>8 字节 · 现代 <span class="term" data-name="CPU / Central Processing Unit" data-tip="中央处理器，计算机的『大脑』，所有计算和指令都由它执行。手机和电脑里那块最核心的芯片就是它。">CPU</span> 的主流字长</td></tr>
         </tbody>
       </table>
     </div>
@@ -379,7 +380,7 @@
     </div>
     <div class="callout">
       <div class="t">为什么硬盘「缩水」了？</div>
-      <p>因为 1024 = 2¹⁰，最接近 1000 又是 2 的幂，所以内存/操作系统常按 1024 计。而硬盘厂商按 1000 标注容量。于是标称 <b>1 TB</b> 的硬盘（10¹² 字节），在按 1024 换算的系统里只显示约 <b>931 GiB</b>——并没有少，只是<b>两套数法之差</b>。严谨写法应区分 <code>GB</code>（×1000）与 <code>GiB</code>（×1024）。</p>
+      <p>因为 1024 = 2¹⁰，最接近 1000 又是 2 的幂，所以内存/<span class="term" data-name="Operating System" data-tip="管理整台计算机软硬件资源的『大管家』软件，比如 Windows、macOS、安卓。你打开的每个应用都要通过它来使用内存、硬盘和屏幕。">操作系统</span>常按 1024 计。而硬盘厂商按 1000 标注容量。于是标称 <b>1 TB</b> 的硬盘（10¹² 字节），在按 1024 换算的系统里只显示约 <b>931 GiB</b>——并没有少，只是<b>两套数法之差</b>。严谨写法应区分 <code>GB</code>（×1000）与 <code>GiB</code>（×1024）。</p>
     </div>
   </section>
 
@@ -396,14 +397,14 @@
       <div class="utf-summary">
         <span>字符数<b id="charCount">0</b></span>
         <span>UTF-8 字节数<b id="byteCount">0</b></span>
-        <span>UTF-16 字节数<b id="u16Count">0</b></span>
+        <span><span class="term" data-name="UTF-16" data-tip="另一种把 Unicode 字符存成字节的方案：大多数字符占 2 字节，少数生僻字符和 emoji 占 4 字节。Windows 系统内部和 JavaScript 字符串用的就是它。">UTF-16</span> 字节数<b id="u16Count">0</b></span>
       </div>
       <div class="char-list" id="charList"></div>
     </div>
 
     <div class="callout teal">
       <div class="t">对做游戏 / 处理日文很关键</div>
-      <p>「字符数」和「字节数」不是一回事。一句 10 个汉字的日文台词，在 UTF-8 里可能占 30 字节左右；如果按字节去截断字符串，很容易把一个汉字「切成两半」变成乱码（俗称 mojibake）。这也是为什么处理 CJK 文本时，要按<b>字符（码点）</b>而非<b>字节</b>来计算长度和切分。</p>
+      <p>「字符数」和「字节数」不是一回事。一句 10 个汉字的日文台词，在 UTF-8 里可能占 30 字节左右；如果按字节去截断字符串，很容易把一个汉字「切成两半」变成乱码（俗称 mojibake）。这也是为什么处理 <span class="term" data-name="CJK" data-tip="中文（Chinese）、日文（Japanese）、韩文（Korean）三种文字的统称。这三种文字共用大量汉字，在编码和排版上常被当作一类问题处理。">CJK</span> 文本时，要按<b>字符（码点）</b>而非<b>字节</b>来计算长度和切分。</p>
     </div>
   </section>
 
@@ -428,7 +429,7 @@
         </div>
       </div>
     </div>
-    <p style="margin-top:18px"><b>大端</b>把「最重要的字节」放在最前（像人类写数字的习惯），网络传输常用它。<b>小端</b>反过来，x86 / ARM 等主流 CPU 在内存里多用小端。读取二进制文件、网络协议或做引擎逆向时，搞错字节序会读出完全错误的数值——这是底层开发常见的坑。</p>
+    <p style="margin-top:18px"><b>大端</b>把「最重要的字节」放在最前（像人类写数字的习惯），网络传输常用它。<b>小端</b>反过来，<span class="term" data-name="x86 / ARM" data-tip="两大主流 CPU 架构（即芯片的『设计流派』）：x86 多见于台式机和笔记本，ARM 多见于手机和苹果 M 系列芯片。不同架构的芯片说着不同的『母语』，软件要分别适配。">x86 / ARM</span> 等主流 CPU 在内存里多用小端。读取<span class="term" data-name="Binary File" data-tip="不是给人直接阅读的文本、而是按某种格式直接存放原始字节的文件，比如图片、音频、游戏存档。用记事本打开会看到一堆乱码，必须按它的格式规则去解读。">二进制文件</span>、网络协议或做引擎<span class="term" data-name="Reverse Engineering" data-tip="在没有源代码和文档的情况下，通过分析程序的字节和行为来反推它内部是怎么工作的，就像拆开一块手表研究它的构造。游戏模组和汉化常用到这种技术。">逆向</span>时，搞错字节序会读出完全错误的数值——这是底层开发常见的坑。</p>
   </section>
 
 </div>

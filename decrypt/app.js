@@ -242,7 +242,7 @@ function renderDH(){
     step('A', `Alice 算公开值 ${fx(`A = g^{a}\\bmod p = ${DH_G}^{${a}}\\bmod ${DH_P} = \\textcolor{${KX.ciph}}{${A}}`, `<b>A = g<sup>a</sup> mod p = ${DH_G}<sup>${a}</sup> mod ${DH_P} =</b> <span class="v">${A}</span>`)} → 发给 Bob`) +
     step('B', `Bob 算公开值 ${fx(`B = g^{b}\\bmod p = ${DH_G}^{${b}}\\bmod ${DH_P} = \\textcolor{${KX.ciph}}{${B}}`, `<b>B = g<sup>b</sup> mod p = ${DH_G}<sup>${b}</sup> mod ${DH_P} =</b> <span class="v">${B}</span>`)} → 发给 Alice`) +
     step('=', `Alice：${fx(`B^{a}\\bmod p = \\textcolor{${KX.ciph}}{${sA}}`, `<b>B<sup>a</sup> mod p =</b> <span class="v">${sA}</span>`)}　Bob：${fx(`A^{b}\\bmod p = \\textcolor{${KX.ciph}}{${sB}}`, `<b>A<sup>b</sup> mod p =</b> <span class="v">${sB}</span>`)}　${sA === sB ? '<b style="color:var(--cipher)">✓ 相等！</b>' : ''}`) +
-    step('!', `窃听者只拿到 g、p、A、B，想反推出 a 或 b 就得解<b>离散对数</b>——大素数下做不到。`);
+    step('!', `窃听者只拿到 g、p、A、B，想反推出 a 或 b 就得解<b><span class="term" data-name="Discrete Logarithm" data-tip="已知模幂运算的结果，反推当初用的指数是多少的数学难题。数字一大，连超级计算机也算不出来，DH 的安全全靠它。">离散对数</span></b>——大素数下做不到。`);
 }
 ['dhA','dhB'].forEach(id => $(id).addEventListener('input', renderDH));
 renderDH();
