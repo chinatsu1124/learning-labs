@@ -12,6 +12,12 @@
 <link rel="stylesheet" href="/assets/fonts.css">
 <link rel="stylesheet" href="/assets/base.css">
 <script defer src="/assets/term.js"></script>
+<script defer src="/assets/secnav.js"></script>
+<link rel="stylesheet" href="/assets/flow.css">
+<script src="/assets/flow.js"></script>
+<script src="/assets/quiz.js"></script>
+<script src="/assets/cards.js"></script>
+<script src="/assets/stepper.js"></script>
 <style>
   :root{
     --bg:#090c0e;
@@ -79,13 +85,13 @@
   @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
 
   /* ---------- sections ---------- */
-  section{padding:56px 0;border-top:1px solid var(--line)}
+  section{padding:72px 0}
   .secnum{font-family:var(--mono);font-size:12px;color:var(--teal);letter-spacing:.2em;
     margin-bottom:10px;display:flex;align-items:center;gap:12px}
-  .secnum::after{content:"";flex:1;height:1px;background:var(--line)}
+  .secnum::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
   h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);
     line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
-  h2 em{font-style:normal;color:var(--teal)}
+  h2 em{font-style:normal;background:linear-gradient(90deg,var(--teal),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
   p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
   p b{color:var(--ink);font-weight:600}
   .hl{color:var(--teal);font-weight:600}
@@ -192,14 +198,7 @@
   .codeblock .n{color:var(--amber)}
 
   /* ---------- 熔断器 ---------- */
-  .cb-state{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
-    font-family:var(--mono);font-size:13px;margin-bottom:18px}
-  .cb-node{border:1.5px solid var(--line);border-radius:10px;padding:10px 18px;background:var(--bg2);
-    color:var(--muted);transition:all .25s;text-align:center}
-  .cb-node small{display:block;font-size:10px;color:var(--faint);letter-spacing:.1em}
-  .cb-node.on-closed{border-color:var(--teal);background:var(--teal-dim);color:var(--teal);box-shadow:0 0 22px rgba(79,227,193,.22)}
-  .cb-node.on-open{border-color:var(--rose);background:var(--rose-dim);color:var(--rose);box-shadow:0 0 22px rgba(255,122,133,.22)}
-  .cb-node.on-half{border-color:var(--amber);background:var(--amber-dim);color:var(--amber);box-shadow:0 0 22px rgba(255,182,72,.22)}
+  #cb-flow{max-width:620px;margin:0 auto 8px}
   .cb-meta{font-family:var(--mono);font-size:12px;color:var(--faint);text-align:center;margin-bottom:14px}
   .cb-meta b{color:var(--ink);font-weight:500}
   .cb-log{display:flex;flex-direction:column;gap:6px;margin-top:14px;max-height:240px;overflow-y:auto}
@@ -451,13 +450,7 @@
 
     <div class="panel">
       <div class="panel-label">simulator · 订单服务 → 库存服务（熔断阈值：连续 3 次失败）</div>
-      <div class="cb-state">
-        <div class="cb-node" id="cb-closed">闭合<small>CLOSED · 正常放行</small></div>
-        <span class="svc-arr">→</span>
-        <div class="cb-node" id="cb-open">断开<small>OPEN · 直接拒绝</small></div>
-        <span class="svc-arr">→</span>
-        <div class="cb-node" id="cb-half">半开<small>HALF-OPEN · 放一个试探</small></div>
-      </div>
+      <div id="cb-flow"></div>
       <div class="cb-meta" id="cb-meta"></div>
       <div class="btnrow">
         <button class="btn" id="cb-send">发送请求 ▸</button>
@@ -570,30 +563,25 @@ const jrSteps = [
   {role:'ok', who:'响应返回', node:'client',
    html:'<span class="body-text"><b>201 Created，全程 ~180ms。</b>这条链路上：网关收口了认证限流，服务发现解决了"对方在哪"，关键依赖走同步、非关键依赖走异步。<br><br><span class="think">但是——如果第 3 步库存服务挂了呢？如果第 4 步扣款失败、库存已经扣了呢？这正是第 05、06 节要解决的问题。</span></span>'}
 ];
-let jrIdx = 0;
 const jrLog = document.getElementById('jr-log');
-const jrNext = document.getElementById('jr-next');
 function jrLight(node){
   document.querySelectorAll('.svc-node').forEach(n=>
     n.classList.toggle('lit', n.dataset.sn === node));
 }
-jrNext.addEventListener('click', ()=>{
-  if(jrIdx >= jrSteps.length) return;
-  const s = jrSteps[jrIdx++];
-  const d = document.createElement('div');
-  d.className = 'msg ' + s.role;
-  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
-  jrLog.appendChild(d);
-  jrLight(s.node);
-  if(jrIdx >= jrSteps.length){
-    jrNext.disabled = true;
-    jrNext.textContent = '请求完成 ✓';
-  }
-});
-document.getElementById('jr-reset').addEventListener('click', ()=>{
-  jrIdx = 0; jrLog.innerHTML = '';
-  jrNext.disabled = false; jrNext.textContent = '下一步 ▸';
-  jrLight(null);
+Stepper.bind({
+  next: document.getElementById('jr-next'),
+  reset: document.getElementById('jr-reset'),
+  total: jrSteps.length,
+  doneText: '请求完成 ✓',
+  onStep(i){
+    const s = jrSteps[i];
+    const d = document.createElement('div');
+    d.className = 'msg ' + s.role;
+    d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+    jrLog.appendChild(d);
+    jrLight(s.node);
+  },
+  onReset(){ jrLog.innerHTML = ''; jrLight(null); }
 });
 
 /* ================= 04 sync vs async demo ================= */
@@ -628,10 +616,25 @@ const cbSwitch = document.getElementById('cb-switch');
 const cbHealth = document.getElementById('cb-health');
 let cbReq = 0;
 
+const cbFlow = Flow.render(document.getElementById('cb-flow'), {
+  nodes:[
+    {id:'closed', label:'闭合', sub:'CLOSED · 正常放行', x:1.3,  y:1,   accent:'teal'},
+    {id:'open',   label:'断开', sub:'OPEN · 直接拒绝',   x:6,    y:1,   accent:'rose'},
+    {id:'half',   label:'半开', sub:'HALF-OPEN · 试探', x:3.65, y:2.9, accent:'amber'}],
+  edges:[
+    {from:'closed', to:'open',   label:'连续失败 ≥ 3 · 跳闸'},
+    {from:'open',   to:'half',   label:'冷却时间到', via:[[6,2.9]]},
+    {from:'half',   to:'closed', label:'试探成功',   via:[[1.3,2.9]]},
+    {from:'half',   to:'open',   label:'试探失败',   via:[[4.85,2.9],[4.85,1]]}]
+});
+let cbLitEdge = null;
+function cbEdge(from, to){
+  if(cbLitEdge) cbFlow.flow(cbLitEdge[0], cbLitEdge[1], false);
+  cbLitEdge = from ? [from, to] : null;
+  if(from) cbFlow.flow(from, to, true);
+}
 function cbRender(){
-  document.getElementById('cb-closed').className = 'cb-node' + (CB.state==='closed' ? ' on-closed' : '');
-  document.getElementById('cb-open').className   = 'cb-node' + (CB.state==='open'   ? ' on-open'   : '');
-  document.getElementById('cb-half').className   = 'cb-node' + (CB.state==='half'   ? ' on-half'   : '');
+  cbFlow.light(CB.state);
   const names = {closed:'CLOSED 闭合', open:'OPEN 断开', half:'HALF-OPEN 半开'};
   cbMeta.innerHTML = '当前状态 <b>'+names[CB.state]+'</b> · 连续失败 <b>'+CB.fails+' / '+CB.THRESHOLD+'</b>';
   cbWait.disabled = CB.state !== 'open';
@@ -657,9 +660,11 @@ cbSend.addEventListener('click', ()=>{
   if(CB.state === 'half'){
     if(CB.healthy){
       CB.state = 'closed'; CB.fails = 0;
+      cbEdge('half', 'closed');
       cbLine('ok', '#'+cbReq+' ✓ 试探请求成功 → 下游恢复了！熔断器闭合（HALF-OPEN → CLOSED）');
     } else {
       CB.state = 'open';
+      cbEdge('half', 'open');
       cbLine('fail', '#'+cbReq+' ✗ 试探请求失败 → 还没好，继续断开（HALF-OPEN → OPEN）');
     }
     cbRender(); return;
@@ -672,6 +677,7 @@ cbSend.addEventListener('click', ()=>{
     CB.fails++;
     if(CB.fails >= CB.THRESHOLD){
       CB.state = 'open';
+      cbEdge('closed', 'open');
       cbLine('fail', '#'+cbReq+' ✗ 超时（2000ms）· 连续失败达到 '+CB.THRESHOLD+' 次 → 跳闸！（CLOSED → OPEN）');
     } else {
       cbLine('fail', '#'+cbReq+' ✗ 超时（2000ms）· 连续失败 '+CB.fails+' 次');
@@ -682,6 +688,7 @@ cbSend.addEventListener('click', ()=>{
 cbWait.addEventListener('click', ()=>{
   if(CB.state !== 'open') return;
   CB.state = 'half'; CB.fails = 0;
+  cbEdge('open', 'half');
   cbLine('info', '⏲ 冷却时间（30s）到 → 进入 HALF-OPEN，下一个请求作为试探放行');
   cbRender();
 });
@@ -690,6 +697,7 @@ document.getElementById('cb-reset').addEventListener('click', ()=>{
   cbSwitch.classList.remove('down');
   cbHealth.textContent = '正常';
   cbLog.innerHTML = '';
+  cbEdge(null);
   cbRender();
 });
 cbRender();
@@ -717,35 +725,30 @@ const sagaSad = [
   {role:'ok', who:'⑤ 订单服务 · 补偿收尾',
    html:'<span class="body-text">把订单标记为 <b>CANCELLED</b>，给用户返回「支付失败」。<br><br><span class="think">在第 ② 步到第 ④ 步之间，系统短暂处于"库存扣了但单子最终没成"的中间态——Saga 给的是最终一致，业务要能容忍这几秒。</span></span>'}
 ];
-let sagaMode = 0, sagaIdx = 0;
+let sagaMode = 0;
 const sagaLog = document.getElementById('saga-log');
-const sagaNext = document.getElementById('saga-next');
 const sagaTabs = document.getElementById('saga-tabs');
-function sagaReset(){
-  sagaIdx = 0; sagaLog.innerHTML = '';
-  sagaNext.disabled = false; sagaNext.textContent = '下一步 ▸';
-}
+const sagaStepper = Stepper.bind({
+  next: document.getElementById('saga-next'),
+  reset: document.getElementById('saga-reset'),
+  total: () => (sagaMode ? sagaSad : sagaHappy).length,
+  doneText: () => sagaMode ? '补偿完成 ✓' : 'Saga 完成 ✓',
+  onStep(i){
+    const s = (sagaMode ? sagaSad : sagaHappy)[i];
+    const d = document.createElement('div');
+    d.className = 'msg ' + s.role;
+    d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+    sagaLog.appendChild(d);
+  },
+  onReset(){ sagaLog.innerHTML = ''; }
+});
 sagaTabs.addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
   sagaTabs.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
   b.classList.add('active');
   sagaMode = +b.dataset.t;
-  sagaReset();
+  sagaStepper.reset();
 });
-sagaNext.addEventListener('click', ()=>{
-  const steps = sagaMode ? sagaSad : sagaHappy;
-  if(sagaIdx >= steps.length) return;
-  const s = steps[sagaIdx++];
-  const d = document.createElement('div');
-  d.className = 'msg ' + s.role;
-  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
-  sagaLog.appendChild(d);
-  if(sagaIdx >= steps.length){
-    sagaNext.disabled = true;
-    sagaNext.textContent = sagaMode ? '补偿完成 ✓' : 'Saga 完成 ✓';
-  }
-});
-document.getElementById('saga-reset').addEventListener('click', sagaReset);
 
 /* ================= 07 observability pillars ================= */
 const obsPillars = [
@@ -762,20 +765,10 @@ const obsPillars = [
    d:'请求进入系统时生成全局 <b>trace_id</b>，沿着调用链一路透传，每一跳记录自己的耗时（span），最后拼成一棵瀑布图（Jaeger / Zipkin / SkyWalking）。这是微服务排障的<b>杀手锏</b>：一眼看出 8 跳里哪一跳是瓶颈。',
    when:'回答 · 这个慢请求的时间花在了哪？'}
 ];
-const obsGrid = document.getElementById('obs-grid');
-const obsDetail = document.getElementById('obs-detail');
-obsPillars.forEach((p,i)=>{
-  const el = document.createElement('button');
-  el.className = 'pat-card';
-  el.innerHTML = '<div class="pi">'+p.icon+'</div><div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>';
-  el.addEventListener('click', ()=>{
-    obsGrid.querySelectorAll('.pat-card').forEach(x=>x.classList.remove('active'));
-    el.classList.add('active');
-    obsDetail.innerHTML = '<div class="flow">'+p.flow+'</div>'+p.d+
-      '<div class="when">它回答的问题</div>'+p.when;
-  });
-  obsGrid.appendChild(el);
-  if(i===0) el.click();
+Cards.render(document.getElementById('obs-grid'), document.getElementById('obs-detail'), obsPillars, {
+  cardClass: 'pat-card',
+  card: p => '<div class="pi">'+p.icon+'</div><div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>',
+  detail: p => '<div class="flow">'+p.flow+'</div>'+p.d+'<div class="when">它回答的问题</div>'+p.when
 });
 
 /* ================= 08 quiz ================= */
@@ -805,43 +798,11 @@ const quiz = [
    ans:2,
    exp:'<b>链路追踪</b>用全局 trace_id 把一次请求在每个服务里的耗时（span）拼成瀑布图，哪一跳是瓶颈一目了然。日志答"现场细节"，指标答"整体趋势"，三者互补但定位单请求慢点靠 trace。'}
 ];
-const quizList = document.getElementById('quiz-list');
-const quizScore = document.getElementById('quiz-score');
-let answered = 0, correct = 0;
-quiz.forEach((item,qi)=>{
-  const qd = document.createElement('div');
-  qd.className = 'quiz-q';
-  qd.innerHTML = '<div class="qt"><span class="qn">Q'+(qi+1)+'</span>'+item.q+'</div>';
-  const opts = document.createElement('div');
-  opts.className = 'quiz-opts';
-  const exp = document.createElement('div');
-  exp.className = 'quiz-exp';
-  exp.innerHTML = item.exp;
-  item.opts.forEach((o,oi)=>{
-    const b = document.createElement('button');
-    b.textContent = String.fromCharCode(65+oi) + '. ' + o;
-    b.addEventListener('click', ()=>{
-      if(qd.dataset.done) return;
-      qd.dataset.done = '1';
-      answered++;
-      if(oi === item.ans){ b.classList.add('right'); correct++; }
-      else {
-        b.classList.add('wrong');
-        opts.children[item.ans].classList.add('right');
-      }
-      exp.style.display = 'block';
-      quizScore.innerHTML = '得分 <b>'+correct+' / '+answered+'</b>' +
-        (answered === quiz.length
-          ? (correct === quiz.length ? ' 🎉 全对！可以去画你们系统的服务边界了'
-             : correct >= 4 ? ' 👍 不错，回头看看错题的解析'
-             : ' 💪 建议从第 01 节再过一遍')
-          : '');
-    });
-    opts.appendChild(b);
-  });
-  qd.appendChild(opts);
-  qd.appendChild(exp);
-  quizList.appendChild(qd);
+Quiz.render(document.getElementById('quiz-list'), document.getElementById('quiz-score'), quiz, {
+  final: (correct, total) =>
+    correct === total ? ' 🎉 全对！可以去画你们系统的服务边界了'
+    : correct >= 4 ? ' 👍 不错，回头看看错题的解析'
+    : ' 💪 建议从第 01 节再过一遍'
 });
 </script>
 </body>

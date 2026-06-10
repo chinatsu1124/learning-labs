@@ -12,6 +12,10 @@
 <link rel="stylesheet" href="/assets/fonts.css">
 <link rel="stylesheet" href="/assets/base.css">
 <script defer src="/assets/term.js"></script>
+<script defer src="/assets/secnav.js"></script>
+<script src="/assets/quiz.js"></script>
+<script src="/assets/cards.js"></script>
+<script src="/assets/stepper.js"></script>
 <style>
   :root{
     --bg:#0a0b10;
@@ -77,13 +81,13 @@
   @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
 
   /* ---------- sections ---------- */
-  section{padding:56px 0;border-top:1px solid var(--line)}
+  section{padding:72px 0}
   .secnum{font-family:var(--mono);font-size:12px;color:var(--violet);letter-spacing:.2em;
     margin-bottom:10px;display:flex;align-items:center;gap:12px}
-  .secnum::after{content:"";flex:1;height:1px;background:var(--line)}
+  .secnum::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
   h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);
     line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
-  h2 em{font-style:normal;color:var(--violet)}
+  h2 em{font-style:normal;background:linear-gradient(90deg,var(--violet),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
   p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
   p b{color:var(--ink);font-weight:600}
   .hl{color:var(--teal);font-weight:600}
@@ -491,41 +495,37 @@ const growSteps = [
   {label:'轮 6 · 思考 + run_tests()', add:0.3},
   {label:'轮 6 · 测试通过 ✓ 输出最终回答', add:0.8, done:true}
 ];
-let growIdx = 0, growTotal = 0;
+let growTotal = 0;
 const growFill = document.getElementById('grow-fill');
 const growPct = document.getElementById('grow-pct');
 const growLog = document.getElementById('grow-log');
-const growNext = document.getElementById('grow-next');
 function setMeter(){
   const pct = Math.min(100, growTotal / CAP * 100);
   growFill.style.width = pct + '%';
   growPct.textContent = growTotal.toFixed(1) + 'k / ' + CAP + 'k';
 }
-growNext.addEventListener('click', ()=>{
-  if(growIdx >= growSteps.length) return;
-  const s = growSteps[growIdx++];
-  const row = document.createElement('div');
-  row.className = 'grow-row' + (s.warn ? ' warn' : '') + (s.compact ? ' compact' : '');
-  let tk = '';
-  if(s.compact){
-    growTotal = s.setTo;
-    tk = '回收 ≈17k ⬇';
-  } else if(s.add){
-    growTotal += s.add;
-    tk = '+' + s.add.toFixed(1) + 'k' + (s.big ? ' ⬆' : '');
-  }
-  row.innerHTML = '<b>' + s.label + '</b><span class="tk">' + tk + '</span>';
-  growLog.appendChild(row);
-  setMeter();
-  if(growIdx >= growSteps.length){
-    growNext.disabled = true;
-    growNext.textContent = '任务完成 ✓';
-  }
-});
-document.getElementById('grow-reset').addEventListener('click', ()=>{
-  growIdx = 0; growTotal = 0; growLog.innerHTML = '';
-  growNext.disabled = false; growNext.textContent = '执行下一轮 ▸';
-  setMeter();
+Stepper.bind({
+  next: document.getElementById('grow-next'),
+  reset: document.getElementById('grow-reset'),
+  total: growSteps.length,
+  doneText: '任务完成 ✓',
+  onStep(i){
+    const s = growSteps[i];
+    const row = document.createElement('div');
+    row.className = 'grow-row' + (s.warn ? ' warn' : '') + (s.compact ? ' compact' : '');
+    let tk = '';
+    if(s.compact){
+      growTotal = s.setTo;
+      tk = '回收 ≈17k ⬇';
+    } else if(s.add){
+      growTotal += s.add;
+      tk = '+' + s.add.toFixed(1) + 'k' + (s.big ? ' ⬆' : '');
+    }
+    row.innerHTML = '<b>' + s.label + '</b><span class="tk">' + tk + '</span>';
+    growLog.appendChild(row);
+    setMeter();
+  },
+  onReset(){ growTotal = 0; growLog.innerHTML = ''; setMeter(); }
 });
 setMeter();
 
@@ -544,20 +544,12 @@ const strategies = [
    code:'<span class="c"># task-state.md（窗口外，工具读写）</span>\n<span class="k">## 已确认</span>\n- 根因：refresh.js:42 竞态\n- 约束：不许改 API 签名\n<span class="k">## TODO</span>\n- [x] 定位根因\n- [ ] 写修复 + 测试',
    when:'长任务/多会话任务 · 高可靠要求 · 和摘要压缩叠加使用'}
 ];
-const stratGrid = document.getElementById('strat-grid');
-const stratDetail = document.getElementById('strat-detail');
-strategies.forEach((p,i)=>{
-  const el = document.createElement('button');
-  el.className = 'strat-card';
-  el.innerHTML = '<div class="pi">'+p.icon+'</div><div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>';
-  el.addEventListener('click', ()=>{
-    stratGrid.querySelectorAll('.strat-card').forEach(x=>x.classList.remove('active'));
-    el.classList.add('active');
-    stratDetail.innerHTML = p.d + '<div class="codeblock">'+p.code+'</div>'
-      + '<div class="when">适用场景</div>' + p.when;
-  });
-  stratGrid.appendChild(el);
-  if(i===1) el.click();
+Cards.render(document.getElementById('strat-grid'), document.getElementById('strat-detail'), strategies, {
+  cardClass: 'strat-card',
+  card: p => '<div class="pi">'+p.icon+'</div><div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>',
+  detail: p => p.d + '<div class="codeblock">'+p.code+'</div>'
+    + '<div class="when">适用场景</div>' + p.when,
+  initial: 1
 });
 
 /* ================= 05 failure modes ================= */
@@ -575,20 +567,11 @@ const failures = [
    d:'上下文里同时存在<b>互相矛盾的版本</b>：旧的文件内容 vs 改过的、早期的计划 vs 推翻后的。模型可能随机押一边，输出在两个版本间摇摆。',
    fix:'处方：信息更新后让旧版本退场（编辑/移除过时的 tool_result），或显式标注"以下为最新版，此前版本作废"。'}
 ];
-const failGrid = document.getElementById('fail-grid');
-const failDetail = document.getElementById('fail-detail');
-failures.forEach((p,i)=>{
-  const el = document.createElement('button');
-  el.className = 'fail-card';
-  el.innerHTML = '<div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>';
-  el.addEventListener('click', ()=>{
-    failGrid.querySelectorAll('.fail-card').forEach(x=>x.classList.remove('active'));
-    el.classList.add('active');
-    failDetail.innerHTML = p.d + '<div class="fix">'+p.fix.split('：')[0]+'</div>'
-      + p.fix.slice(p.fix.indexOf('：')+1);
-  });
-  failGrid.appendChild(el);
-  if(i===0) el.click();
+Cards.render(document.getElementById('fail-grid'), document.getElementById('fail-detail'), failures, {
+  cardClass: 'fail-card',
+  card: p => '<div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>',
+  detail: p => p.d + '<div class="fix">'+p.fix.split('：')[0]+'</div>'
+    + p.fix.slice(p.fix.indexOf('：')+1)
 });
 
 /* ================= 06 quiz ================= */
@@ -614,43 +597,11 @@ const quiz = [
    ans:1,
    exp:'<b>Context Poisoning</b>：错误信息进入上下文后被当成事实反复引用。Clash 是"新旧两个版本同时在场打架"，而中毒是"只有错的那版，且没人发现"。防治靠验证后再记录 + 发现后显式纠正。'}
 ];
-const quizList = document.getElementById('quiz-list');
-const quizScore = document.getElementById('quiz-score');
-let answered = 0, correct = 0;
-quiz.forEach((item,qi)=>{
-  const qd = document.createElement('div');
-  qd.className = 'quiz-q';
-  qd.innerHTML = '<div class="qt"><span class="qn">Q'+(qi+1)+'</span>'+item.q+'</div>';
-  const opts = document.createElement('div');
-  opts.className = 'quiz-opts';
-  const exp = document.createElement('div');
-  exp.className = 'quiz-exp';
-  exp.innerHTML = item.exp;
-  item.opts.forEach((o,oi)=>{
-    const b = document.createElement('button');
-    b.textContent = String.fromCharCode(65+oi) + '. ' + o;
-    b.addEventListener('click', ()=>{
-      if(qd.dataset.done) return;
-      qd.dataset.done = '1';
-      answered++;
-      if(oi === item.ans){ b.classList.add('right'); correct++; }
-      else {
-        b.classList.add('wrong');
-        opts.children[item.ans].classList.add('right');
-      }
-      exp.style.display = 'block';
-      quizScore.innerHTML = '得分 <b>'+correct+' / '+answered+'</b>' +
-        (answered === quiz.length
-          ? (correct === quiz.length ? ' 🎉 全对！预算意识已就位'
-             : correct >= 3 ? ' 👍 不错，回头看看错题的解析'
-             : ' 💪 建议把 02 节的模拟器再跑一遍')
-          : '');
-    });
-    opts.appendChild(b);
-  });
-  qd.appendChild(opts);
-  qd.appendChild(exp);
-  quizList.appendChild(qd);
+Quiz.render(document.getElementById('quiz-list'), document.getElementById('quiz-score'), quiz, {
+  final: (correct, total) =>
+    correct === total ? ' 🎉 全对！预算意识已就位'
+    : correct >= 3 ? ' 👍 不错，回头看看错题的解析'
+    : ' 💪 建议把 02 节的模拟器再跑一遍'
 });
 </script>
 </body>

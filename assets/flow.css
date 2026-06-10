@@ -1,0 +1,18 @@
+/* flow.css — flow.js 渲染器的配套样式，颜色全部跟随页面 CSS 变量 */
+svg.flow{width:100%;height:auto;display:block}
+.fl-node{color:var(--muted)}
+.fl-node rect{fill:var(--bg2,#0f1118);stroke:currentColor;stroke-width:1.5;transition:all .25s}
+.fl-node .fl-label{fill:var(--ink);font-size:14px;text-anchor:middle;font-weight:600}
+.fl-node .fl-sub{fill:var(--faint);font-family:var(--mono);font-size:9px;
+  text-anchor:middle;letter-spacing:.15em}
+.fl-node.lit{color:var(--blue)}
+.fl-node.lit rect{fill:color-mix(in srgb,currentColor 16%,transparent);
+  filter:drop-shadow(0 0 9px color-mix(in srgb,currentColor 45%,transparent))}
+.fl-node.lit .fl-label{fill:currentColor}
+.fl-edge{color:var(--faint)}
+.fl-edge path{fill:none;stroke:currentColor;stroke-width:1.5;transition:all .25s}
+.fl-edge text{fill:var(--muted);font-family:var(--mono);font-size:10.5px;text-anchor:middle}
+.fl-edge.on{color:var(--teal)}
+.fl-edge.on path{stroke-width:2}
+.fl-anim{stroke-dasharray:6 5;animation:fl-dash 1s linear infinite}
+@keyframes fl-dash{to{stroke-dashoffset:-11}}

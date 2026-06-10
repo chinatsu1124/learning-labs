@@ -12,6 +12,10 @@
 <link rel="stylesheet" href="/assets/fonts.css">
 <link rel="stylesheet" href="/assets/base.css">
 <script defer src="/assets/term.js"></script>
+<script defer src="/assets/secnav.js"></script>
+<script src="/assets/quiz.js"></script>
+<script src="/assets/cards.js"></script>
+<script src="/assets/stepper.js"></script>
 <style>
   :root{
     --bg:#0a0b10;
@@ -77,13 +81,13 @@
   @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
 
   /* ---------- sections ---------- */
-  section{padding:56px 0;border-top:1px solid var(--line)}
+  section{padding:72px 0}
   .secnum{font-family:var(--mono);font-size:12px;color:var(--teal);letter-spacing:.2em;
     margin-bottom:10px;display:flex;align-items:center;gap:12px}
-  .secnum::after{content:"";flex:1;height:1px;background:var(--line)}
+  .secnum::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
   h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);
     line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
-  h2 em{font-style:normal;color:var(--teal)}
+  h2 em{font-style:normal;background:linear-gradient(90deg,var(--teal),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
   p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
   p b{color:var(--ink);font-weight:600}
   .hl{color:var(--teal);font-weight:600}
@@ -420,24 +424,20 @@ const reactSteps = [
   {role:'think', who:'轮 6 · 思考（被迫换路）', html:'<div class="note">搜索被禁了。换个思路：先查公司的注册全称。</div><div class="mono">lookup_entity("ACME")\n→ { full_name: "ACME Holdings Inc." }</div>'},
   {role:'fix', who:'轮 7 · 成功', html:'<div class="note"><div class="mono">search("ACME Holdings 2025 revenue")\n→ 营收 ¥42.7 亿（2025 年报）</div><div style="margin-top:8px">卡点不在模型能力——换全称它一击即中。<b>卡点在"它意识不到自己在重复"</b>，这正是护栏要补的盲区。</div></div>'}
 ];
-let reactIdx = 0;
 const reactLog = document.getElementById('react-log');
-const reactNext = document.getElementById('react-next');
-reactNext.addEventListener('click', ()=>{
-  if(reactIdx >= reactSteps.length) return;
-  const s = reactSteps[reactIdx++];
-  const d = document.createElement('div');
-  d.className = 'tmsg ' + s.role;
-  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
-  reactLog.appendChild(d);
-  if(reactIdx >= reactSteps.length){
-    reactNext.disabled = true;
-    reactNext.textContent = '案例结束 ✓';
-  }
-});
-document.getElementById('react-reset').addEventListener('click', ()=>{
-  reactIdx = 0; reactLog.innerHTML = '';
-  reactNext.disabled = false; reactNext.textContent = '下一步 ▸';
+Stepper.bind({
+  next: document.getElementById('react-next'),
+  reset: document.getElementById('react-reset'),
+  total: reactSteps.length,
+  doneText: '案例结束 ✓',
+  onStep(i){
+    const s = reactSteps[i];
+    const d = document.createElement('div');
+    d.className = 'tmsg ' + s.role;
+    d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+    reactLog.appendChild(d);
+  },
+  onReset(){ reactLog.innerHTML = ''; }
 });
 
 /* ================= 02 plan & execute ================= */
@@ -459,8 +459,6 @@ const planScript = [
 ];
 const planBoard = document.getElementById('plan-board');
 const planNote = document.getElementById('plan-note');
-const planNext = document.getElementById('plan-next');
-let planIdx = 0;
 const newPlan = [
   '① 导出 MySQL 用户表为 CSV ✓',
   '② 在 PostgreSQL 建同构表 ✓',
@@ -480,29 +478,28 @@ function renderPlan(items, statuses){
   });
 }
 renderPlan(planInit, []);
-planNext.addEventListener('click', ()=>{
-  if(planIdx >= planScript.length) return;
-  const s = planScript[planIdx++];
-  if(s.replan){
-    renderPlan(newPlan, ['ok','ok','new','new','new']);
-  } else if(s.replanDone){
-    renderPlan(newPlan, ['ok','ok','doing','wait','wait']);
-  } else if(s.final){
-    renderPlan(newPlan, ['ok','ok','ok','ok','ok']);
-  } else if(s.status){
-    renderPlan(planInit, s.status);
+Stepper.bind({
+  next: document.getElementById('plan-next'),
+  reset: document.getElementById('plan-reset'),
+  total: planScript.length,
+  doneText: '迁移完成 ✓',
+  onStep(i){
+    const s = planScript[i];
+    if(s.replan){
+      renderPlan(newPlan, ['ok','ok','new','new','new']);
+    } else if(s.replanDone){
+      renderPlan(newPlan, ['ok','ok','doing','wait','wait']);
+    } else if(s.final){
+      renderPlan(newPlan, ['ok','ok','ok','ok','ok']);
+    } else if(s.status){
+      renderPlan(planInit, s.status);
+    }
+    planNote.innerHTML = s.note;
+  },
+  onReset(){
+    renderPlan(planInit, []);
+    planNote.innerHTML = '点击"推进"开始执行计划。';
   }
-  planNote.innerHTML = s.note;
-  if(planIdx >= planScript.length){
-    planNext.disabled = true;
-    planNext.textContent = '迁移完成 ✓';
-  }
-});
-document.getElementById('plan-reset').addEventListener('click', ()=>{
-  planIdx = 0;
-  renderPlan(planInit, []);
-  planNote.innerHTML = '点击"推进"开始执行计划。';
-  planNext.disabled = false; planNext.textContent = '推进 ▸';
 });
 
 /* ================= 03 reflection ================= */
@@ -518,27 +515,29 @@ const reflSteps = [
   {cls:'v3', who:'修订 ② · 质量 88%（+3）→ 边际收益已趋零', pct:88, btn:null,
    html:'<div class="note">改进微乎其微，但这一轮的 token 花费和第一轮<b>一样贵</b>。工程上的停止条件：① 外部信号全绿；② 连续 N 轮改进低于阈值；③ 预算用完。三者任一命中就收手。</div>'}
 ];
-let reflIdx = 0;
 const reflStage = document.getElementById('refl-stage');
 const reflNext = document.getElementById('refl-next');
 const reflFill = document.getElementById('refl-fill');
 const reflPct = document.getElementById('refl-pct');
-reflNext.addEventListener('click', ()=>{
-  if(reflIdx >= reflSteps.length) return;
-  const s = reflSteps[reflIdx++];
-  const d = document.createElement('div');
-  d.className = 'refl-draft ' + s.cls;
-  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
-  reflStage.appendChild(d);
-  reflFill.style.width = s.pct + '%';
-  reflPct.textContent = s.pct + '%';
-  if(s.btn) reflNext.textContent = s.btn;
-  else { reflNext.disabled = true; reflNext.textContent = '已收敛 ✓'; }
-});
-document.getElementById('refl-reset').addEventListener('click', ()=>{
-  reflIdx = 0; reflStage.innerHTML = '';
-  reflFill.style.width = '0%'; reflPct.textContent = '—';
-  reflNext.disabled = false; reflNext.textContent = '生成初稿 ▸';
+Stepper.bind({
+  next: reflNext,
+  reset: document.getElementById('refl-reset'),
+  total: reflSteps.length,
+  doneText: '已收敛 ✓',
+  onStep(i){
+    const s = reflSteps[i];
+    const d = document.createElement('div');
+    d.className = 'refl-draft ' + s.cls;
+    d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+    reflStage.appendChild(d);
+    reflFill.style.width = s.pct + '%';
+    reflPct.textContent = s.pct + '%';
+    if(s.btn) reflNext.textContent = s.btn;
+  },
+  onReset(){
+    reflStage.innerHTML = '';
+    reflFill.style.width = '0%'; reflPct.textContent = '—';
+  }
 });
 
 /* ================= 04 multi-agent topology ================= */
@@ -564,21 +563,12 @@ const topos = [
    when:'大批量同构任务：扫 90 个文件找漏洞、给 500 条工单分类',
    risk:'分片粒度难拿捏；归并时口径不一致（worker A 标 high，B 同样问题标 medium）要靠统一 rubric 约束'}
 ];
-const topoGrid = document.getElementById('topo-grid');
-const topoDetail = document.getElementById('topo-detail');
-topos.forEach((p,i)=>{
-  const el = document.createElement('button');
-  el.className = 'topo-card';
-  el.innerHTML = '<div class="pi">'+p.icon+'</div><div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>';
-  el.addEventListener('click', ()=>{
-    topoGrid.querySelectorAll('.topo-card').forEach(x=>x.classList.remove('active'));
-    el.classList.add('active');
-    topoDetail.innerHTML = '<div class="ascii">'+p.ascii+'</div>'+p.d
-      +'<div class="when">适用</div>'+p.when
-      +'<div class="risk">翻车方式</div>'+p.risk;
-  });
-  topoGrid.appendChild(el);
-  if(i===0) el.click();
+Cards.render(document.getElementById('topo-grid'), document.getElementById('topo-detail'), topos, {
+  cardClass: 'topo-card',
+  card: p => '<div class="pi">'+p.icon+'</div><div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>',
+  detail: p => '<div class="ascii">'+p.ascii+'</div>'+p.d
+    +'<div class="when">适用</div>'+p.when
+    +'<div class="risk">翻车方式</div>'+p.risk
 });
 
 /* ================= 05 decision tree ================= */
@@ -647,43 +637,11 @@ const quiz = [
    ans:1,
    exp:'子 Agent 间<b>不共享上下文</b>，每次交接都是一次压缩转述——A 探索过程中的细节、踩过的坑，B 默认看不到。这是多 Agent 的固有税，也是"能单 Agent 就别多 Agent"的根本原因。'}
 ];
-const quizList = document.getElementById('quiz-list');
-const quizScore = document.getElementById('quiz-score');
-let answered = 0, correct = 0;
-quiz.forEach((item,qi)=>{
-  const qd = document.createElement('div');
-  qd.className = 'quiz-q';
-  qd.innerHTML = '<div class="qt"><span class="qn">Q'+(qi+1)+'</span>'+item.q+'</div>';
-  const opts = document.createElement('div');
-  opts.className = 'quiz-opts';
-  const exp = document.createElement('div');
-  exp.className = 'quiz-exp';
-  exp.innerHTML = item.exp;
-  item.opts.forEach((o,oi)=>{
-    const b = document.createElement('button');
-    b.textContent = String.fromCharCode(65+oi) + '. ' + o;
-    b.addEventListener('click', ()=>{
-      if(qd.dataset.done) return;
-      qd.dataset.done = '1';
-      answered++;
-      if(oi === item.ans){ b.classList.add('right'); correct++; }
-      else {
-        b.classList.add('wrong');
-        opts.children[item.ans].classList.add('right');
-      }
-      exp.style.display = 'block';
-      quizScore.innerHTML = '得分 <b>'+correct+' / '+answered+'</b>' +
-        (answered === quiz.length
-          ? (correct === quiz.length ? ' 🎉 全对！可以去设计自己的 Agent 架构了'
-             : correct >= 3 ? ' 👍 不错，回头看看错题的解析'
-             : ' 💪 建议把几个模拟器再跑一遍')
-          : '');
-    });
-    opts.appendChild(b);
-  });
-  qd.appendChild(opts);
-  qd.appendChild(exp);
-  quizList.appendChild(qd);
+Quiz.render(document.getElementById('quiz-list'), document.getElementById('quiz-score'), quiz, {
+  final: (correct, total) =>
+    correct === total ? ' 🎉 全对！可以去设计自己的 Agent 架构了'
+    : correct >= 3 ? ' 👍 不错，回头看看错题的解析'
+    : ' 💪 建议把几个模拟器再跑一遍'
 });
 </script>
 </body>
