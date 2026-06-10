@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@500;600&display=swap" rel="stylesheet">
+<script defer src="/assets/term.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
 <style>
@@ -274,7 +275,7 @@ footer b{color:var(--plain-dim);font-weight:400}
 </div></div>
 
 <header class="hero"><div class="wrap">
-  <div class="eyebrow">明文 → 密文 → 明文</div>
+  <div class="eyebrow"><span class="term" data-name="Plaintext" data-tip="还没加密、谁都能直接读懂的原始内容，就像一张没装进信封的明信片。">明文</span> → <span class="term" data-name="Ciphertext" data-tip="明文被加密后变成的乱码。没有正确钥匙的人即使截获它，也读不出任何内容。">密文</span> → 明文</div>
   <h1><span class="han">把秘密</span><em>锁起来</em><br>的几种方式</h1>
   <p class="lead">加密的全部任务，是让一段信息只有持有正确「钥匙」的人才能读懂。
   下面这台机器正在实时运转——改动文字或拨动转盘，看明文如何被搅乱成密文。</p>
@@ -319,15 +320,15 @@ footer b{color:var(--plain-dim);font-weight:400}
       <div class="num">01 / 可逆 · 同一把钥匙</div>
       <h3>Symmetric</h3>
       <div class="zh">对称加密</div>
-      <p>加密和解密用<strong style="color:var(--plain)">同一把密钥</strong>。速度快，适合加密大量数据。难点在于：怎么安全地把这把钥匙交给对方？</p>
+      <p>加密和解密用<strong style="color:var(--plain)">同一把<span class="term" data-name="Key" data-tip="加密和解密时用的『钥匙』，本质是一串保密的数字或字符。锁门和开门都靠它，一旦泄露秘密就保不住了。">密钥</span></strong>。速度快，适合加密大量数据。难点在于：怎么安全地把这把钥匙交给对方？</p>
       <div class="meta">代表：<b>AES · ChaCha20 · DES</b><br>钥匙：1 把，双方共享<br>用途：磁盘 / 通信内容加密</div>
     </div>
     <div class="card asym">
       <div class="num">02 / 可逆 · 一对钥匙</div>
       <h3>Asymmetric</h3>
       <div class="zh">非对称 / 公钥加密</div>
-      <p>每人有<strong style="color:var(--plain)">公钥 + 私钥</strong>一对。公钥随便发，谁都能用它加密；只有对应私钥能解开。慢，但解决了「钥匙怎么送」的难题。</p>
-      <div class="meta">代表：<b>RSA · ECC · Diffie-Hellman</b><br>钥匙：1 对，公开 + 私藏<br>用途：密钥交换 / 数字签名</div>
+      <p>每人有<strong style="color:var(--plain)"><span class="term" data-name="Public Key" data-tip="钥匙对中可以公开给所有人的那一把，好比挂在门口、谁都能往里投信的邮箱口。别人用它加密，只有你能解开。">公钥</span> + <span class="term" data-name="Private Key" data-tip="钥匙对中必须自己藏好的那一把，相当于打开邮箱取信的钥匙。只有它能解开用对应公钥加密的内容。">私钥</span></strong>一对。公钥随便发，谁都能用它加密；只有对应私钥能解开。慢，但解决了「钥匙怎么送」的难题。</p>
+      <div class="meta">代表：<b>RSA · ECC · Diffie-Hellman</b><br>钥匙：1 对，公开 + 私藏<br>用途：密钥交换 / <span class="term" data-name="Digital Signature" data-tip="用私钥给信息盖的『电子印章』。任何人都能用你的公钥验证这条信息确实出自你、且没被篡改过。">数字签名</span></div>
     </div>
     <div class="card hash">
       <div class="num">03 / 不可逆 · 没有钥匙</div>
@@ -337,7 +338,7 @@ footer b{color:var(--plain-dim);font-weight:400}
       <div class="meta">代表：<b>SHA-256 · SHA-3 · MD5</b><br>钥匙：无<br>用途：校验 / 密码存储 / 签名</div>
     </div>
   </div>
-  <p class="note">易混点：哈希<b style="color:var(--danger)">不是加密</b>，因为它不可逆、也没打算让你解回去；Base64 <b style="color:var(--danger)">更不是加密</b>，那只是一种编码，任何人都能直接还原。本页把哈希一并讲，是因为它在密码学里几乎无处不在。</p>
+  <p class="note">易混点：哈希<b style="color:var(--danger)">不是加密</b>，因为它不可逆、也没打算让你解回去；<span class="term" data-name="Base64" data-tip="一种把任意数据写成普通字母和数字的编码方式，类似把汉字改写成拼音。它不需要钥匙，任何人都能直接还原，所以毫无保密作用。">Base64</span> <b style="color:var(--danger)">更不是加密</b>，那只是一种编码，任何人都能直接还原。本页把哈希一并讲，是因为它在密码学里几乎无处不在。</p>
 </div></section>
 
 <!-- ============ 凯撒 + 维吉尼亚 ============ -->
@@ -346,7 +347,7 @@ footer b{color:var(--plain-dim);font-weight:400}
     <span class="badge sym">古典 · 替换密码</span>
     <h2 style="margin:0">Caesar &amp; Vigenère</h2>
   </div>
-  <p class="prose">从最古老的密码开始，因为它们的「机制看得见」。<strong>凯撒密码</strong>把每个字母在字母表里向后挪固定的几位——位移量就是密钥。它的死穴是：只有 25 种可能，挨个试一遍就破了（暴力破解），而且<strong>不改变字母频率</strong>，英文里最常见的 e 加密后仍然最常见，统计一下就露馅。</p>
+  <p class="prose">从最古老的密码开始，因为它们的「机制看得见」。<strong>凯撒密码</strong>把每个字母在字母表里向后挪固定的几位——位移量就是密钥。它的死穴是：只有 25 种可能，挨个试一遍就破了（<span class="term" data-name="Brute Force" data-tip="不动脑子地把所有可能的密钥逐个试过去，就像开行李箱密码锁时从 000 拨到 999。可能性太少的密码都会被这样攻破。">暴力破解</span>），而且<strong>不改变字母频率</strong>，英文里最常见的 e 加密后仍然最常见，统计一下就露馅。</p>
 
   <div class="lab">
     <div class="lab-bar">caesar · 单字母移位</div>
@@ -362,7 +363,7 @@ footer b{color:var(--plain-dim);font-weight:400}
     </div>
   </div>
 
-  <p class="prose" style="margin-top:34px"><strong>维吉尼亚密码</strong>是凯撒的升级：不再用一个固定位移，而是用一个<strong>密钥词</strong>循环套在明文上，每个字母按密钥对应字母的位置移动。这样同一个明文字母在不同位置会变成不同密文，频率分析失效了好几百年——直到有人发现密钥长度可以被推断出来。</p>
+  <p class="prose" style="margin-top:34px"><strong>维吉尼亚密码</strong>是凯撒的升级：不再用一个固定位移，而是用一个<strong>密钥词</strong>循环套在明文上，每个字母按密钥对应字母的位置移动。这样同一个明文字母在不同位置会变成不同密文，<span class="term" data-name="Frequency Analysis" data-tip="利用语言里字母出现频率的固定规律来破解密码。比如英文中 e 最常见，那密文里出现最多的那个符号大概率就是 e。">频率分析</span>失效了好几百年——直到有人发现密钥长度可以被推断出来。</p>
 
   <div class="lab">
     <div class="lab-bar">vigenère · 多表替换</div>
@@ -387,7 +388,7 @@ footer b{color:var(--plain-dim);font-weight:400}
     <h2 style="margin:0">AES</h2>
   </div>
   <p class="prose">高级加密标准（Advanced Encryption Standard）是今天对称加密的事实标准，HTTPS、磁盘加密、微信消息几乎都在用它。它把数据切成 <strong>128 位的块</strong>，在一个 4×4 字节矩阵上反复做<strong>字节替换、行移位、列混淆、轮密钥加</strong>四步，重复 10/12/14 轮（对应 128/192/256 位密钥）。每一轮都让数据更彻底地「扩散和混淆」，最终任何人没有密钥都无从下手。</p>
-  <p class="prose" style="margin-top:14px">下面这台是<strong>真加密</strong>——调用浏览器原生的 Web Crypto，用 <code>AES-GCM</code> 模式。你的口令会经 <code>PBKDF2</code> 派生成 256 位密钥，每次加密还会生成随机 <code>IV</code>，所以同样的明文每次密文都不同（这是好事）。</p>
+  <p class="prose" style="margin-top:14px">下面这台是<strong>真加密</strong>——调用浏览器原生的 Web Crypto，用 <code>AES-GCM</code> 模式。你的口令会经 <span class="term" data-name="PBKDF2" data-tip="一种把人脑能记住的口令『熬炼』成正规密钥的方法。它故意重复计算十几万次，让坏人逐个试口令时慢到难以承受。"><code>PBKDF2</code></span> 派生成 256 位密钥，每次加密还会生成随机 <span class="term" data-name="Initialization Vector · 初始向量" data-tip="每次加密随机生成的一段『起始佐料』。有了它，同样的内容每次加密出的密文都不一样，旁人就看不出任何规律。"><code>IV</code></span>，所以同样的明文每次密文都不同（这是好事）。</p>
 
   <div class="lab">
     <div class="lab-bar">aes-gcm · 浏览器原生真实加密</div>
@@ -415,7 +416,7 @@ footer b{color:var(--plain-dim);font-weight:400}
     <span class="badge asym">非对称 · 公钥</span>
     <h2 style="margin:0">RSA</h2>
   </div>
-  <p class="prose">RSA 的安全建立在一个朴素事实上：<strong>两个大素数相乘很容易，但把乘积分解回去极难</strong>。它造出一对钥匙——公钥 <code>(n, e)</code> 公开给所有人加密，私钥 <code>(n, d)</code> 自己留着解密。下面用<strong>很小的素数</strong>把整个数学骨架拆给你看（真实 RSA 的 n 有 600 多位数字，这里只是为了看清原理）。</p>
+  <p class="prose">RSA 的安全建立在一个朴素事实上：<strong>两个大<span class="term" data-name="Prime Number" data-tip="只能被 1 和它自己整除的数，比如 2、3、5、7、61。它们像不可再拆的积木，是 RSA 这类算法的数学地基。">素数</span>相乘很容易，但把乘积分解回去极难</strong>。它造出一对钥匙——公钥 <code>(n, e)</code> 公开给所有人加密，私钥 <code>(n, d)</code> 自己留着解密。下面用<strong>很小的素数</strong>把整个数学骨架拆给你看（真实 RSA 的 n 有 600 多位数字，这里只是为了看清原理）。</p>
 
   <div class="lab">
     <div class="lab-bar">rsa · 小素数原理演示</div>
@@ -434,7 +435,7 @@ footer b{color:var(--plain-dim);font-weight:400}
   </div>
   <div class="warn">
     <h4>⚠ 为什么不能自己写加密算法</h4>
-    <p>上面的演示省略了填充（padding）、随机化、防侧信道等一切真实工程要素。自实现的密码学几乎必然存在可被利用的漏洞。<strong>原则：理解原理，但永远调用经过审计的成熟库</strong>（如 libsodium、浏览器 Web Crypto、OpenSSL）。</p>
+    <p>上面的演示省略了填充（padding）、随机化、防<span class="term" data-name="Side-Channel Attack" data-tip="不正面攻击算法，而是通过程序的耗时、耗电、电磁辐射等『旁路线索』偷出密钥，就像听保险柜转轮的咔哒声来开锁。">侧信道</span>等一切真实工程要素。自实现的密码学几乎必然存在可被利用的漏洞。<strong>原则：理解原理，但永远调用经过审计的成熟库</strong>（如 libsodium、浏览器 Web Crypto、OpenSSL）。</p>
   </div>
 </div></section>
 
@@ -466,7 +467,7 @@ footer b{color:var(--plain-dim);font-weight:400}
       </div>
     </div>
   </div>
-  <p class="note">应用：网站不该存你的明文密码，而是存密码的哈希（还要加盐 + 慢哈希如 bcrypt/Argon2）。下载文件后比对 SHA-256，能确认它没被篡改或损坏。</p>
+  <p class="note">应用：网站不该存你的明文密码，而是存密码的哈希（还要<span class="term" data-name="Salt" data-tip="给每个密码拌进一段随机字符再做哈希，像做菜各加各的盐。这样即使两人密码相同，存下的指纹也不同，坏人无法用提前算好的对照表批量破解。">加盐</span> + 慢哈希如 bcrypt/Argon2）。下载文件后比对 SHA-256，能确认它没被篡改或损坏。</p>
 </div></section>
 
 <!-- ============ Diffie-Hellman ============ -->
@@ -507,7 +508,7 @@ footer b{color:var(--plain-dim);font-weight:400}
       <div class="steps" id="dhSteps" style="margin-top:18px"></div>
     </div>
   </div>
-  <p class="note">真实 DH 用大素数下的模幂运算（离散对数难题）替代「混颜色」。算出共享密钥后，双方再用它做 AES 这种快速对称加密——这正是 HTTPS 握手每天在做的事。</p>
+  <p class="note">真实 DH 用大素数下的<span class="term" data-name="Modular Exponentiation" data-tip="先算乘方、再取除法余数的运算，好比时钟转了很多圈后只看指针最终停在几点。正着算很快，想反推转了多少圈却极难。">模幂运算</span>（离散对数难题）替代「混颜色」。算出共享密钥后，双方再用它做 AES 这种快速对称加密——这正是 HTTPS 握手每天在做的事。</p>
 </div></section>
 
 <!-- ============ 对比表 ============ -->
