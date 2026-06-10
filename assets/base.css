@@ -1,0 +1,5 @@
+/* base.css — 所有 lab 共用的基础样式。
+ * 只放对所有页面都安全的最小子集；各 lab 的配色、排版、完整 reset 仍写在自己页面里。
+ * 新 lab 起步：引入 /assets/base.css + /assets/fonts.css + /assets/term.js。 */
+*{box-sizing:border-box}
+body{margin:0;-webkit-font-smoothing:antialiased}

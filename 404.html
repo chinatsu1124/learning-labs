@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>404 · learning labs</title>
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
+<style>
+  :root{
+    --bg:#06070b;
+    --bg-2:#0c0e16;
+    --panel:#10131d;
+    --line:#1d2230;
+    --line-2:#262c3d;
+    --ink:#e6e8ee;
+    --muted:#7b8298;
+    --faint:#4a5066;
+    --accent:#7cf0c2;
+    --accent-2:#ffb648;
+  }
+  html,body{background:var(--bg);color:var(--ink);font-family:'JetBrains Mono',ui-monospace,monospace;font-size:14px;line-height:1.6}
+  body{
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    background:
+      radial-gradient(900px 600px at 85% -10%, rgba(124,240,194,0.06), transparent 60%),
+      radial-gradient(700px 500px at -10% 110%, rgba(255,182,72,0.05), transparent 60%),
+      var(--bg);
+    padding:24px;
+  }
+  .box{max-width:560px;width:100%}
+  .kicker{color:var(--accent-2);font-size:12px;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:18px}
+  h1{font-family:'Inter',sans-serif;font-size:clamp(40px,9vw,72px);font-weight:600;letter-spacing:-0.02em;line-height:1.05}
+  h1 .slash{color:var(--faint);font-weight:400}
+  .lede{margin-top:18px;color:var(--muted);line-height:1.7}
+  .lede code{color:var(--ink);background:var(--bg-2);padding:1px 6px;border-radius:3px;border:1px solid var(--line)}
+  .actions{margin-top:32px;display:flex;gap:12px;flex-wrap:wrap}
+  .actions a{
+    color:var(--accent);text-decoration:none;font-size:13px;
+    border:1px solid var(--line-2);padding:10px 18px;background:var(--panel);
+    transition:border-color .18s ease, background .18s ease;
+  }
+  .actions a:hover{border-color:var(--accent);background:#11141f}
+  .cursor{display:inline-block;width:10px;height:18px;background:var(--accent-2);vertical-align:-2px;margin-left:6px;animation:blink 1.1s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="kicker">// error 404</div>
+    <h1><span class="slash">~/</span>not-found<span class="cursor"></span></h1>
+    <p class="lede">这个路径下没有 lab。可能是地址敲错了，也可能这个实验还躺在草稿里。</p>
+    <div class="actions">
+      <a href="/">← 回到 labs 首页</a>
+    </div>
+  </div>
+</body>
+</html>

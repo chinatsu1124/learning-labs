@@ -3,10 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="一些用来理解概念的交互式小页面：加密算法、字节与编码、计算机网络、产品方法论、AI Agent。">
+<meta property="og:title" content="learning labs">
+<meta property="og:description" content="一些用来理解概念的交互式小页面：加密算法、字节与编码、计算机网络、产品方法论、AI Agent。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title>learning labs · index</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
 <style>
   :root{
     --bg:#06070b;
@@ -132,7 +136,7 @@
 
     <div class="sec-head">
       <h2>&gt; labs</h2>
-      <span class="count" id="lab-count">05 active · 01 pending</span>
+      <span class="count" id="lab-count"></span>
     </div>
 
     <div class="grid">
@@ -220,5 +224,15 @@
     <span>© chinatsu1124 · static site on cloudflare pages</span>
     <span><a href="https://github.com/chinatsu1124/learning-labs">source on github</a></span>
   </footer>
+  <script>
+    /* lab 计数从 .grid 里自动统计，加新 card 不用手动改数字 */
+    (function(){
+      var pad = function(n){ return String(n).padStart(2, '0'); };
+      var active = document.querySelectorAll('.grid a.card').length;
+      var pending = document.querySelectorAll('.grid .card.placeholder').length;
+      document.getElementById('lab-count').textContent =
+        pad(active) + ' active · ' + pad(pending) + ' pending';
+    })();
+  </script>
 </body>
 </html>

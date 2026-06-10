@@ -49,9 +49,13 @@
     t.innerHTML = (name ? '<div class="tt-name"></div>' : '');
     if(name) t.firstChild.textContent = name;
     t.appendChild(document.createTextNode(el.getAttribute('data-tip') || ''));
-    if(current && current !== el) current.classList.remove('tip-on');
+    if(current && current !== el){
+      current.classList.remove('tip-on');
+      current.removeAttribute('aria-describedby');
+    }
     current = el; pinned = !!pin;
     el.classList.add('tip-on');
+    el.setAttribute('aria-describedby','term-tip');
     t.classList.add('show');
     place(el);
   }
@@ -59,7 +63,10 @@
   function hide(){
     if(!tip) return;
     tip.classList.remove('show');
-    if(current) current.classList.remove('tip-on');
+    if(current){
+      current.classList.remove('tip-on');
+      current.removeAttribute('aria-describedby');
+    }
     current = null; pinned = false;
   }
 
