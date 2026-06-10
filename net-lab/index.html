@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网络实验室 · NET LAB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b10;
+    --bg2:#0f1118;
+    --panel:#13151f;
+    --panel-hi:#1a1d29;
+    --line:#262a38;
+    --ink:#dfe3ec;
+    --muted:#8a90a3;
+    --faint:#565c70;
+    --blue:#8aa9ff;
+    --blue-dim:#243054;
+    --teal:#4fe3c1;
+    --teal-dim:#1f4d44;
+    --amber:#ffb648;
+    --amber-dim:#5a4422;
+    --rose:#ff7a85;
+    --display:'Syne',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:48px 48px;
+    background-position:center top;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(138,169,255,.08),transparent 60%),
+               radial-gradient(ellipse 70% 50% at 90% 20%,rgba(79,227,193,.05),transparent 55%),
+               linear-gradient(180deg,rgba(10,11,16,.4),var(--bg) 90%);
+  }
+  .wrap{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:0 24px}
+
+  /* ---------- header ---------- */
+  header{padding:90px 0 40px;text-align:center}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:var(--blue);
+    text-transform:uppercase;margin-bottom:24px;opacity:0;animation:rise .7s .1s forwards}
+  h1.hero{font-family:var(--display);font-weight:800;font-size:clamp(72px,18vw,170px);
+    line-height:.9;letter-spacing:-.03em;margin-bottom:8px}
+  h1.hero .b{display:inline-block;opacity:0;transform:translateY(40px);
+    animation:rise .8s forwards}
+  h1.hero .b:nth-child(1){animation-delay:.15s;color:var(--ink)}
+  h1.hero .b:nth-child(2){animation-delay:.25s;color:var(--blue)}
+  h1.hero .b:nth-child(3){animation-delay:.35s;color:var(--teal)}
+  .sub{font-family:var(--mono);color:var(--muted);font-size:15px;margin-top:18px;
+    opacity:0;animation:rise .7s .6s forwards}
+  .sub b{color:var(--ink);font-weight:500}
+  .scrollcue{margin-top:54px;font-family:var(--mono);font-size:11px;letter-spacing:.3em;
+    color:var(--faint);opacity:0;animation:rise .7s .9s forwards;text-transform:uppercase}
+  .scrollcue span{display:block;font-size:18px;margin-top:6px;animation:bob 1.8s ease-in-out infinite}
+
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+  /* ---------- sections ---------- */
+  section{padding:56px 0;border-top:1px solid var(--line)}
+  .secnum{font-family:var(--mono);font-size:12px;color:var(--blue);letter-spacing:.2em;
+    margin-bottom:10px;display:flex;align-items:center;gap:12px}
+  .secnum::after{content:"";flex:1;height:1px;background:var(--line)}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);
+    line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
+  h2 em{font-style:normal;color:var(--blue)}
+  p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
+  p b{color:var(--ink);font-weight:600}
+  .hl{color:var(--teal);font-weight:600}
+  .hl-b{color:var(--blue);font-weight:600}
+  .hl-a{color:var(--amber);font-weight:600}
+  code{font-family:var(--mono);background:var(--panel-hi);color:var(--teal);
+    padding:2px 7px;border-radius:5px;font-size:.88em;border:1px solid var(--line)}
+
+  /* ---------- panel ---------- */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:28px;margin:26px 0;position:relative;overflow:hidden}
+  .panel::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--blue),transparent);opacity:.5}
+  .panel-label{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--faint);
+    text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+  .panel-label::before{content:"●";color:var(--teal);font-size:8px}
+
+  .btn{font-family:var(--mono);font-size:13px;background:var(--panel-hi);color:var(--ink);
+    border:1px solid var(--line);border-radius:8px;padding:9px 16px;cursor:pointer;transition:all .18s}
+  .btn:hover{border-color:var(--blue);color:var(--blue)}
+  .btn:disabled{opacity:.35;cursor:default}
+  .btn:disabled:hover{border-color:var(--line);color:var(--ink)}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .toggle-grp{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:18px}
+  .toggle-grp button{font-family:var(--mono);font-size:13px;background:transparent;color:var(--muted);
+    border:0;padding:9px 18px;cursor:pointer;transition:all .18s}
+  .toggle-grp button.active{background:var(--blue-dim);color:var(--blue)}
+
+  /* ---------- callout ---------- */
+  .callout{border-left:3px solid var(--blue);background:var(--panel);border-radius:0 12px 12px 0;
+    padding:16px 20px;margin:22px 0}
+  .callout .t{font-family:var(--mono);font-size:12px;letter-spacing:.15em;color:var(--blue);
+    text-transform:uppercase;margin-bottom:6px}
+  .callout p{margin:0;font-size:15px;color:var(--ink)}
+  .callout.teal{border-color:var(--teal)}
+  .callout.teal .t{color:var(--teal)}
+  .callout.amber{border-color:var(--amber)}
+  .callout.amber .t{color:var(--amber)}
+
+  /* ---------- layer stack ---------- */
+  .layer-stack{display:flex;flex-direction:column;gap:8px}
+  .layer-row{display:grid;grid-template-columns:42px 1fr auto;gap:14px;align-items:center;
+    background:var(--bg2);border:1.5px solid var(--line);border-radius:10px;padding:12px 16px;
+    cursor:pointer;transition:all .18s;text-align:left;width:100%;color:inherit;font:inherit}
+  .layer-row:hover{border-color:var(--muted)}
+  .layer-row.active{border-color:var(--blue);background:var(--blue-dim);box-shadow:0 0 22px rgba(138,169,255,.18)}
+  .layer-row .ln{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--faint);text-align:center}
+  .layer-row.active .ln{color:var(--blue)}
+  .layer-row .lname{font-weight:600;font-size:15px}
+  .layer-row .lname small{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--faint);letter-spacing:.08em}
+  .layer-row .lpdu{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--line);
+    border-radius:5px;padding:2px 8px;white-space:nowrap}
+  .layer-detail{margin-top:18px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;
+    padding:18px 20px;font-size:14.5px;color:var(--muted);line-height:1.9}
+  .layer-detail b{color:var(--ink)}
+  .layer-detail .dt{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--blue);text-transform:uppercase;margin-bottom:6px}
+  .layer-detail .chips{margin-top:8px}
+  .pchip{display:inline-block;font-family:var(--mono);font-size:12px;background:var(--teal-dim);color:var(--teal);
+    border-radius:5px;padding:2px 8px;margin:2px 5px 2px 0}
+
+  /* ---------- encapsulation ---------- */
+  .encap-stage{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:stretch;
+    min-height:72px;padding:18px 6px;background:var(--bg2);border:1px solid var(--line);border-radius:12px}
+  .encap-chip{font-family:var(--mono);font-size:12.5px;font-weight:500;border-radius:8px;padding:14px 12px;
+    border:1.5px solid;display:flex;flex-direction:column;justify-content:center;text-align:center;gap:2px;
+    animation:pop .35s cubic-bezier(.34,1.4,.5,1)}
+  .encap-chip small{font-size:10px;opacity:.75;font-weight:400}
+  .encap-chip.data{border-color:var(--ink);color:var(--ink);background:var(--panel-hi)}
+  .encap-chip.tcp{border-color:var(--amber);color:var(--amber);background:var(--amber-dim)}
+  .encap-chip.ip{border-color:var(--teal);color:var(--teal);background:var(--teal-dim)}
+  .encap-chip.eth{border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+  @keyframes pop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+  .encap-name{font-family:var(--mono);text-align:center;margin-top:14px;font-size:14px;color:var(--muted)}
+  .encap-name b{color:var(--blue);font-size:17px}
+  .encap-desc{margin-top:12px;font-size:14.5px;color:var(--muted);background:var(--bg2);
+    border:1px solid var(--line);border-radius:10px;padding:14px 16px;line-height:1.8}
+  .encap-desc b{color:var(--ink)}
+  .encap-bits{font-family:var(--mono);font-size:12px;color:var(--blue);text-align:center;margin-top:10px;
+    letter-spacing:2px;word-break:break-all;animation:pop .4s}
+
+  /* ---------- subnet lab ---------- */
+  .ip-inputs{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+  .ip-inputs input[type=text]{font-family:var(--mono);font-size:18px;background:var(--bg2);color:var(--ink);
+    border:1px solid var(--line);border-radius:10px;padding:12px 16px;width:230px;outline:none;transition:border-color .18s}
+  .ip-inputs input[type=text]:focus{border-color:var(--blue)}
+  .ip-inputs input[type=text].bad{border-color:var(--rose);color:var(--rose)}
+  .prefix-box{flex:1;min-width:220px}
+  .prefix-box .pl{font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:6px}
+  .prefix-box .pl b{color:var(--blue);font-size:16px}
+  input[type=range]{width:100%;accent-color:var(--blue)}
+  .bitgrid{display:flex;flex-direction:column;gap:8px;margin:8px 0 4px}
+  .octet{display:flex;gap:4px;align-items:center}
+  .octet .oct-label{font-family:var(--mono);font-size:11px;color:var(--faint);width:34px;text-align:right;margin-right:6px}
+  .ipbit{flex:1;aspect-ratio:1;max-width:40px;border-radius:7px;border:1.5px solid var(--line);
+    font-family:var(--mono);font-weight:700;font-size:clamp(11px,2.6vw,15px);
+    display:flex;align-items:center;justify-content:center;background:var(--bg2);color:var(--faint);transition:all .15s}
+  .ipbit.net{border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+  .ipbit.host{border-color:var(--amber);color:var(--amber);background:var(--amber-dim)}
+  .bit-legend{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin:10px 0 4px;display:flex;gap:18px;flex-wrap:wrap}
+  .bit-legend .lg{display:flex;align-items:center;gap:6px}
+  .bit-legend .sq{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:18px}
+  .ro{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .ro .lab{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--faint);
+    text-transform:uppercase;margin-bottom:6px}
+  .ro .val{font-family:var(--mono);font-weight:700;font-size:clamp(16px,3.6vw,21px);color:var(--ink);word-break:break-all}
+  .ro.acc .val{color:var(--blue)}
+  .ro.acc2 .val{color:var(--teal)}
+  .ro.acc3 .val{color:var(--amber)}
+
+  /* ---------- tcp handshake ---------- */
+  .hs-heads{display:flex;justify-content:space-between;font-family:var(--mono);margin-bottom:6px}
+  .hs-heads .h{text-align:center;width:130px}
+  .hs-heads .h .who{font-size:14px;font-weight:700;color:var(--ink)}
+  .hs-heads .h .st{font-size:11px;margin-top:4px;color:var(--faint);border:1px solid var(--line);
+    border-radius:5px;padding:2px 6px;display:inline-block;transition:all .25s}
+  .hs-heads .h .st.live{color:var(--teal);border-color:var(--teal)}
+  .hs-track{position:relative;min-height:200px;padding:6px 56px;
+    border-left:2px solid var(--line);border-right:2px solid var(--line);margin:0 64px}
+  .hs-msg{position:relative;margin:38px 0;opacity:0;animation:rise .5s forwards}
+  .hs-lbl{position:absolute;top:-24px;left:50%;transform:translateX(-50%);
+    font-family:var(--mono);font-size:12.5px;white-space:nowrap;color:var(--ink)}
+  .hs-line{height:2px;position:relative}
+  .hs-msg.to-server .hs-line{background:linear-gradient(90deg,transparent,var(--blue))}
+  .hs-msg.to-server .hs-line::after{content:"";position:absolute;right:-1px;top:-5px;
+    border:6px solid transparent;border-left:9px solid var(--blue)}
+  .hs-msg.to-server .hs-lbl{color:var(--blue)}
+  .hs-msg.to-client .hs-line{background:linear-gradient(90deg,var(--teal),transparent)}
+  .hs-msg.to-client .hs-line::after{content:"";position:absolute;left:-1px;top:-5px;
+    border:6px solid transparent;border-right:9px solid var(--teal)}
+  .hs-msg.to-client .hs-lbl{color:var(--teal)}
+  .hs-desc{margin-top:16px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;
+    padding:14px 16px;font-size:14.5px;color:var(--muted);line-height:1.8;min-height:58px}
+  .hs-desc b{color:var(--ink)}
+
+  /* ---------- dns ---------- */
+  .dns-nodes{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:18px}
+  .dns-node{font-family:var(--mono);font-size:12px;border:1.5px solid var(--line);border-radius:8px;
+    padding:8px 12px;color:var(--muted);background:var(--bg2);transition:all .22s;text-align:center}
+  .dns-node.lit{border-color:var(--blue);color:var(--blue);background:var(--blue-dim);
+    box-shadow:0 0 18px rgba(138,169,255,.25)}
+  .dns-node.done{border-color:var(--teal-dim);color:var(--teal);opacity:.8}
+  .dns-desc{background:var(--bg2);border:1px solid var(--line);border-radius:10px;
+    padding:14px 16px;font-size:14.5px;color:var(--muted);line-height:1.8;min-height:80px}
+  .dns-desc b{color:var(--ink)}
+  .dns-desc .qa{font-family:var(--mono);font-size:12.5px;display:block;margin-top:6px}
+  .dns-desc .qa .q{color:var(--amber)}
+  .dns-desc .qa .a{color:var(--teal)}
+  .dns-prog{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:10px;letter-spacing:.1em}
+
+  /* ---------- http ---------- */
+  .http-pane{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px}
+  .http-box{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto}
+  .http-box h4{font-family:var(--mono);font-size:12px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:12px}
+  .http-box.req h4{color:var(--blue)}
+  .http-box.res h4{color:var(--teal)}
+  .http-box pre{font-family:var(--mono);font-size:12.5px;line-height:1.9;color:var(--muted)}
+  .http-box .m{color:var(--blue);font-weight:700}
+  .http-box .u{color:var(--ink)}
+  .http-box .h{color:var(--amber)}
+  .http-box .v{color:var(--muted)}
+  .http-box .s{color:var(--teal);font-weight:700}
+  .http-box .bd{color:var(--ink)}
+  .status-chips{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 12px}
+  .schip{font-family:var(--mono);font-size:13px;font-weight:700;border:1.5px solid var(--line);
+    background:var(--bg2);color:var(--muted);border-radius:8px;padding:7px 13px;cursor:pointer;transition:all .18s}
+  .schip:hover{border-color:var(--muted)}
+  .schip.on{border-color:var(--teal);color:var(--teal);background:var(--teal-dim)}
+  .schip.on.warn{border-color:var(--amber);color:var(--amber);background:var(--amber-dim)}
+  .schip.on.err{border-color:var(--rose);color:var(--rose);background:rgba(255,122,133,.12)}
+  .status-desc{background:var(--bg2);border:1px solid var(--line);border-radius:10px;
+    padding:14px 16px;font-size:14.5px;color:var(--muted);line-height:1.8;min-height:58px}
+  .status-desc b{color:var(--ink)}
+
+  .ptable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13.5px;margin-top:6px}
+  .ptable th,.ptable td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line)}
+  .ptable th{color:var(--faint);font-weight:500;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+  .ptable td:first-child{color:var(--blue);font-weight:700}
+  .ptable td .big{color:var(--ink);font-weight:700}
+  .ptable tr:last-child td{border-bottom:0}
+
+  /* ---------- journey ---------- */
+  .journey{display:flex;flex-direction:column;gap:0;margin-top:8px}
+  .jstep{display:grid;grid-template-columns:46px 1fr;gap:16px;position:relative;padding-bottom:26px}
+  .jstep::before{content:"";position:absolute;left:22px;top:36px;bottom:0;width:2px;background:var(--line)}
+  .jstep:last-child::before{display:none}
+  .jstep .jn{width:46px;height:36px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg2);
+    font-family:var(--mono);font-weight:700;font-size:14px;color:var(--faint);
+    display:flex;align-items:center;justify-content:center;transition:all .25s;position:relative;z-index:1}
+  .jstep.lit .jn{border-color:var(--blue);color:var(--blue);background:var(--blue-dim);box-shadow:0 0 16px rgba(138,169,255,.3)}
+  .jstep .jt{font-size:15px;color:var(--ink);font-weight:600;line-height:36px;transition:color .25s}
+  .jstep .jx{grid-column:2;font-size:14px;color:var(--muted);margin-top:-8px;line-height:1.7}
+  .jstep .jx code{font-size:.85em}
+  .jstep.dim .jt{color:var(--faint)}
+  .jstep.dim .jx{opacity:.45}
+
+  /* ---------- footer ---------- */
+  footer{padding:60px 0 80px;text-align:center;border-top:1px solid var(--line)}
+  .recap{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;
+    text-align:left;margin-bottom:40px}
+  .recap div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .recap .n{font-family:var(--mono);color:var(--blue);font-size:12px;margin-bottom:6px}
+  .recap .x{font-size:14px;color:var(--muted);line-height:1.5}
+  .recap .x b{color:var(--ink)}
+  footer .sig{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.2em}
+
+  @media(max-width:640px){
+    .http-pane{grid-template-columns:1fr}
+    .hs-track{margin:0 8px;padding:6px 18px}
+    .hs-heads .h{width:90px}
+    header{padding:60px 0 30px}
+    .ipbit{border-radius:5px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="kicker">交互式计算机网络入门</div>
+    <h1 class="hero"><span class="b">N</span><span class="b">E</span><span class="b">T</span></h1>
+    <div class="sub">计算机网络 · 数据如何跨越世界<br><b>从一根网线到一次完整的网页加载</b></div>
+    <div class="scrollcue">向下滚动开始<span>↓</span></div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 00. WHY -->
+  <section>
+    <div class="secnum">00 / 起点</div>
+    <h2>两台电脑，怎么<em>说上话</em>？</h2>
+    <p>把两台电脑用一根线连起来，它们并不会自动开始交流——就像把两个语言不通的人关在一个房间里。要通信，双方必须事先约定好<b>一套共同的规则</b>：先说什么、后说什么、出错了怎么办、怎么确认对方收到了。</p>
+    <p>这套约定好的规则，就叫 <b class="hl-b">协议（protocol）</b>。你听过的 HTTP、TCP、IP、DNS、Wi-Fi……全都是协议。计算机网络的本质，就是<b>一大堆协议互相配合</b>，让数据可靠地从一台机器搬到另一台机器。</p>
+    <div class="callout">
+      <div class="t">一个直觉类比</div>
+      <p>网络通信很像<b>寄快递</b>：你写好信（数据），装进信封写上地址（加上头部信息），交给快递网络层层转运（路由器转发），对方收到后拆开信封读信（解析数据）。这个类比会贯穿整页。</p>
+    </div>
+    <p>问题来了：通信涉及的事情太多——电信号怎么传？地址怎么编？丢包了怎么补发？网页格式长什么样？把这些全塞进一个协议会复杂到无法维护。于是工程师们用了一招经典手法：<b class="hl">分层</b>。</p>
+  </section>
+
+  <!-- 01. LAYERS -->
+  <section>
+    <div class="secnum">01 / 分层</div>
+    <h2>网络的<em>分层模型</em></h2>
+    <p>每一层只解决一类问题，并且只依赖下一层提供的服务、为上一层提供服务。这样每层可以独立演化：换 Wi-Fi 还是网线，上面的 HTTP 完全不用知道。</p>
+    <p>经典教材讲 <b class="hl-b">OSI 七层模型</b>（理论参考），而现实世界跑的是更务实的 <b class="hl">TCP/IP 四层模型</b>。<b>点击任意一层</b>查看它的职责：</p>
+
+    <div class="panel">
+      <div class="panel-label">分层模型浏览器 · 点击查看每一层</div>
+      <div class="toggle-grp" id="modelToggle">
+        <button class="active" data-model="tcp">TCP/IP 四层（实际）</button>
+        <button data-model="osi">OSI 七层（理论）</button>
+      </div>
+      <div class="layer-stack" id="layerStack"></div>
+      <div class="layer-detail" id="layerDetail"></div>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">记忆锚点</div>
+      <p>从上往下记四层的关键词：<b>应用层</b>管「内容长什么样」，<b>传输层</b>管「端到端送没送到」，<b>网络层</b>管「往哪个方向转发」，<b>链路层</b>管「这一跳怎么物理传过去」。</p>
+    </div>
+  </section>
+
+  <!-- 02. ENCAPSULATION -->
+  <section>
+    <div class="secnum">02 / 封装</div>
+    <h2>数据出发前，要被<em>层层打包</em></h2>
+    <p>当你发送一个 HTTP 请求时，数据会自上而下穿过每一层。<b>每经过一层，就被套上一个该层的「头部」</b>（header）——就像信纸装进信封、信封再装进快递盒。这个过程叫 <b class="hl-b">封装（encapsulation）</b>；接收方则反过来层层拆开，叫<b>解封装</b>。</p>
+
+    <div class="panel">
+      <div class="panel-label">封装模拟器 · 看一个 HTTP 请求被打包成比特流</div>
+      <div class="encap-stage" id="encapStage"></div>
+      <div class="encap-name" id="encapName"></div>
+      <div class="encap-bits" id="encapBits" style="display:none">01001000 01010100 01010100 01010000 ⋯</div>
+      <div class="encap-desc" id="encapDesc"></div>
+      <div class="btnrow">
+        <button class="btn" id="encPrev">← 上一步</button>
+        <button class="btn" id="encNext">下一步 →</button>
+        <button class="btn" id="encReset">重置</button>
+      </div>
+    </div>
+
+    <p>注意每层打包后的<b>名字会变</b>：应用层叫<b>数据</b>，加上 TCP 头叫<b class="hl-a">段（segment）</b>，加上 IP 头叫<b class="hl">包（packet）</b>，加上帧头帧尾叫<b class="hl-b">帧（frame）</b>，最后变成线缆上的<b>比特流</b>。面试和抓包工具里这些词会反复出现。</p>
+  </section>
+
+  <!-- 03. IP -->
+  <section>
+    <div class="secnum">03 / 寻址</div>
+    <h2><em>IP 地址</em>：互联网的门牌号</h2>
+    <p>要把包送到对方手里，先得有地址。<b class="hl-b">IPv4 地址</b>本质上就是一个 <b>32 位的二进制数</b>，为了方便人读，按 8 位一组写成四段十进制，如 <code>192.168.1.10</code>。</p>
+    <p>地址被分成两部分：前面的<b class="hl-b">网络位</b>（标识「哪个小区」）和后面的<b class="hl-a">主机位</b>（标识「哪一户」）。斜杠后的数字（如 <code>/24</code>）叫<b>前缀长度</b>，表示前多少位是网络位。<b>改一改下面的 IP 和前缀试试：</b></p>
+
+    <div class="panel">
+      <div class="panel-label">子网计算器 · 输入 IP，拖动前缀长度</div>
+      <div class="ip-inputs">
+        <input type="text" id="ipInput" value="192.168.1.10" spellcheck="false">
+        <div class="prefix-box">
+          <div class="pl">前缀长度 <b id="prefixVal">/24</b></div>
+          <input type="range" id="prefixRange" min="1" max="32" value="24">
+        </div>
+      </div>
+      <div class="bitgrid" id="bitGrid"></div>
+      <div class="bit-legend">
+        <span class="lg"><span class="sq" style="background:var(--blue-dim);border:1px solid var(--blue)"></span>网络位（小区）</span>
+        <span class="lg"><span class="sq" style="background:var(--amber-dim);border:1px solid var(--amber)"></span>主机位（门牌）</span>
+      </div>
+      <div class="readout">
+        <div class="ro acc"><div class="lab">子网掩码</div><div class="val" id="roMask">—</div></div>
+        <div class="ro acc2"><div class="lab">网络地址</div><div class="val" id="roNet">—</div></div>
+        <div class="ro"><div class="lab">广播地址</div><div class="val" id="roBcast">—</div></div>
+        <div class="ro acc3"><div class="lab">可用主机数</div><div class="val" id="roHosts">—</div></div>
+        <div class="ro"><div class="lab">第一个可用</div><div class="val" id="roFirst">—</div></div>
+        <div class="ro"><div class="lab">最后一个可用</div><div class="val" id="roLast">—</div></div>
+      </div>
+    </div>
+
+    <p>试着把前缀从 <code>/24</code> 拖到 <code>/16</code>：网络位变少、主机位变多，这个网络能容纳的设备从 254 台暴涨到 6 万多台。<b>同一网络内的机器可以直接互相通信；跨网络则必须经过路由器转发。</b></p>
+    <div class="callout amber">
+      <div class="t">为什么还有 IPv6？</div>
+      <p>32 位只有约 <b>42.9 亿</b>个地址，早就不够全人类用了。IPv6 把地址扩到 <b>128 位</b>（如 <code>2001:db8::1</code>），数量多到可以给地球上每粒沙子分配无数个。过渡期内两者并存，家用网络还普遍靠 <b>NAT</b>（让全家共用一个公网 IPv4）续命。</p>
+    </div>
+  </section>
+
+  <!-- 04. TCP -->
+  <section>
+    <div class="secnum">04 / 连接</div>
+    <h2>TCP <em>三次握手</em>：先确认，再说话</h2>
+    <p>IP 只负责「尽力把包扔过去」，不保证送达、不保证顺序。<b class="hl-b">TCP</b> 在它之上补齐了可靠性：编号、确认、重传、排序。而这一切的前提是双方先建立连接、同步好初始序号——这就是著名的<b>三次握手</b>。</p>
+
+    <div class="panel">
+      <div class="panel-label">握手模拟器 · 一步步建立 TCP 连接</div>
+      <div class="hs-heads">
+        <div class="h"><div class="who">客户端</div><div class="st" id="cState">CLOSED</div></div>
+        <div class="h"><div class="who">服务器</div><div class="st" id="sState">LISTEN</div></div>
+      </div>
+      <div class="hs-track" id="hsTrack"></div>
+      <div class="hs-desc" id="hsDesc"></div>
+      <div class="btnrow">
+        <button class="btn" id="hsNext">下一步 →</button>
+        <button class="btn" id="hsReset">重置</button>
+      </div>
+    </div>
+
+    <p>为什么是三次而不是两次？因为<b>双方都需要确认「我能发出去、也能收到对方的回应」</b>。两次只能证明一个方向通畅；三次刚好让双方各完成一次「发送 + 收到确认」。</p>
+    <div class="callout teal">
+      <div class="t">对应的告别：四次挥手</div>
+      <p>断开连接要<b>四次挥手</b>（FIN → ACK → FIN → ACK）。多出一次是因为 TCP 是全双工的：一方说「我说完了」（FIN）后，另一方可能还有数据要发，所以「确认收到」和「我也说完了」要分开发送。</p>
+    </div>
+  </section>
+
+  <!-- 05. DNS -->
+  <section>
+    <div class="secnum">05 / 域名</div>
+    <h2><em>DNS</em>：把名字翻译成地址</h2>
+    <p>人类记不住 <code>104.18.25.30</code> 这种数字，于是有了域名。<b class="hl-b">DNS（域名系统）</b>就是互联网的电话簿：把 <code>example.com</code> 翻译成 IP 地址。它是一个巨大的<b>分布式分层数据库</b>——没有任何一台服务器知道所有答案，但顺着层级问下去总能问到。</p>
+
+    <div class="panel">
+      <div class="panel-label">解析模拟器 · 查询 www.example.com 的 IP</div>
+      <div class="dns-nodes" id="dnsNodes"></div>
+      <div class="dns-desc" id="dnsDesc"></div>
+      <div class="dns-prog" id="dnsProg"></div>
+      <div class="btnrow">
+        <button class="btn" id="dnsNext">下一步 →</button>
+        <button class="btn" id="dnsReset">重置</button>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="t">缓存无处不在</div>
+      <p>完整的递归查询其实很少发生：浏览器、操作系统、路由器、运营商的解析器都会按 <b>TTL</b>（生存时间）缓存结果。这也是为什么改了域名解析后「要等一会儿才生效」——旧记录还在各级缓存里没过期。</p>
+    </div>
+  </section>
+
+  <!-- 06. HTTP -->
+  <section>
+    <div class="secnum">06 / 应用</div>
+    <h2><em>HTTP</em>：浏览器与服务器的对话格式</h2>
+    <p>连接建好了、地址查到了，终于轮到应用层说正事。<b class="hl-b">HTTP</b> 是浏览器和服务器之间的对话格式，本质就是<b>一来一回的纯文本</b>（HTTP/2 之后变成二进制，但语义不变）：客户端发<b>请求</b>，服务器回<b>响应</b>。</p>
+
+    <div class="panel">
+      <div class="panel-label">一次真实的 HTTP 对话</div>
+      <div class="http-pane">
+        <div class="http-box req">
+          <h4>请求 Request →</h4>
+          <pre><span class="m">GET</span> <span class="u">/index.html</span> <span class="v">HTTP/1.1</span>
+<span class="h">Host:</span> <span class="v">example.com</span>
+<span class="h">User-Agent:</span> <span class="v">Mozilla/5.0 …</span>
+<span class="h">Accept:</span> <span class="v">text/html</span>
+<span class="h">Cookie:</span> <span class="v">session=a1b2c3</span>
+</pre>
+        </div>
+        <div class="http-box res">
+          <h4>← 响应 Response</h4>
+          <pre><span class="v">HTTP/1.1</span> <span class="s">200 OK</span>
+<span class="h">Content-Type:</span> <span class="v">text/html; charset=utf-8</span>
+<span class="h">Content-Length:</span> <span class="v">1256</span>
+<span class="h">Cache-Control:</span> <span class="v">max-age=600</span>
+
+<span class="bd">&lt;!DOCTYPE html&gt;
+&lt;html&gt;…&lt;/html&gt;</span></pre>
+        </div>
+      </div>
+      <p style="font-size:14px;margin:14px 0 0">第一行是<b>请求行 / 状态行</b>，接着是若干<b>头部</b>（键值对），空一行之后是<b>正文</b>。响应里的三位数字就是<b>状态码</b>——点击下面的状态码看它们的含义：</p>
+      <div class="status-chips" id="statusChips"></div>
+      <div class="status-desc" id="statusDesc"></div>
+    </div>
+
+    <p>另一个关键概念是<b class="hl-a">端口</b>：IP 地址定位到机器，端口定位到机器上的<b>具体程序</b>（一台服务器可能同时跑着网站、数据库、SSH）。一些约定俗成的「知名端口」值得记住：</p>
+    <div class="panel">
+      <div class="panel-label">常见端口速查</div>
+      <table class="ptable">
+        <thead><tr><th>端口</th><th>协议 / 服务</th><th>干什么的</th></tr></thead>
+        <tbody>
+          <tr><td>80</td><td class="big">HTTP</td><td>明文网页</td></tr>
+          <tr><td>443</td><td class="big">HTTPS</td><td>加密网页（HTTP over TLS）</td></tr>
+          <tr><td>53</td><td class="big">DNS</td><td>域名解析</td></tr>
+          <tr><td>22</td><td class="big">SSH</td><td>远程登录服务器</td></tr>
+          <tr><td>25 / 465</td><td class="big">SMTP</td><td>发送邮件</td></tr>
+          <tr><td>3306</td><td class="big">MySQL</td><td>数据库</td></tr>
+          <tr><td>6379</td><td class="big">Redis</td><td>缓存数据库</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout teal">
+      <div class="t">HTTPS 多了什么？</div>
+      <p>HTTPS = HTTP + <b>TLS</b>。在 TCP 握手之后、HTTP 对话之前，再加一轮 <b>TLS 握手</b>：验证服务器证书（防冒充）、协商加密密钥（防窃听和篡改）。如今浏览器地址栏的小锁🔒就是它。原理可以去隔壁 <a href="/decrypt/" style="color:var(--teal)">解密台</a> 看非对称加密那一节。</p>
+    </div>
+  </section>
+
+  <!-- 07. JOURNEY -->
+  <section>
+    <div class="secnum">07 / 全景</div>
+    <h2>在地址栏敲下回车后，<em>发生了什么</em></h2>
+    <p>把前面所有概念串起来，就是这道经典面试题的答案。<b>点击「播放」</b>，沿着时间线走一遍完整旅程：</p>
+
+    <div class="panel">
+      <div class="panel-label">完整旅程 · https://example.com</div>
+      <div class="journey" id="journey"></div>
+      <div class="btnrow">
+        <button class="btn" id="jPlay">▶ 播放</button>
+        <button class="btn" id="jReset">重置</button>
+      </div>
+    </div>
+
+    <p>每一步都对应前面的一节：分层让这条流水线各司其职，封装让数据带着地址上路，TCP 保证可靠，DNS 解决寻名，HTTP 承载内容。<b>所谓「上网」，就是这套流程每天重复亿万次。</b></p>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <h2 style="margin-bottom:30px">一分钟回顾</h2>
+    <div class="recap">
+      <div><div class="n">01</div><div class="x"><b>协议</b>是通信双方的共同约定</div></div>
+      <div><div class="n">02</div><div class="x"><b>分层</b>让每层只解决一类问题</div></div>
+      <div><div class="n">03</div><div class="x">数据逐层<b>封装</b>：段 → 包 → 帧</div></div>
+      <div><div class="n">04</div><div class="x"><b>IP</b> 定位机器，<b>端口</b>定位程序</div></div>
+      <div><div class="n">05</div><div class="x"><b>TCP 三次握手</b>换来可靠传输</div></div>
+      <div><div class="n">06</div><div class="x"><b>DNS</b> 把域名翻译成 IP</div></div>
+      <div><div class="n">07</div><div class="x"><b>HTTP(S)</b> 承载真正的内容</div></div>
+    </div>
+    <div class="sig">NET LAB · 192.168.1.10/24 · SYN → SYN-ACK → ACK</div>
+  </div>
+</footer>
+
+<script>
+/* ============ 01. layer explorer ============ */
+(function(){
+  const MODELS={
+    tcp:[
+      {n:'4',name:'应用层',en:'Application',pdu:'数据 data',
+       role:'定义<b>内容的格式与语义</b>——网页长什么样、邮件怎么写、域名怎么查。程序员日常打交道最多的一层。',
+       protos:['HTTP','HTTPS','DNS','SMTP','WebSocket','SSH'],dev:'浏览器、App、服务器程序'},
+      {n:'3',name:'传输层',en:'Transport',pdu:'段 segment',
+       role:'提供<b>端到端</b>（进程到进程）的传输：用<b>端口号</b>区分程序；TCP 提供可靠有序传输，UDP 提供轻量快速传输。',
+       protos:['TCP','UDP','QUIC'],dev:'操作系统内核、防火墙'},
+      {n:'2',name:'网络层',en:'Internet',pdu:'包 packet',
+       role:'用 <b>IP 地址</b>在全球范围内寻址，由路由器一跳一跳<b>转发（路由）</b>。只管方向，不保证送达。',
+       protos:['IP','ICMP (ping)','ARP*'],dev:'路由器'},
+      {n:'1',name:'网络接口层',en:'Link / Network Interface',pdu:'帧 frame · 比特 bit',
+       role:'解决<b>相邻两个设备之间</b>怎么传：用 <b>MAC 地址</b>标识网卡，把帧变成电信号 / 光信号 / 无线电波。',
+       protos:['Ethernet','Wi-Fi (802.11)','PPP'],dev:'交换机、网卡、网线、光纤'}
+    ],
+    osi:[
+      {n:'7',name:'应用层',en:'Application',pdu:'数据',
+       role:'直接面向用户程序的协议：网页、邮件、文件传输、域名解析。',
+       protos:['HTTP','DNS','SMTP','FTP'],dev:'浏览器、App'},
+      {n:'6',name:'表示层',en:'Presentation',pdu:'数据',
+       role:'数据的<b>表示形式</b>：字符编码、压缩、加密解密（TLS 通常归在这附近）。',
+       protos:['TLS','JPEG','UTF-8'],dev:'—'},
+      {n:'5',name:'会话层',en:'Session',pdu:'数据',
+       role:'建立、管理、终止<b>会话</b>（一次完整对话的上下文）。现实中常被并入应用层实现。',
+       protos:['RPC','NetBIOS'],dev:'—'},
+      {n:'4',name:'传输层',en:'Transport',pdu:'段 segment',
+       role:'端到端传输与可靠性：端口、确认、重传、流量控制。',
+       protos:['TCP','UDP'],dev:'操作系统、防火墙'},
+      {n:'3',name:'网络层',en:'Network',pdu:'包 packet',
+       role:'逻辑寻址（IP 地址）与路由选择，让包跨越多个网络。',
+       protos:['IP','ICMP','OSPF/BGP'],dev:'路由器'},
+      {n:'2',name:'数据链路层',en:'Data Link',pdu:'帧 frame',
+       role:'相邻节点间的可靠传输：MAC 地址、成帧、差错检测。',
+       protos:['Ethernet','Wi-Fi','ARP'],dev:'交换机、网卡'},
+      {n:'1',name:'物理层',en:'Physical',pdu:'比特 bit',
+       role:'把比特变成物理信号：电压高低、光的明灭、无线电波。',
+       protos:['网线 (RJ45)','光纤','无线电'],dev:'集线器、中继器、线缆'}
+    ]
+  };
+  let model='tcp', sel=0;
+  const stack=document.getElementById('layerStack');
+  const detail=document.getElementById('layerDetail');
+  const toggle=document.getElementById('modelToggle');
+
+  function render(){
+    const layers=MODELS[model];
+    if(sel>=layers.length) sel=0;
+    stack.innerHTML='';
+    layers.forEach((L,i)=>{
+      const row=document.createElement('button');
+      row.className='layer-row'+(i===sel?' active':'');
+      row.innerHTML='<span class="ln">'+L.n+'</span>'+
+        '<span class="lname">'+L.name+'<small>'+L.en+'</small></span>'+
+        '<span class="lpdu">'+L.pdu+'</span>';
+      row.addEventListener('click',()=>{sel=i;render();});
+      stack.appendChild(row);
+    });
+    const L=layers[sel];
+    detail.innerHTML='<div class="dt">L'+L.n+' · '+L.name+'</div>'+L.role+
+      '<div class="chips">'+L.protos.map(p=>'<span class="pchip">'+p+'</span>').join('')+'</div>'+
+      '<div style="margin-top:6px;font-size:13px">典型角色：<b>'+L.dev+'</b></div>'+
+      (model==='tcp'&&L.n==='3'?'<div style="margin-top:6px;font-size:12.5px;color:var(--faint)">* ARP 介于网络层与链路层之间，归属有争议</div>':'');
+  }
+  toggle.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      model=b.dataset.model; sel=0;
+      toggle.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));
+      render();
+    });
+  });
+  render();
+})();
+
+/* ============ 02. encapsulation ============ */
+(function(){
+  const CHIPS=[
+    {cls:'eth',label:'帧头',sub:'MAC 地址'},
+    {cls:'ip',label:'IP 头',sub:'源/目的 IP'},
+    {cls:'tcp',label:'TCP 头',sub:'端口·序号'},
+    {cls:'data',label:'数据',sub:'GET /index.html'},
+    {cls:'eth',label:'帧尾',sub:'校验 FCS'}
+  ];
+  // 每一步显示 CHIPS 的哪些下标
+  const STEPS=[
+    {show:[3],name:'数据 <b>data</b>',layer:'应用层',
+     desc:'<b>应用层</b>：浏览器写好了一个 HTTP 请求 <code>GET /index.html</code>。这就是真正想传递的内容——接下来开始打包。'},
+    {show:[2,3],name:'段 <b>segment</b>',layer:'传输层',
+     desc:'<b>传输层</b>套上 <b>TCP 头</b>：写明源端口和目的端口（比如 51742 → 443），加上序号以便对方排序和确认。现在它叫「段」。'},
+    {show:[1,2,3],name:'包 <b>packet</b>',layer:'网络层',
+     desc:'<b>网络层</b>套上 <b>IP 头</b>：写明源 IP 和目的 IP（比如 192.168.1.10 → 93.184.216.34）。沿途每个路由器都靠它决定下一跳。现在它叫「包」。'},
+    {show:[0,1,2,3,4],name:'帧 <b>frame</b>',layer:'链路层',
+     desc:'<b>链路层</b>套上<b>帧头</b>（本跳的源/目的 MAC 地址）和<b>帧尾</b>（FCS 校验码，用于检测传输错误）。注意：MAC 地址每过一跳就换一次，IP 地址全程不变。'},
+    {show:[0,1,2,3,4],name:'比特流 <b>bits</b>',layer:'物理层',bits:true,
+     desc:'<b>物理层</b>把整个帧变成电信号 / 光信号 / 无线电波发射出去。接收方则自下而上<b>层层拆包（解封装）</b>，最终还原出那行 HTTP 请求。'}
+  ];
+  let step=0;
+  const stage=document.getElementById('encapStage');
+  const nameEl=document.getElementById('encapName');
+  const bitsEl=document.getElementById('encapBits');
+  const descEl=document.getElementById('encapDesc');
+  const prev=document.getElementById('encPrev'), next=document.getElementById('encNext');
+
+  function render(){
+    const S=STEPS[step];
+    stage.innerHTML='';
+    S.show.forEach(i=>{
+      const c=CHIPS[i];
+      const d=document.createElement('div');
+      d.className='encap-chip '+c.cls;
+      d.innerHTML=c.label+'<small>'+c.sub+'</small>';
+      stage.appendChild(d);
+    });
+    nameEl.innerHTML='当前形态：<b>'+S.name+'</b>　·　'+S.layer;
+    bitsEl.style.display=S.bits?'block':'none';
+    descEl.innerHTML=S.desc;
+    prev.disabled=step===0;
+    next.disabled=step===STEPS.length-1;
+  }
+  next.addEventListener('click',()=>{if(step<STEPS.length-1){step++;render();}});
+  prev.addEventListener('click',()=>{if(step>0){step--;render();}});
+  document.getElementById('encReset').addEventListener('click',()=>{step=0;render();});
+  render();
+})();
+
+/* ============ 03. subnet calculator ============ */
+(function(){
+  const ipInput=document.getElementById('ipInput');
+  const range=document.getElementById('prefixRange');
+  const prefixVal=document.getElementById('prefixVal');
+  const grid=document.getElementById('bitGrid');
+
+  function ipToInt(s){
+    const parts=s.trim().split('.');
+    if(parts.length!==4) return null;
+    let n=0;
+    for(const p of parts){
+      if(!/^\d{1,3}$/.test(p)) return null;
+      const v=+p;
+      if(v>255) return null;
+      n=(n*256)+v;
+    }
+    return n>>>0;
+  }
+  function intToIp(n){
+    return [(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255].join('.');
+  }
+
+  function render(){
+    const prefix=+range.value;
+    prefixVal.textContent='/'+prefix;
+    const ip=ipToInt(ipInput.value);
+    ipInput.classList.toggle('bad',ip===null);
+    if(ip===null) return;
+
+    const mask= prefix===0?0:((0xFFFFFFFF<<(32-prefix))>>>0);
+    const net=(ip&mask)>>>0;
+    const bcast=(net|(~mask>>>0))>>>0;
+    const hostBits=32-prefix;
+
+    // 位网格：4 行 × 8 位
+    grid.innerHTML='';
+    for(let o=0;o<4;o++){
+      const row=document.createElement('div');
+      row.className='octet';
+      const lab=document.createElement('span');
+      lab.className='oct-label';
+      lab.textContent=(ip>>>(24-o*8))&255;
+      row.appendChild(lab);
+      for(let b=0;b<8;b++){
+        const idx=o*8+b;                 // 从最高位数起的第 idx 位
+        const bit=(ip>>>(31-idx))&1;
+        const cell=document.createElement('div');
+        cell.className='ipbit '+(idx<prefix?'net':'host');
+        cell.textContent=bit;
+        row.appendChild(cell);
+      }
+      grid.appendChild(row);
+    }
+
+    document.getElementById('roMask').textContent=intToIp(mask);
+    document.getElementById('roNet').textContent=intToIp(net)+'/'+prefix;
+    document.getElementById('roBcast').textContent= hostBits>=1?intToIp(bcast):'—';
+    if(prefix>=31){
+      // /31 点对点、/32 单主机的特殊情况
+      document.getElementById('roHosts').textContent= prefix===31?'2（点对点）':'1（单主机）';
+      document.getElementById('roFirst').textContent= prefix===31?intToIp(net):intToIp(ip);
+      document.getElementById('roLast').textContent= prefix===31?intToIp(bcast):intToIp(ip);
+      document.getElementById('roBcast').textContent= prefix===31?'—（不适用）':'—（不适用）';
+    }else{
+      const hosts=Math.pow(2,hostBits)-2;
+      document.getElementById('roHosts').textContent=hosts.toLocaleString('en-US');
+      document.getElementById('roFirst').textContent=intToIp(net+1);
+      document.getElementById('roLast').textContent=intToIp(bcast-1);
+    }
+  }
+  ipInput.addEventListener('input',render);
+  range.addEventListener('input',render);
+  render();
+})();
+
+/* ============ 04. tcp handshake ============ */
+(function(){
+  const STEPS=[
+    {desc:'初始状态：服务器在 <b>LISTEN</b>（监听端口，等人敲门），客户端还没动作。点「下一步」发起连接。',
+     c:'CLOSED',s:'LISTEN'},
+    {msg:{dir:'to-server',label:'SYN · seq=100'},
+     desc:'<b>① 客户端 → 服务器：SYN</b>。「我想建立连接，我的初始序号是 <b>100</b>」（实际是随机数，防止被猜到）。客户端进入 SYN_SENT 状态。',
+     c:'SYN_SENT',s:'LISTEN'},
+    {msg:{dir:'to-client',label:'SYN-ACK · seq=300 · ack=101'},
+     desc:'<b>② 服务器 → 客户端：SYN-ACK</b>。「收到了你的 100（所以 ack=<b>101</b>，意思是下一个想收 101）；我也想连，我的初始序号是 <b>300</b>」。服务器进入 SYN_RCVD。',
+     c:'SYN_SENT',s:'SYN_RCVD'},
+    {msg:{dir:'to-server',label:'ACK · ack=301'},
+     desc:'<b>③ 客户端 → 服务器：ACK</b>。「你的 300 我也收到了（ack=<b>301</b>）」。至此双方都确认了彼此<b>收发能力正常</b>且序号已同步——连接建立，可以开始传数据了！',
+     c:'ESTABLISHED',s:'ESTABLISHED'}
+  ];
+  let step=0;
+  const track=document.getElementById('hsTrack');
+  const desc=document.getElementById('hsDesc');
+  const cState=document.getElementById('cState');
+  const sState=document.getElementById('sState');
+  const next=document.getElementById('hsNext');
+
+  function render(){
+    const S=STEPS[step];
+    desc.innerHTML=S.desc;
+    cState.textContent=S.c; sState.textContent=S.s;
+    cState.classList.toggle('live',S.c==='ESTABLISHED');
+    sState.classList.toggle('live',S.s==='ESTABLISHED');
+    next.disabled=step===STEPS.length-1;
+    next.textContent= step===STEPS.length-1?'✓ 连接已建立':'下一步 →';
+  }
+  next.addEventListener('click',()=>{
+    if(step>=STEPS.length-1) return;
+    step++;
+    const m=STEPS[step].msg;
+    const div=document.createElement('div');
+    div.className='hs-msg '+m.dir;
+    div.innerHTML='<span class="hs-lbl">'+m.label+'</span><div class="hs-line"></div>';
+    track.appendChild(div);
+    render();
+  });
+  document.getElementById('hsReset').addEventListener('click',()=>{
+    step=0; track.innerHTML=''; render();
+  });
+  render();
+})();
+
+/* ============ 05. dns resolver ============ */
+(function(){
+  const NODES=['浏览器缓存','系统 / hosts','递归解析器','根服务器','TLD (.com)','权威服务器'];
+  const STEPS=[
+    {node:0,prog:'STEP 1 / 6',
+     desc:'你访问 <b>www.example.com</b>。浏览器先翻自己的<b>缓存</b>：最近查过吗？<span class="qa"><span class="q">Q: www.example.com 的 IP?</span><span class="a">A: 没查过，往下问。</span></span>'},
+    {node:1,prog:'STEP 2 / 6',
+     desc:'问<b>操作系统</b>：系统级缓存和 <code>hosts</code> 文件里有吗？（hosts 是本机的「私人电话簿」，开发时常用它把域名指到 127.0.0.1）<span class="qa"><span class="a">A: 也没有，去问递归解析器。</span></span>'},
+    {node:2,prog:'STEP 3 / 6',
+     desc:'问<b>递归解析器</b>（通常是运营商提供，或你手动设置的 8.8.8.8 / 1.1.1.1）。它是「跑腿专家」：缓存里没有的话，它会替你把后面几步全问完。'},
+    {node:3,prog:'STEP 4 / 6',
+     desc:'解析器先问<b>根服务器</b>（全球 13 组逻辑根）。根不知道答案，但知道该问谁：<span class="qa"><span class="q">Q: www.example.com?</span><span class="a">A: 不知道，但 .com 的事去找 TLD 服务器。</span></span>'},
+    {node:4,prog:'STEP 5 / 6',
+     desc:'再问 <b>.com 顶级域（TLD）服务器</b>：<span class="qa"><span class="q">Q: www.example.com?</span><span class="a">A: example.com 的权威服务器在 ns1.example.com，去问它。</span></span>'},
+    {node:5,prog:'STEP 6 / 6 · 完成',
+     desc:'最后问 <b>example.com 的权威服务器</b>——它是这个域名的「户籍科」，给出最终答案：<span class="qa"><span class="q">Q: www.example.com?</span><span class="a">A: 93.184.216.34 ✓（TTL=3600，可缓存 1 小时）</span></span>答案沿原路返回并被各级缓存。浏览器拿到 IP，开始 TCP 握手！'}
+  ];
+  let step=-1;
+  const nodesEl=document.getElementById('dnsNodes');
+  const descEl=document.getElementById('dnsDesc');
+  const progEl=document.getElementById('dnsProg');
+  const next=document.getElementById('dnsNext');
+
+  NODES.forEach(n=>{
+    const d=document.createElement('div');
+    d.className='dns-node'; d.textContent=n;
+    nodesEl.appendChild(d);
+  });
+  const nodeEls=[...nodesEl.children];
+
+  function render(){
+    nodeEls.forEach((el,i)=>{
+      el.classList.toggle('lit', step>=0 && i===STEPS[step].node);
+      el.classList.toggle('done', step>=0 && i<STEPS[step].node);
+    });
+    if(step<0){
+      descEl.innerHTML='目标：查出 <b>www.example.com</b> 对应的 IP 地址。点「下一步」开始。';
+      progEl.textContent='READY';
+    }else{
+      descEl.innerHTML=STEPS[step].desc;
+      progEl.textContent=STEPS[step].prog;
+    }
+    next.disabled= step===STEPS.length-1;
+    next.textContent= step===STEPS.length-1?'✓ 解析完成':'下一步 →';
+  }
+  next.addEventListener('click',()=>{ if(step<STEPS.length-1){step++;render();} });
+  document.getElementById('dnsReset').addEventListener('click',()=>{ step=-1; render(); });
+  render();
+})();
+
+/* ============ 06. status codes ============ */
+(function(){
+  const CODES=[
+    {c:'200',k:'ok',t:'200 OK',d:'<b>成功</b>。最常见的状态码：请求正常处理，响应正文里就是你要的内容。'},
+    {c:'301',k:'warn',t:'301 Moved Permanently',d:'<b>永久重定向</b>。资源搬家了，新地址在 <code>Location</code> 头里。浏览器和搜索引擎会记住新地址。'},
+    {c:'304',k:'ok',t:'304 Not Modified',d:'<b>没变，用缓存吧</b>。浏览器问「我手里这份过期了吗」，服务器说「没变」，于是不重传内容、省下带宽。'},
+    {c:'403',k:'err',t:'403 Forbidden',d:'<b>禁止访问</b>。服务器认识你，但你没有权限看这个资源。和 401（未登录 / 未认证）是两回事。'},
+    {c:'404',k:'err',t:'404 Not Found',d:'<b>找不到</b>。互联网最著名的数字：URL 指向的资源不存在。注意：这说明服务器是通的，只是没这个东西。'},
+    {c:'500',k:'err',t:'500 Internal Server Error',d:'<b>服务器内部错误</b>。锅在服务端：代码抛了异常、配置错了。用户端通常无能为力。'},
+    {c:'502',k:'err',t:'502 Bad Gateway',d:'<b>坏网关</b>。前面的代理 / 负载均衡器（如 Nginx）找后端服务要数据，后端挂了或返回了无效响应。'},
+    {c:'418',k:'warn',t:"418 I'm a teapot",d:'<b>我是茶壶 🫖</b>。1998 年愚人节 RFC 的彩蛋：「拒绝用茶壶煮咖啡」。真实存在于标准文档中，是程序员式幽默的化石。'}
+  ];
+  const chipsEl=document.getElementById('statusChips');
+  const descEl=document.getElementById('statusDesc');
+  let sel=0;
+  CODES.forEach((C,i)=>{
+    const b=document.createElement('button');
+    b.className='schip'; b.textContent=C.c;
+    b.addEventListener('click',()=>{sel=i;render();});
+    chipsEl.appendChild(b);
+  });
+  const chipEls=[...chipsEl.children];
+  function render(){
+    chipEls.forEach((el,i)=>{
+      el.className='schip'+(i===sel?' on '+CODES[i].k:'');
+    });
+    descEl.innerHTML='<b>'+CODES[sel].t+'</b> — '+CODES[sel].d;
+  }
+  render();
+})();
+
+/* ============ 07. journey ============ */
+(function(){
+  const STEPS=[
+    {t:'输入网址，敲下回车',x:'浏览器解析 URL：协议 <code>https</code>、域名 <code>example.com</code>、路径 <code>/</code>。'},
+    {t:'DNS 解析',x:'层层查询（多半命中缓存），把域名翻译成 IP 地址 <code>93.184.216.34</code>。→ 见第 05 节'},
+    {t:'TCP 三次握手',x:'SYN → SYN-ACK → ACK，与服务器 443 端口建立可靠连接。→ 见第 04 节'},
+    {t:'TLS 握手',x:'验证服务器证书、协商加密密钥。此后所有内容都是密文，中间人看不懂也改不了。'},
+    {t:'发送 HTTP 请求',x:'<code>GET / HTTP/1.1</code> 被层层封装成帧，变成比特流出发。→ 见第 02、06 节'},
+    {t:'服务器处理并响应',x:'服务器程序生成 HTML，回 <code>200 OK</code>。响应同样经历封装、路由、解封装。'},
+    {t:'浏览器解析渲染',x:'解析 HTML 时发现还需要 CSS / JS / 图片，于是并发地重复上述流程拉取资源，最终把页面画出来。'}
+  ];
+  const wrap=document.getElementById('journey');
+  STEPS.forEach((S,i)=>{
+    const d=document.createElement('div');
+    d.className='jstep';
+    d.innerHTML='<div class="jn">'+(i+1)+'</div><div class="jt">'+S.t+'</div><div class="jx">'+S.x+'</div>';
+    wrap.appendChild(d);
+  });
+  const stepEls=[...wrap.children];
+  let timer=null;
+  function setLit(k){ // k = 已点亮到第几步（-1 全灭）
+    stepEls.forEach((el,i)=>{
+      el.classList.toggle('lit',i===k);
+      el.classList.toggle('dim',k>=0&&i>k);
+    });
+  }
+  document.getElementById('jPlay').addEventListener('click',()=>{
+    clearInterval(timer);
+    let k=0;
+    setLit(0);
+    timer=setInterval(()=>{
+      k++;
+      if(k>=stepEls.length){clearInterval(timer);setLit(-1);return;}
+      setLit(k);
+    },1400);
+  });
+  document.getElementById('jReset').addEventListener('click',()=>{
+    clearInterval(timer); setLit(-1);
+  });
+  setLit(-1);
+})();
+</script>
+</body>
+</html>
