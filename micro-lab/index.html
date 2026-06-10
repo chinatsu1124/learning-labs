@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="微服务入门：单体 vs 微服务、服务拆分、一次下单请求的完整链路模拟、同步异步通信、熔断器演示、Saga 分布式事务与可观测性。">
+<meta property="og:title" content="微服务实验室 · MICRO LAB">
+<meta property="og:description" content="微服务入门：单体 vs 微服务、服务拆分、一次下单请求的完整链路模拟、同步异步通信、熔断器演示、Saga 分布式事务与可观测性。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>微服务实验室 · MICRO LAB</title>
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
+<script defer src="/assets/term.js"></script>
+<style>
+  :root{
+    --bg:#090c0e;
+    --bg2:#0e1216;
+    --panel:#11161b;
+    --panel-hi:#171e25;
+    --line:#232c35;
+    --ink:#e0e5ea;
+    --muted:#8a94a0;
+    --faint:#566270;
+    --teal:#4fe3c1;
+    --teal-dim:#1d4a40;
+    --amber:#ffb648;
+    --amber-dim:#5a4422;
+    --rose:#ff7a85;
+    --rose-dim:#52262b;
+    --blue:#8aa9ff;
+    --blue-dim:#27314f;
+    --violet:#b08aff;
+    --violet-dim:#37284f;
+    --display:'Syne',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:48px 48px;
+    background-position:center top;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(79,227,193,.09),transparent 60%),
+               radial-gradient(ellipse 70% 50% at 90% 20%,rgba(138,169,255,.05),transparent 55%),
+               linear-gradient(180deg,rgba(9,12,14,.4),var(--bg) 90%);
+  }
+  .wrap{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:0 24px}
+
+  /* ---------- header ---------- */
+  header{padding:90px 0 40px;text-align:center}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:var(--teal);
+    text-transform:uppercase;margin-bottom:24px;opacity:0;animation:rise .7s .1s forwards}
+  h1.hero{font-family:var(--display);font-weight:800;font-size:clamp(46px,12vw,118px);
+    line-height:.9;letter-spacing:-.03em;margin-bottom:8px}
+  h1.hero .b{display:inline-block;opacity:0;transform:translateY(40px);animation:rise .8s forwards}
+  h1.hero .b:nth-child(1){animation-delay:.15s;color:var(--teal)}
+  h1.hero .b:nth-child(2){animation-delay:.25s;color:var(--ink)}
+  .sub{font-family:var(--mono);color:var(--muted);font-size:15px;margin-top:18px;
+    opacity:0;animation:rise .7s .6s forwards}
+  .sub b{color:var(--ink);font-weight:500}
+  .scrollcue{margin-top:54px;font-family:var(--mono);font-size:11px;letter-spacing:.3em;
+    color:var(--faint);opacity:0;animation:rise .7s .9s forwards;text-transform:uppercase}
+  .scrollcue span{display:block;font-size:18px;margin-top:6px;animation:bob 1.8s ease-in-out infinite}
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+  @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+
+  /* ---------- sections ---------- */
+  section{padding:56px 0;border-top:1px solid var(--line)}
+  .secnum{font-family:var(--mono);font-size:12px;color:var(--teal);letter-spacing:.2em;
+    margin-bottom:10px;display:flex;align-items:center;gap:12px}
+  .secnum::after{content:"";flex:1;height:1px;background:var(--line)}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);
+    line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
+  h2 em{font-style:normal;color:var(--teal)}
+  p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
+  p b{color:var(--ink);font-weight:600}
+  .hl{color:var(--teal);font-weight:600}
+  .hl-v{color:var(--violet);font-weight:600}
+  .hl-a{color:var(--amber);font-weight:600}
+  .hl-b{color:var(--blue);font-weight:600}
+  .hl-r{color:var(--rose);font-weight:600}
+  code{font-family:var(--mono);background:var(--panel-hi);color:var(--teal);
+    padding:2px 7px;border-radius:5px;font-size:.88em;border:1px solid var(--line)}
+
+  /* ---------- panel ---------- */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:28px;margin:26px 0;position:relative;overflow:hidden}
+  .panel::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--teal),transparent);opacity:.5}
+  .panel-label{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--faint);
+    text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+  .panel-label::before{content:"●";color:var(--teal);font-size:8px}
+
+  .btn{font-family:var(--mono);font-size:13px;background:var(--panel-hi);color:var(--ink);
+    border:1px solid var(--line);border-radius:8px;padding:9px 16px;cursor:pointer;transition:all .18s}
+  .btn:hover{border-color:var(--teal);color:var(--teal)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .btn:disabled:hover{border-color:var(--line);color:var(--ink)}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}
+  .toggle-grp{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:18px;flex-wrap:wrap}
+  .toggle-grp button{font-family:var(--mono);font-size:13px;background:transparent;color:var(--muted);
+    border:0;padding:9px 18px;cursor:pointer;transition:all .18s}
+  .toggle-grp button.active{background:var(--teal-dim);color:var(--teal)}
+
+  /* ---------- callout ---------- */
+  .callout{border-left:3px solid var(--teal);background:var(--panel);border-radius:0 12px 12px 0;
+    padding:16px 20px;margin:22px 0}
+  .callout .t{font-family:var(--mono);font-size:12px;letter-spacing:.15em;color:var(--teal);
+    text-transform:uppercase;margin-bottom:6px}
+  .callout p{margin:0;font-size:15px;color:var(--ink)}
+  .callout.blue{border-color:var(--blue)}
+  .callout.blue .t{color:var(--blue)}
+  .callout.amber{border-color:var(--amber)}
+  .callout.amber .t{color:var(--amber)}
+  .callout.rose{border-color:var(--rose)}
+  .callout.rose .t{color:var(--rose)}
+
+  /* ---------- spectrum cards ---------- */
+  .spectrum{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:6px}
+  @media(max-width:680px){.spectrum{grid-template-columns:1fr}}
+  .spec-card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:18px}
+  .spec-card .si{font-size:22px;margin-bottom:6px}
+  .spec-card h3{font-family:var(--display);font-size:17px;margin-bottom:4px}
+  .spec-card .sq{font-family:var(--mono);font-size:11px;color:var(--faint);margin-bottom:10px}
+  .spec-card ul{list-style:none}
+  .spec-card li{font-size:13.5px;color:var(--muted);padding:6px 0;border-top:1px dashed var(--line);line-height:1.6}
+  .spec-card li b{color:var(--ink);font-weight:600}
+  .spec-card.s1{border-color:var(--violet-dim)}
+  .spec-card.s1 h3{color:var(--violet)}
+  .spec-card.s2{border-color:var(--amber-dim)}
+  .spec-card.s2 h3{color:var(--amber)}
+  .spec-card.s3{border-color:var(--teal-dim)}
+  .spec-card.s3 h3{color:var(--teal)}
+  .spec-arrow{text-align:center;font-family:var(--mono);font-size:12px;color:var(--faint);
+    margin:14px 0 0;letter-spacing:.2em}
+
+  /* ---------- 服务地图（请求链路模拟器） ---------- */
+  .svc-map{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:12.5px;margin-bottom:20px}
+  .svc-node{border:1.5px solid var(--line);border-radius:10px;padding:9px 13px;background:var(--bg2);
+    color:var(--muted);transition:all .25s;text-align:center}
+  .svc-node small{display:block;font-size:9.5px;color:var(--faint);letter-spacing:.08em}
+  .svc-node.lit{border-color:var(--teal);background:var(--teal-dim);color:var(--teal);
+    box-shadow:0 0 22px rgba(79,227,193,.22)}
+  .svc-node.lit small{color:var(--teal);opacity:.7}
+  .svc-arr{color:var(--faint)}
+
+  /* ---------- 步进日志 ---------- */
+  .chatlog{display:flex;flex-direction:column;gap:10px;margin-top:14px;min-height:60px}
+  .msg{border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:14px;
+    line-height:1.7;animation:pop .3s ease;background:var(--bg2)}
+  .msg .who{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+    margin-bottom:5px;color:var(--faint)}
+  .msg.client{border-color:var(--violet-dim)}
+  .msg.client .who{color:var(--violet)}
+  .msg.gw{border-color:var(--blue-dim)}
+  .msg.gw .who{color:var(--blue)}
+  .msg.svc{border-color:var(--amber-dim)}
+  .msg.svc .who{color:var(--amber)}
+  .msg.mq{border-color:var(--violet-dim)}
+  .msg.mq .who{color:var(--violet)}
+  .msg.ok{border-color:var(--teal-dim)}
+  .msg.ok .who{color:var(--teal)}
+  .msg.bad{border-color:var(--rose-dim)}
+  .msg.bad .who{color:var(--rose)}
+  .msg .think{color:var(--faint);font-style:italic;font-size:13px}
+  .msg pre{font-family:var(--mono);font-size:12px;background:var(--panel-hi);border:1px solid var(--line);
+    border-radius:8px;padding:10px 12px;margin-top:8px;overflow-x:auto;color:var(--teal);line-height:1.6}
+  .msg .body-text{color:var(--muted)}
+  .msg .body-text b{color:var(--ink)}
+
+  /* ---------- code block ---------- */
+  .codeblock{font-family:var(--mono);font-size:12.5px;background:var(--bg2);border:1px solid var(--line);
+    border-radius:12px;padding:16px 18px;overflow-x:auto;line-height:1.8;margin-top:14px;white-space:pre}
+  .codeblock .k{color:var(--blue)}
+  .codeblock .s{color:var(--teal)}
+  .codeblock .c{color:var(--faint)}
+  .codeblock .n{color:var(--amber)}
+
+  /* ---------- 熔断器 ---------- */
+  .cb-state{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:13px;margin-bottom:18px}
+  .cb-node{border:1.5px solid var(--line);border-radius:10px;padding:10px 18px;background:var(--bg2);
+    color:var(--muted);transition:all .25s;text-align:center}
+  .cb-node small{display:block;font-size:10px;color:var(--faint);letter-spacing:.1em}
+  .cb-node.on-closed{border-color:var(--teal);background:var(--teal-dim);color:var(--teal);box-shadow:0 0 22px rgba(79,227,193,.22)}
+  .cb-node.on-open{border-color:var(--rose);background:var(--rose-dim);color:var(--rose);box-shadow:0 0 22px rgba(255,122,133,.22)}
+  .cb-node.on-half{border-color:var(--amber);background:var(--amber-dim);color:var(--amber);box-shadow:0 0 22px rgba(255,182,72,.22)}
+  .cb-meta{font-family:var(--mono);font-size:12px;color:var(--faint);text-align:center;margin-bottom:14px}
+  .cb-meta b{color:var(--ink);font-weight:500}
+  .cb-log{display:flex;flex-direction:column;gap:6px;margin-top:14px;max-height:240px;overflow-y:auto}
+  .cb-line{font-family:var(--mono);font-size:12.5px;border:1px solid var(--line);border-radius:8px;
+    padding:8px 12px;background:var(--bg2);color:var(--muted);animation:pop .25s ease;line-height:1.6}
+  .cb-line.ok{border-color:var(--teal-dim);color:var(--teal)}
+  .cb-line.fail{border-color:var(--rose-dim);color:var(--rose)}
+  .cb-line.fast{border-color:var(--amber-dim);color:var(--amber)}
+  .cb-line.info{border-color:var(--blue-dim);color:var(--blue)}
+  .switch{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;
+    color:var(--muted);cursor:pointer;user-select:none}
+  .switch .track{width:40px;height:22px;border-radius:999px;border:1px solid var(--line);
+    background:var(--panel-hi);position:relative;transition:all .2s}
+  .switch .knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
+    background:var(--teal);transition:all .2s}
+  .switch.down .track{background:var(--rose-dim);border-color:var(--rose)}
+  .switch.down .knob{left:20px;background:var(--rose)}
+  .switch .lbl b{color:var(--teal);font-weight:500}
+  .switch.down .lbl b{color:var(--rose)}
+
+  /* ---------- 拆分练习卡片 ---------- */
+  .split-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+  @media(max-width:680px){.split-grid{grid-template-columns:1fr}}
+  .split-card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:18px}
+  .split-card h3{font-family:var(--display);font-size:16px;margin-bottom:8px}
+  .split-card.good{border-color:var(--teal-dim)}
+  .split-card.good h3{color:var(--teal)}
+  .split-card.bad{border-color:var(--rose-dim)}
+  .split-card.bad h3{color:var(--rose)}
+  .split-card ul{list-style:none}
+  .split-card li{font-size:13.5px;color:var(--muted);padding:6px 0;border-top:1px dashed var(--line);line-height:1.6}
+  .split-card li b{color:var(--ink)}
+
+  /* ---------- 可观测性三支柱 ---------- */
+  .pat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+  .pat-card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:18px;
+    cursor:pointer;transition:all .18s;text-align:left;color:inherit;font:inherit;width:100%}
+  .pat-card:hover{border-color:var(--muted)}
+  .pat-card.active{border-color:var(--teal);background:var(--teal-dim);box-shadow:0 0 22px rgba(79,227,193,.15)}
+  .pat-card .pi{font-size:22px;margin-bottom:6px}
+  .pat-card .pn{font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink)}
+  .pat-card.active .pn{color:var(--teal)}
+  .pat-card .pd{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:2px}
+  .pat-detail{margin-top:16px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;
+    padding:18px 20px;font-size:14.5px;color:var(--muted);line-height:1.9}
+  .pat-detail b{color:var(--ink)}
+  .pat-detail .flow{font-family:var(--mono);font-size:12.5px;color:var(--teal);margin:8px 0;
+    background:var(--panel-hi);border:1px solid var(--line);border-radius:8px;padding:10px 14px;overflow-x:auto;white-space:pre}
+  .pat-detail .when{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--amber);
+    text-transform:uppercase;margin-top:10px;margin-bottom:2px}
+
+  /* ---------- quiz ---------- */
+  .quiz-q{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+  .quiz-q .qt{font-size:15px;color:var(--ink);margin-bottom:12px;font-weight:600}
+  .quiz-q .qt .qn{font-family:var(--mono);color:var(--teal);margin-right:8px}
+  .quiz-opts{display:flex;flex-direction:column;gap:8px}
+  .quiz-opts button{font-size:14px;font-family:var(--body);background:var(--panel-hi);color:var(--muted);
+    border:1px solid var(--line);border-radius:8px;padding:10px 14px;cursor:pointer;transition:all .15s;text-align:left}
+  .quiz-opts button:hover{border-color:var(--muted);color:var(--ink)}
+  .quiz-opts button.right{border-color:var(--teal);background:var(--teal-dim);color:var(--teal)}
+  .quiz-opts button.wrong{border-color:var(--rose);background:var(--rose-dim);color:var(--rose)}
+  .quiz-exp{font-size:13.5px;color:var(--muted);margin-top:10px;padding-top:10px;
+    border-top:1px dashed var(--line);display:none;line-height:1.7}
+  .quiz-exp b{color:var(--teal)}
+  .quiz-score{text-align:center;font-family:var(--mono);font-size:14px;color:var(--muted);margin-top:18px}
+  .quiz-score b{color:var(--teal);font-size:20px}
+
+  footer{border-top:1px solid var(--line);padding:28px 24px 48px;text-align:center;
+    font-family:var(--mono);font-size:12px;color:var(--faint)}
+  footer a{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--line)}
+  footer a:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+<a class="lab-home" href="/" title="返回 learning labs 首页">←&nbsp;~/labs</a>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">// micro lab</div>
+    <h1 class="hero"><span class="b">MICRO</span><span class="b">SERVICES</span></h1>
+    <div class="sub">从一个大单体，到<b>几十个互相调用的小服务</b> —— 拆分、通信、容错、事务、观测全拆开讲</div>
+    <div class="scrollcue">scroll<span>▾</span></div>
+  </header>
+
+  <!-- ============ 01 单体 vs 微服务 ============ -->
+  <section id="what">
+    <div class="secnum">01 / MONOLITH VS MICROSERVICES</div>
+    <h2>先说清楚：<em>微服务到底是什么？</em></h2>
+    <p>微服务不是某个框架，而是一种<b>架构风格</b>：把一个应用拆成一组<span class="hl">小而自治的服务</span>，每个服务围绕一块业务能力构建、<b>独立开发、独立部署、独立扩缩容</b>，服务之间通过网络（<span class="term" data-name="API" data-tip="应用程序接口：程序之间互相调用的『服务窗口』。微服务之间通常用 HTTP 接口或消息来通信。">API</span> 或消息）通信。它的对立面是<span class="hl-v">单体（Monolith）</span>——所有功能打成一个进程、一个包、一起部署。</p>
+
+    <div class="panel">
+      <div class="panel-label">spectrum · 拆分粒度从左到右递增</div>
+      <div class="spectrum">
+        <div class="spec-card s1">
+          <div class="si">🧱</div>
+          <h3>单体 Monolith</h3>
+          <div class="sq">一个代码库 · 一个进程 · 一起部署</div>
+          <ul>
+            <li><b>优点</b>：开发简单、调试直观、函数调用不丢包、事务一条 SQL 搞定</li>
+            <li><b>痛点</b>：改一行也要整体发布；一处崩溃全站陪葬；只能整体扩容</li>
+            <li><b>适合</b>：新项目、小团队、需求还在剧烈变化时</li>
+          </ul>
+        </div>
+        <div class="spec-card s2">
+          <div class="si">📦</div>
+          <h3>模块化单体</h3>
+          <div class="sq">一个进程 · 内部模块边界清晰</div>
+          <ul>
+            <li><b>做法</b>：代码按业务域分模块，模块间只走定义好的接口</li>
+            <li><b>价值</b>：享受单体的简单，又为将来拆分铺好了路</li>
+            <li><b>适合</b>：绝大多数中小团队的最佳起点</li>
+          </ul>
+        </div>
+        <div class="spec-card s3">
+          <div class="si">🕸️</div>
+          <h3>微服务</h3>
+          <div class="sq">多个进程 · 独立部署 · 网络通信</div>
+          <ul>
+            <li><b>优点</b>：团队各管各的服务，独立发布；按需扩容；故障可隔离</li>
+            <li><b>代价</b>：网络会断、数据会不一致、排查要跨服务追踪</li>
+            <li><b>适合</b>：业务边界清晰、多团队并行、规模真的大了</li>
+          </ul>
+        </div>
+      </div>
+      <div class="spec-arrow">部署独立性 ↑ &nbsp;·&nbsp; 团队自治 ↑ &nbsp;·&nbsp; 运维复杂度 ↑↑</div>
+    </div>
+
+    <div class="callout">
+      <div class="t">一句话记住它</div>
+      <p><b>微服务 = 用「运维复杂度」换「组织扩展性」</b>。它解决的核心问题不是技术性能，而是<b>几十上百人没法在同一个代码库里互不踩脚地并行开发、独立发布</b>。</p>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">工程直觉</div>
+      <p>不要一上来就微服务。<b>单体的问题你能感觉到（发布排队、改不动），微服务的问题你要踩过才懂（网络分区、数据不一致、调试地狱）</b>。业界共识是「单体优先」：先把模块边界做清楚，等痛点真实出现、团队规模撑得起，再拆。</p>
+    </div>
+  </section>
+
+  <!-- ============ 02 服务拆分 ============ -->
+  <section id="split">
+    <div class="secnum">02 / SERVICE BOUNDARIES</div>
+    <h2>怎么拆？<em>按业务能力，不按技术分层</em></h2>
+    <p>拆分是微服务最难也最重要的决策。原则只有一条：<b>沿着业务边界切，让每个服务高内聚、低耦合</b>。<span class="term" data-name="DDD · Domain-Driven Design" data-tip="领域驱动设计：一套从业务出发建模软件的方法论。它的『限界上下文（Bounded Context）』概念——同一个词在不同业务语境里含义不同、应该划清边界——正好是微服务拆分的天然刀法。">DDD</span> 里的<span class="hl">限界上下文</span>是最常用的刀法：「商品」在交易域是价格库存，在物流域是重量体积——语义变了，就是边界。</p>
+
+    <div class="panel">
+      <div class="panel-label">case · 同一个电商系统的两种拆法</div>
+      <div class="split-grid">
+        <div class="split-card good">
+          <h3>✓ 按业务能力垂直拆</h3>
+          <ul>
+            <li><b>用户服务</b>：注册、登录、个人资料</li>
+            <li><b>商品服务</b>：商品信息、类目、搜索</li>
+            <li><b>订单服务</b>：下单、订单状态机</li>
+            <li><b>支付服务</b>：收单、退款、对账</li>
+            <li>每个服务<b>独立演进</b>：改支付逻辑不用动订单代码，各自有自己的数据库</li>
+          </ul>
+        </div>
+        <div class="split-card bad">
+          <h3>✗ 按技术分层水平拆</h3>
+          <ul>
+            <li><b>Controller 服务</b>：所有接口</li>
+            <li><b>Service 服务</b>：所有业务逻辑</li>
+            <li><b>DAO 服务</b>：所有数据库访问</li>
+            <li>改任何一个需求都要<b>同时改三个服务、一起发布</b>——这叫分布式单体，只继承了缺点</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout rose">
+      <div class="t">最常见的翻车：拆得太细</div>
+      <p>两个服务如果<b>总是一起改、一起发布</b>，说明它们本该是一个服务——边界切在了业务的"肉"上而不是"缝"上。判断标准：<b>一次典型需求，最好只改一个服务</b>。拆错的代价极高（合并比拆分难得多），所以宁可先粗后细。</p>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">康威定律 Conway's Law</div>
+      <p>「系统架构会复制组织的沟通结构」。反过来用它：<b>想要什么样的服务边界，就组什么样的团队</b>——一个服务最好归属一个团队（亚马逊著名的"两个披萨团队"），跨团队共管一个服务是事故温床。</p>
+    </div>
+  </section>
+
+  <!-- ============ 03 一次请求的旅程 ============ -->
+  <section id="journey">
+    <div class="secnum">03 / A REQUEST'S JOURNEY</div>
+    <h2>一次下单请求的<em>完整旅程</em></h2>
+    <p>用户在 App 上点了一下「提交订单」，在微服务世界里会发生什么？这条链路上有微服务的几个核心角色：<span class="hl-b">API 网关</span>统一入口，<span class="term" data-name="Service Discovery · 服务发现" data-tip="服务实例的『电话簿』：每个服务启动时把自己的地址注册进去（如 Consul/Nacos/k8s 内置 DNS），调用方按服务名查询可用实例，而不是写死 IP——因为实例随时在扩缩容、漂移。">服务发现</span>找到对方，服务间<span class="hl-a">同步调用</span>，以及<span class="hl-v">消息队列</span>异步解耦。点击"下一步"走完整条链路👇</p>
+
+    <div class="panel">
+      <div class="panel-label">simulator · POST /orders 「买 1 台相机」</div>
+      <div class="svc-map">
+        <div class="svc-node" data-sn="client">客户端<small>APP</small></div>
+        <span class="svc-arr">→</span>
+        <div class="svc-node" data-sn="gw">API 网关<small>GATEWAY</small></div>
+        <span class="svc-arr">→</span>
+        <div class="svc-node" data-sn="order">订单服务<small>ORDER</small></div>
+        <span class="svc-arr">⇄</span>
+        <div class="svc-node" data-sn="dep">库存 / 支付<small>SYNC</small></div>
+        <span class="svc-arr">→</span>
+        <div class="svc-node" data-sn="mq">消息队列<small>ASYNC</small></div>
+      </div>
+      <div class="chatlog" id="jr-log"></div>
+      <div class="btnrow">
+        <button class="btn" id="jr-next">下一步 ▸</button>
+        <button class="btn" id="jr-reset">重置 ↺</button>
+      </div>
+    </div>
+
+    <div class="callout blue">
+      <div class="t">API 网关在干嘛</div>
+      <p>客户端只认识网关一个地址。网关负责<b>路由</b>（/orders → 订单服务）、<b>认证鉴权</b>、<b>限流</b>、<b>协议转换</b>——把这些横切关注点收口在一处，几十个服务就不用各写一遍，客户端也不用知道内部拆成了什么样。</p>
+    </div>
+
+    <div class="callout">
+      <div class="t">关键观察</div>
+      <p>注意链路的后半段：扣库存、扣款是<b>同步调用</b>（下单成败取决于它们，必须等结果）；而发短信、给推荐系统喂数据走的是<b>消息队列</b>（晚几秒无所谓，订单服务发完事件就返回了）。<b>"结果影响主流程吗"是选同步还是异步的第一判断</b>——下一节展开。</p>
+    </div>
+  </section>
+
+  <!-- ============ 04 同步 vs 异步 ============ -->
+  <section id="comm">
+    <div class="secnum">04 / SYNC VS ASYNC</div>
+    <h2>服务间通信：<em>打电话，还是发消息？</em></h2>
+    <p>服务之间隔着网络，通信方式只有两大类：<span class="hl-a">同步调用</span>——像打电话，发请求后原地等回复（REST、<span class="term" data-name="gRPC" data-tip="Google 开源的高性能 RPC 框架：用 Protobuf 二进制编码 + HTTP/2 传输，比 JSON over HTTP 更快更省带宽，接口用 .proto 文件强类型定义。微服务内部调用的常见选择。">gRPC</span>）；<span class="hl-v">异步消息</span>——像发消息，扔进<span class="term" data-name="Message Queue · 消息队列" data-tip="服务之间的『收发室』（如 Kafka/RabbitMQ/RocketMQ）：生产者把消息投进队列就走，消费者按自己的节奏取。两边不用同时在线，天然削峰、解耦。">消息队列</span>就走，对方什么时候消费是对方的事。点击切换，看同一个场景两种写法👇</p>
+
+    <div class="panel">
+      <div class="panel-label">demo · 订单创建成功后，通知下游</div>
+      <div class="toggle-grp" id="comm-tabs">
+        <button class="active" data-t="0">同步调用（REST）</button>
+        <button data-t="1">异步消息（事件）</button>
+      </div>
+      <div id="comm-out"></div>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">同步调用的隐藏炸弹：级联失败</div>
+      <p>A 同步调 B，B 同步调 C —— C 一卡顿，B 的线程全被占住等待，接着 A 也被拖死，<b>一个服务的故障沿着调用链向上蔓延，全链路雪崩</b>。这就是为什么同步链路要尽量短、必须配超时和熔断（下一节）。</p>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">怎么选</div>
+      <p>问自己一个问题：<b>「调用方需要这个结果才能继续吗？」</b>需要（下单要知道扣款成败）→ 同步；不需要（发短信、记日志、刷缓存）→ 异步。异步的代价是<b>最终一致性</b>——下游晚几秒才知道，且消息可能重复投递，消费端要做<span class="term" data-name="幂等 · Idempotency" data-tip="同一个操作执行一次和执行多次效果相同。消息队列通常保证『至少一次』投递，意味着消息可能重复——消费端要靠唯一 ID 去重，否则一条『扣款』消息重复消费就是事故。">幂等</span>。</p>
+    </div>
+  </section>
+
+  <!-- ============ 05 容错与熔断 ============ -->
+  <section id="resilience">
+    <div class="secnum">05 / RESILIENCE</div>
+    <h2>拥抱失败：<em>熔断器怎么救命</em></h2>
+    <p>单体里函数调用从不"丢包"，微服务里<b>网络故障是日常</b>。容错三件套：<span class="hl">超时</span>（别无限等）、<span class="hl-a">重试</span>（只对读和幂等写，且要加<span class="term" data-name="Exponential Backoff · 指数退避" data-tip="重试间隔逐次翻倍（1s、2s、4s…）并加随机抖动。如果所有调用方同时立刻重试，会把刚要恢复的下游再次打垮——这叫重试风暴。">指数退避</span>）、<span class="hl-r">熔断</span>（连续失败就别再调了）。熔断器是个三状态开关，亲手玩一下👇</p>
+
+    <div class="panel">
+      <div class="panel-label">simulator · 订单服务 → 库存服务（熔断阈值：连续 3 次失败）</div>
+      <div class="cb-state">
+        <div class="cb-node" id="cb-closed">闭合<small>CLOSED · 正常放行</small></div>
+        <span class="svc-arr">→</span>
+        <div class="cb-node" id="cb-open">断开<small>OPEN · 直接拒绝</small></div>
+        <span class="svc-arr">→</span>
+        <div class="cb-node" id="cb-half">半开<small>HALF-OPEN · 放一个试探</small></div>
+      </div>
+      <div class="cb-meta" id="cb-meta"></div>
+      <div class="btnrow">
+        <button class="btn" id="cb-send">发送请求 ▸</button>
+        <button class="btn" id="cb-wait" disabled>等待冷却 ⏲</button>
+        <button class="btn" id="cb-reset">重置 ↺</button>
+        <label class="switch" id="cb-switch">
+          <span class="track"><span class="knob"></span></span>
+          <span class="lbl">库存服务：<b id="cb-health">正常</b></span>
+        </label>
+      </div>
+      <div class="cb-log" id="cb-log"></div>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">试试这条路径</div>
+      <p>① 先发几个请求（成功）→ ② 把库存服务拨到「故障」，连发 3 个失败请求，看熔断器<b>跳闸到 OPEN</b> → ③ 再发请求，发现<b>根本没打到库存服务</b>，是熔断器秒拒的（快速失败，保护双方）→ ④ 点「等待冷却」进入 HALF-OPEN → ⑤ 把服务拨回「正常」再发一个，试探成功，<b>熔断器闭合，恢复正常</b>。</p>
+    </div>
+
+    <div class="callout rose">
+      <div class="t">为什么"直接拒绝"反而是好事</div>
+      <p>下游已经病了，继续把请求砸过去只会<b>让它永远好不了</b>，还把自己的线程全部耗在等待上。熔断的本质是：<b>用一小段时间的快速失败，换下游喘息恢复的机会</b>，同时调用方可以走降级逻辑（返回缓存、默认值、友好提示），而不是整条链路一起卡死。</p>
+    </div>
+  </section>
+
+  <!-- ============ 06 数据与 Saga ============ -->
+  <section id="data">
+    <div class="secnum">06 / DATA &amp; SAGA</div>
+    <h2>最硬的骨头：<em>没有跨服务的事务</em></h2>
+    <p>微服务的铁律：<b>每个服务独占自己的数据库</b>（Database per Service），别的服务想要数据只能走 API——否则你改个表结构要通知全公司，等于没拆。但代价立刻出现：下单要「订单库写订单 + 库存库扣库存 + 支付库扣款」，<b>三个库没法包在一个本地事务里</b>。怎么办？业界主流答案是 <span class="hl">Saga</span>：把大事务拆成一串本地事务，<b>失败时用「补偿操作」把已完成的步骤逆向冲正</b>。两条路径都跑一遍👇</p>
+
+    <div class="panel">
+      <div class="panel-label">simulator · saga：创建订单 → 扣库存 → 扣款</div>
+      <div class="toggle-grp" id="saga-tabs">
+        <button class="active" data-t="0">😊 一切顺利</button>
+        <button data-t="1">💥 支付失败 → 补偿</button>
+      </div>
+      <div class="chatlog" id="saga-log"></div>
+      <div class="btnrow">
+        <button class="btn" id="saga-next">下一步 ▸</button>
+        <button class="btn" id="saga-reset">重置 ↺</button>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">注意：补偿 ≠ 回滚</div>
+      <p>数据库回滚是"假装没发生过"，补偿是<b>用一笔新的逆向操作抵消</b>（扣了库存就加回去，扣了款就退款）。中间态是真实存在过的——别的服务可能已经看到了"库存 -1"。所以 Saga 给的是<span class="term" data-name="最终一致性 · Eventual Consistency" data-tip="不保证任意时刻所有服务的数据都一致，只保证『不再有新写入后，最终会收敛到一致』。微服务里大部分跨服务数据同步都是这个级别。">最终一致性</span>，业务设计要容忍短暂的中间状态。</p>
+    </div>
+
+    <div class="callout blue">
+      <div class="t">配套模式速览</div>
+      <p><b>事件驱动</b>：服务完成本地事务后发布事件（OrderCreated），下游订阅驱动下一步——上面模拟的就是这种"编舞式 Saga"；<b>Outbox 模式</b>：「写库」和「发消息」不是原子的，先把事件写进同库的 outbox 表（同一个本地事务），再由后台进程搬运到消息队列，保证两者不脱节；<b><span class="term" data-name="CQRS" data-tip="命令查询职责分离：写走规范化的主模型，读走专门冗余出来的查询模型（靠事件同步）。跨服务的复杂查询（如『订单列表带商品名和用户昵称』）常用它解决，避免一次查询串调 N 个服务。">CQRS</span></b>：跨服务的复杂查询，靠事件把数据冗余成一张专门的"读表"，别在线串调五个服务拼数据。</p>
+    </div>
+  </section>
+
+  <!-- ============ 07 可观测性与部署 ============ -->
+  <section id="ops">
+    <div class="secnum">07 / OBSERVABILITY &amp; DEPLOY</div>
+    <h2>跑起来之后：<em>看得见，才敢拆</em></h2>
+    <p>一个请求穿过 8 个服务，哪一跳慢了、哪一跳挂了？单体时代 <code>grep</code> 一下日志就行，微服务必须靠<b>可观测性三支柱</b>。点击卡片逐个看👇</p>
+
+    <div class="panel">
+      <div class="panel-label">interactive · 三支柱，各答一类问题</div>
+      <div class="pat-grid" id="obs-grid"></div>
+      <div class="pat-detail" id="obs-detail"></div>
+    </div>
+
+    <div class="callout">
+      <div class="t">部署底座：容器 + 编排</div>
+      <p>几十个服务 × 多个实例，靠人肉部署不现实。标准答案：每个服务打成<b>容器镜像</b>（Docker，环境一致、秒级启动），交给 <b>Kubernetes</b> 编排——它负责调度实例、故障自愈（挂了自动拉起）、滚动升级、按负载自动扩缩容，还内置了服务发现和负载均衡。<b>CI/CD 流水线</b>把"提交代码 → 测试 → 构建镜像 → 上线"全自动化，这是"独立部署"承诺真正兑现的地方。</p>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">微服务成熟度自查</div>
+      <p>敢说自己微服务玩明白了，至少要做到：<b>① 任何服务可以随时独立发布</b>（不用拉群约时间）；<b>② 任何一跳故障不会雪崩</b>（超时/熔断/降级齐全）；<b>③ 任何请求可以一键追踪全链路</b>；<b>④ 新人半天能在本地把一个服务跑起来</b>。做不到的话，痛点清单就是你的路线图。</p>
+    </div>
+  </section>
+
+  <!-- ============ 08 测验 ============ -->
+  <section id="quiz">
+    <div class="secnum">08 / QUIZ</div>
+    <h2>随堂测验：<em>检验一下</em></h2>
+    <p>6 道题，覆盖前面所有章节。答错没关系，解析比答案重要。</p>
+
+    <div class="panel">
+      <div class="panel-label">quiz · 点击选项作答</div>
+      <div id="quiz-list"></div>
+      <div class="quiz-score" id="quiz-score"></div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <a href="/">← back to labs</a> &nbsp;·&nbsp; micro lab · learning-labs
+</footer>
+
+<script>
+/* ================= 03 request journey simulator ================= */
+const jrSteps = [
+  {role:'client', who:'客户端 · APP', node:'client',
+   html:'用户点击「提交订单」：<pre>POST /orders\n{ "sku": "CAM-001", "qty": 1, "user": "u_42" }</pre>'},
+  {role:'gw', who:'API 网关', node:'gw',
+   html:'<span class="body-text">统一入口先干三件事：<b>验 token</b>（你是谁）→ <b>限流</b>（最近请求是不是太猛）→ <b>路由</b>（/orders 归订单服务管）。客户端不知道、也不需要知道后面有多少个服务。</span>'},
+  {role:'svc', who:'订单服务', node:'order',
+   html:'<span class="body-text">通过<b>服务发现</b>拿到库存服务当前的健康实例地址（实例随时在扩缩容，不能写死 IP），发起同步调用：</span><pre>GET inventory-service/stock?sku=CAM-001\n→ { "stock": 12 }   // 有货 ✓</pre>'},
+  {role:'svc', who:'订单服务 → 支付服务 · 同步', node:'dep',
+   html:'<span class="body-text">库存够，落库创建订单（状态 PENDING），再同步调支付——<b>下单成败取决于扣款结果，必须等</b>：</span><pre>POST payment-service/charge\n{ "order_id": "o_888", "amount": 4999 }\n→ { "status": "ok", "txn": "t_123" }  // 扣款成功 ✓</pre>'},
+  {role:'mq', who:'订单服务 → 消息队列 · 异步', node:'mq',
+   html:'<span class="body-text">订单标记 PAID，然后发布一条<b>事件</b>就立刻返回，不等任何人：</span><pre>PUBLISH topic=order.paid\n{ "order_id": "o_888", "sku": "CAM-001", "user": "u_42" }</pre><span class="think">短信服务、推荐系统、数据仓库各自订阅这个 topic，什么时候消费是它们的事——晚 3 秒发短信没人在乎，但能让下单接口快 200ms。</span>'},
+  {role:'ok', who:'响应返回', node:'client',
+   html:'<span class="body-text"><b>201 Created，全程 ~180ms。</b>这条链路上：网关收口了认证限流，服务发现解决了"对方在哪"，关键依赖走同步、非关键依赖走异步。<br><br><span class="think">但是——如果第 3 步库存服务挂了呢？如果第 4 步扣款失败、库存已经扣了呢？这正是第 05、06 节要解决的问题。</span></span>'}
+];
+let jrIdx = 0;
+const jrLog = document.getElementById('jr-log');
+const jrNext = document.getElementById('jr-next');
+function jrLight(node){
+  document.querySelectorAll('.svc-node').forEach(n=>
+    n.classList.toggle('lit', n.dataset.sn === node));
+}
+jrNext.addEventListener('click', ()=>{
+  if(jrIdx >= jrSteps.length) return;
+  const s = jrSteps[jrIdx++];
+  const d = document.createElement('div');
+  d.className = 'msg ' + s.role;
+  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+  jrLog.appendChild(d);
+  jrLight(s.node);
+  if(jrIdx >= jrSteps.length){
+    jrNext.disabled = true;
+    jrNext.textContent = '请求完成 ✓';
+  }
+});
+document.getElementById('jr-reset').addEventListener('click', ()=>{
+  jrIdx = 0; jrLog.innerHTML = '';
+  jrNext.disabled = false; jrNext.textContent = '下一步 ▸';
+  jrLight(null);
+});
+
+/* ================= 04 sync vs async demo ================= */
+const commCases = [
+  {note:'打电话模式：订单服务亲自逐个通知，每个下游都要等——任何一个慢/挂，下单接口跟着慢/挂',
+   code:'<span class="c">// 订单服务内部（伪代码）</span>\n<span class="k">function</span> <span class="n">createOrder</span>(req) {\n  db.save(order)                  <span class="c">// 1. 落库</span>\n  sms.send(order)        <span class="c">// 2. 等短信服务响应… 300ms</span>\n  recommend.feed(order)  <span class="c">// 3. 等推荐系统响应… 200ms</span>\n  warehouse.fetch(order) <span class="c">// 4. 等仓库系统响应… 500ms</span>\n  <span class="k">return</span> <span class="s">"ok"</span>            <span class="c">// 用户等了 1 秒+</span>\n}\n\n<span class="c">// 加新下游 = 改订单服务代码 = 订单服务认识每个下游</span>\n<span class="c">// 这叫"知道太多"，耦合都在调用方身上</span>'},
+  {note:'发消息模式：订单服务发布事件就返回，谁关心谁订阅——加新下游不用改订单服务一行代码',
+   code:'<span class="c">// 订单服务内部（伪代码）</span>\n<span class="k">function</span> <span class="n">createOrder</span>(req) {\n  db.save(order)                       <span class="c">// 1. 落库</span>\n  mq.publish(<span class="s">"order.created"</span>, order)  <span class="c">// 2. 发事件，~5ms</span>\n  <span class="k">return</span> <span class="s">"ok"</span>                         <span class="c">// 立刻返回</span>\n}\n\n<span class="c">// 各下游自己订阅，订单服务根本不知道它们存在</span>\nsms.subscribe(<span class="s">"order.created"</span>, ...)\nrecommend.subscribe(<span class="s">"order.created"</span>, ...)\nwarehouse.subscribe(<span class="s">"order.created"</span>, ...)\n\n<span class="c">// 代价：下游"晚一点"才知道（最终一致）；</span>\n<span class="c">// 消息可能重复投递，消费端必须幂等（按 order_id 去重）</span>'}
+];
+const commTabs = document.getElementById('comm-tabs');
+const commOut = document.getElementById('comm-out');
+function renderComm(i){
+  commOut.innerHTML =
+    '<p style="font-size:14px;margin-bottom:0">'+commCases[i].note+'</p>' +
+    '<div class="codeblock">'+commCases[i].code+'</div>';
+}
+commTabs.addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  commTabs.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  renderComm(+b.dataset.t);
+});
+renderComm(0);
+
+/* ================= 05 circuit breaker simulator ================= */
+const CB = { state:'closed', fails:0, healthy:true, THRESHOLD:3 };
+const cbLog = document.getElementById('cb-log');
+const cbMeta = document.getElementById('cb-meta');
+const cbSend = document.getElementById('cb-send');
+const cbWait = document.getElementById('cb-wait');
+const cbSwitch = document.getElementById('cb-switch');
+const cbHealth = document.getElementById('cb-health');
+let cbReq = 0;
+
+function cbRender(){
+  document.getElementById('cb-closed').className = 'cb-node' + (CB.state==='closed' ? ' on-closed' : '');
+  document.getElementById('cb-open').className   = 'cb-node' + (CB.state==='open'   ? ' on-open'   : '');
+  document.getElementById('cb-half').className   = 'cb-node' + (CB.state==='half'   ? ' on-half'   : '');
+  const names = {closed:'CLOSED 闭合', open:'OPEN 断开', half:'HALF-OPEN 半开'};
+  cbMeta.innerHTML = '当前状态 <b>'+names[CB.state]+'</b> · 连续失败 <b>'+CB.fails+' / '+CB.THRESHOLD+'</b>';
+  cbWait.disabled = CB.state !== 'open';
+}
+function cbLine(cls, text){
+  const d = document.createElement('div');
+  d.className = 'cb-line ' + cls;
+  d.textContent = text;
+  cbLog.prepend(d);
+}
+cbSwitch.addEventListener('click', ()=>{
+  CB.healthy = !CB.healthy;
+  cbSwitch.classList.toggle('down', !CB.healthy);
+  cbHealth.textContent = CB.healthy ? '正常' : '故障';
+  cbLine('info', '⚙ 库存服务被拨为「' + (CB.healthy ? '正常' : '故障') + '」');
+});
+cbSend.addEventListener('click', ()=>{
+  cbReq++;
+  if(CB.state === 'open'){
+    cbLine('fast', '#'+cbReq+' ⚡ 熔断器 OPEN → 直接拒绝（请求没有发往库存服务），走降级：返回缓存库存');
+    return;
+  }
+  if(CB.state === 'half'){
+    if(CB.healthy){
+      CB.state = 'closed'; CB.fails = 0;
+      cbLine('ok', '#'+cbReq+' ✓ 试探请求成功 → 下游恢复了！熔断器闭合（HALF-OPEN → CLOSED）');
+    } else {
+      CB.state = 'open';
+      cbLine('fail', '#'+cbReq+' ✗ 试探请求失败 → 还没好，继续断开（HALF-OPEN → OPEN）');
+    }
+    cbRender(); return;
+  }
+  /* closed */
+  if(CB.healthy){
+    CB.fails = 0;
+    cbLine('ok', '#'+cbReq+' ✓ 200 OK · 库存查询成功，42ms');
+  } else {
+    CB.fails++;
+    if(CB.fails >= CB.THRESHOLD){
+      CB.state = 'open';
+      cbLine('fail', '#'+cbReq+' ✗ 超时（2000ms）· 连续失败达到 '+CB.THRESHOLD+' 次 → 跳闸！（CLOSED → OPEN）');
+    } else {
+      cbLine('fail', '#'+cbReq+' ✗ 超时（2000ms）· 连续失败 '+CB.fails+' 次');
+    }
+  }
+  cbRender();
+});
+cbWait.addEventListener('click', ()=>{
+  if(CB.state !== 'open') return;
+  CB.state = 'half'; CB.fails = 0;
+  cbLine('info', '⏲ 冷却时间（30s）到 → 进入 HALF-OPEN，下一个请求作为试探放行');
+  cbRender();
+});
+document.getElementById('cb-reset').addEventListener('click', ()=>{
+  CB.state = 'closed'; CB.fails = 0; CB.healthy = true; cbReq = 0;
+  cbSwitch.classList.remove('down');
+  cbHealth.textContent = '正常';
+  cbLog.innerHTML = '';
+  cbRender();
+});
+cbRender();
+
+/* ================= 06 saga stepper ================= */
+const sagaHappy = [
+  {role:'svc', who:'① 订单服务 · 本地事务',
+   html:'<span class="body-text">在<b>自己的数据库</b>里创建订单，状态 <b>PENDING</b>，提交本地事务，发布事件：</span><pre>PUBLISH order.created { order_id: "o_888" }</pre>'},
+  {role:'svc', who:'② 库存服务 · 本地事务',
+   html:'<span class="body-text">订阅到 order.created，在<b>自己的数据库</b>里扣减库存（12 → 11），提交，发布：</span><pre>PUBLISH stock.reserved { order_id: "o_888" }</pre>'},
+  {role:'svc', who:'③ 支付服务 · 本地事务',
+   html:'<span class="body-text">订阅到 stock.reserved，执行扣款 ¥4999，成功，发布：</span><pre>PUBLISH payment.completed { order_id: "o_888" }</pre>'},
+  {role:'ok', who:'④ 订单服务 · 收尾',
+   html:'<span class="body-text">订阅到 payment.completed，把订单标记为 <b>PAID</b>。<br><br><span class="think">三个库、三个本地事务，由事件串成一条链——没有任何跨库的锁，每一步都只动自己的数据。</span></span>'}
+];
+const sagaSad = [
+  {role:'svc', who:'① 订单服务 · 本地事务',
+   html:'<span class="body-text">创建订单，状态 <b>PENDING</b>，发布 <code>order.created</code>。</span>'},
+  {role:'svc', who:'② 库存服务 · 本地事务',
+   html:'<span class="body-text">扣减库存（12 → 11），发布 <code>stock.reserved</code>。<br><span class="think">注意：这次扣减是真实提交了的，别的请求此刻看到的库存就是 11。</span></span>'},
+  {role:'bad', who:'③ 支付服务 · 失败！',
+   html:'<span class="body-text">扣款被银行拒绝（余额不足）。<b>没有跨库事务可以回滚前两步</b>——它们早就各自提交了。支付服务发布失败事件：</span><pre>PUBLISH payment.failed { order_id: "o_888", reason: "insufficient" }</pre>'},
+  {role:'svc', who:'④ 库存服务 · 补偿事务',
+   html:'<span class="body-text">订阅到 payment.failed，执行<b>补偿</b>：把库存加回去（11 → 12）。这不是回滚，是一笔新的逆向操作。</span>'},
+  {role:'ok', who:'⑤ 订单服务 · 补偿收尾',
+   html:'<span class="body-text">把订单标记为 <b>CANCELLED</b>，给用户返回「支付失败」。<br><br><span class="think">在第 ② 步到第 ④ 步之间，系统短暂处于"库存扣了但单子最终没成"的中间态——Saga 给的是最终一致，业务要能容忍这几秒。</span></span>'}
+];
+let sagaMode = 0, sagaIdx = 0;
+const sagaLog = document.getElementById('saga-log');
+const sagaNext = document.getElementById('saga-next');
+const sagaTabs = document.getElementById('saga-tabs');
+function sagaReset(){
+  sagaIdx = 0; sagaLog.innerHTML = '';
+  sagaNext.disabled = false; sagaNext.textContent = '下一步 ▸';
+}
+sagaTabs.addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  sagaTabs.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  sagaMode = +b.dataset.t;
+  sagaReset();
+});
+sagaNext.addEventListener('click', ()=>{
+  const steps = sagaMode ? sagaSad : sagaHappy;
+  if(sagaIdx >= steps.length) return;
+  const s = steps[sagaIdx++];
+  const d = document.createElement('div');
+  d.className = 'msg ' + s.role;
+  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+  sagaLog.appendChild(d);
+  if(sagaIdx >= steps.length){
+    sagaNext.disabled = true;
+    sagaNext.textContent = sagaMode ? '补偿完成 ✓' : 'Saga 完成 ✓';
+  }
+});
+document.getElementById('saga-reset').addEventListener('click', sagaReset);
+
+/* ================= 07 observability pillars ================= */
+const obsPillars = [
+  {icon:'📝', name:'日志 Logs', tag:'发生了什么',
+   flow:'[order-svc] trace=a1b2 ERROR charge failed: timeout after 2000ms',
+   d:'每个服务输出<b>结构化日志</b>（JSON 而不是随手 print），统一收集到 ELK / Loki 这类中央平台。关键纪律：每条日志都带上 <b>trace_id</b>，这样才能把分散在 8 个服务里的同一次请求的日志串起来检索。',
+   when:'回答 · 这个报错的现场细节是什么？'},
+  {icon:'📈', name:'指标 Metrics', tag:'趋势怎么样',
+   flow:'order-svc  QPS=1.2k  p99=340ms  error_rate=0.02%  ▁▂▃▅▇',
+   d:'数值化的时间序列：QPS、延迟分位数（p99 比平均值诚实得多）、错误率、资源占用，由 Prometheus 抓取、Grafana 展示。指标是<b>告警的依据</b>——"支付服务错误率连续 5 分钟 > 1%" 应该在用户投诉之前叫醒值班的人。',
+   when:'回答 · 系统现在健康吗？在变坏吗？'},
+  {icon:'🔍', name:'链路追踪 Traces', tag:'慢在哪一跳',
+   flow:'gateway ──┬ order-svc 30ms\n           ├ inventory  41ms\n           └ payment   612ms ⚠ ← 慢在这',
+   d:'请求进入系统时生成全局 <b>trace_id</b>，沿着调用链一路透传，每一跳记录自己的耗时（span），最后拼成一棵瀑布图（Jaeger / Zipkin / SkyWalking）。这是微服务排障的<b>杀手锏</b>：一眼看出 8 跳里哪一跳是瓶颈。',
+   when:'回答 · 这个慢请求的时间花在了哪？'}
+];
+const obsGrid = document.getElementById('obs-grid');
+const obsDetail = document.getElementById('obs-detail');
+obsPillars.forEach((p,i)=>{
+  const el = document.createElement('button');
+  el.className = 'pat-card';
+  el.innerHTML = '<div class="pi">'+p.icon+'</div><div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>';
+  el.addEventListener('click', ()=>{
+    obsGrid.querySelectorAll('.pat-card').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    obsDetail.innerHTML = '<div class="flow">'+p.flow+'</div>'+p.d+
+      '<div class="when">它回答的问题</div>'+p.when;
+  });
+  obsGrid.appendChild(el);
+  if(i===0) el.click();
+});
+
+/* ================= 08 quiz ================= */
+const quiz = [
+  {q:'微服务架构解决的最核心问题是？',
+   opts:['让代码跑得更快','让多个团队能互不阻塞地并行开发、独立发布','省服务器钱','让系统永不宕机'],
+   ans:1,
+   exp:'微服务的本质收益是<b>组织扩展性</b>：服务边界隔离了团队之间的耦合，各自独立发布。性能反而常常变差（函数调用变成了网络调用），成本和复杂度都是上升的。'},
+  {q:'把系统拆成「Controller 服务 + Service 服务 + DAO 服务」三层，问题在哪？',
+   opts:['没问题，分层是好实践','服务数量太少','任何一个需求都要同时改三个服务、一起发布——这是分布式单体','DAO 不应该独立部署，其他没问题'],
+   ans:2,
+   exp:'拆分要<b>沿业务能力垂直切</b>，不能沿技术分层水平切。按层拆的结果是每个需求都横跨所有服务，部署被互相锁死，只得到微服务的复杂度，没得到任何独立性——业界叫它<b>分布式单体</b>。'},
+  {q:'下单时要扣款（结果决定下单成败）和发短信通知（晚几秒没关系），通信方式应该怎么选？',
+   opts:['都用同步调用，保证可靠','都用消息队列，保证解耦','扣款同步调用，短信走消息队列','扣款走消息队列，短信同步调用'],
+   ans:2,
+   exp:'判断标准是「<b>调用方需要这个结果才能继续吗？</b>」扣款的结果决定订单成败，必须同步等；短信不影响主流程，异步发事件即可——还能让下单接口更快、与短信服务解耦。'},
+  {q:'熔断器跳闸（OPEN）之后，对下游服务的请求会怎样？',
+   opts:['排队等待下游恢复','被熔断器直接拒绝、走降级逻辑，根本不发往下游','自动重试三次','转发给别的服务处理'],
+   ans:1,
+   exp:'OPEN 状态的意义就是<b>快速失败</b>：请求在调用方本地被秒拒（可走降级：缓存、默认值、友好提示），不再砸向已经故障的下游——既保护下游喘息恢复，也避免自己的线程被等待耗尽引发雪崩。'},
+  {q:'Saga 中支付失败后，已经扣掉的库存怎么处理？',
+   opts:['数据库自动回滚到扣减之前','执行一笔补偿事务：把库存加回去','不管它，反正最终一致','把支付服务重启一遍'],
+   ans:1,
+   exp:'跨服务<b>没有统一的事务可以回滚</b>——库存服务的本地事务早已提交。Saga 的答案是<b>补偿</b>：用一笔新的逆向操作（库存 +1）抵消之前的操作。中间态真实存在过，所以是最终一致而非强一致。'},
+  {q:'一个请求穿过 8 个服务后变慢了，想知道慢在哪一跳，应该看哪个？',
+   opts:['日志 Logs','指标 Metrics','链路追踪 Traces','CPU 使用率'],
+   ans:2,
+   exp:'<b>链路追踪</b>用全局 trace_id 把一次请求在每个服务里的耗时（span）拼成瀑布图，哪一跳是瓶颈一目了然。日志答"现场细节"，指标答"整体趋势"，三者互补但定位单请求慢点靠 trace。'}
+];
+const quizList = document.getElementById('quiz-list');
+const quizScore = document.getElementById('quiz-score');
+let answered = 0, correct = 0;
+quiz.forEach((item,qi)=>{
+  const qd = document.createElement('div');
+  qd.className = 'quiz-q';
+  qd.innerHTML = '<div class="qt"><span class="qn">Q'+(qi+1)+'</span>'+item.q+'</div>';
+  const opts = document.createElement('div');
+  opts.className = 'quiz-opts';
+  const exp = document.createElement('div');
+  exp.className = 'quiz-exp';
+  exp.innerHTML = item.exp;
+  item.opts.forEach((o,oi)=>{
+    const b = document.createElement('button');
+    b.textContent = String.fromCharCode(65+oi) + '. ' + o;
+    b.addEventListener('click', ()=>{
+      if(qd.dataset.done) return;
+      qd.dataset.done = '1';
+      answered++;
+      if(oi === item.ans){ b.classList.add('right'); correct++; }
+      else {
+        b.classList.add('wrong');
+        opts.children[item.ans].classList.add('right');
+      }
+      exp.style.display = 'block';
+      quizScore.innerHTML = '得分 <b>'+correct+' / '+answered+'</b>' +
+        (answered === quiz.length
+          ? (correct === quiz.length ? ' 🎉 全对！可以去画你们系统的服务边界了'
+             : correct >= 4 ? ' 👍 不错，回头看看错题的解析'
+             : ' 💪 建议从第 01 节再过一遍')
+          : '');
+    });
+    opts.appendChild(b);
+  });
+  qd.appendChild(opts);
+  qd.appendChild(exp);
+  quizList.appendChild(qd);
+});
+</script>
+</body>
+</html>
