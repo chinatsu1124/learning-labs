@@ -1,15 +1,19 @@
 /* secnav.js — 右侧滚动进度导航（共享组件）
- * 自动从页面的 section[id] + .secnum 生成圆点导航：当前章节高亮、hover 显示章节名、点击平滑跳转。
- * 强调色自动取第一个 .secnum 的文字颜色，无需配置；不足 2 个章节或窄屏（<1100px）不显示。
+ * 自动从页面的 section 生成圆点导航：当前章节高亮、hover 显示章节名、点击平滑跳转。
+ * 章节名取 section 的 .secnum 文本，或 data-nav 属性（适配无 secnum 结构的页面）。
+ * 强调色优先取 :root 的 --secnav-accent，否则取第一个 .secnum 的文字颜色。
+ * 不足 2 个章节或窄屏（<1100px）不显示。
  * 用法：<script defer src="/assets/secnav.js"></script>
  */
 (() => {
   function init() {
-    const secs = [...document.querySelectorAll('section')]
-      .filter(s => s.querySelector('.secnum'));
+    const label = s => s.dataset.nav || s.querySelector('.secnum')?.textContent.trim();
+    const secs = [...document.querySelectorAll('section')].filter(label);
     if (secs.length < 2) return;
     secs.forEach((s, i) => { if (!s.id) s.id = 'sec-' + (i + 1); });
-    const accent = getComputedStyle(secs[0].querySelector('.secnum')).color;
+    const firstNum = secs.map(s => s.querySelector('.secnum')).find(Boolean);
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--secnav-accent').trim()
+      || (firstNum ? getComputedStyle(firstNum).color : '#8aa9ff');
 
     const style = document.createElement('style');
     style.textContent = `
@@ -33,7 +37,7 @@
     secs.forEach(s => {
       const a = document.createElement('a');
       a.href = '#' + s.id;
-      a.dataset.name = s.querySelector('.secnum').textContent.trim();
+      a.dataset.name = label(s);
       nav.appendChild(a);
     });
     document.body.appendChild(nav);

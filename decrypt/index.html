@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="/assets/fonts.css">
 <link rel="stylesheet" href="/assets/base.css">
 <script defer src="/assets/term.js"></script>
+<script defer src="/assets/secnav.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
 <style>
@@ -31,6 +32,8 @@
   --danger:#ff6f5e;       /* 不安全/破解：珊瑚红 */
   --danger-soft:rgba(255,111,94,.12);
   --violet:#9a8cff;       /* 非对称强调 */
+  --secnav-accent:#43e0c8;   /* 右侧进度导航强调色 = 密文青 */
+  --panel:var(--surface);    /* 共享组件 tooltip 底色别名 */
   --mono:'JetBrains Mono',ui-monospace,monospace;
   --disp:'Space Grotesk',var(--han),sans-serif;
   --han:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
@@ -51,7 +54,7 @@ a{color:var(--cipher);text-decoration:none}
 
 /* ---- 布局骨架 ---- */
 .wrap{max-width:980px;margin:0 auto;padding:0 24px}
-section{padding:90px 0;border-top:1px solid var(--line-soft)}
+section{padding:90px 0;border-top:1px solid transparent;border-image:linear-gradient(90deg,var(--line-soft),transparent) 1}
 section:first-of-type{border-top:none}
 
 /* ---- 顶栏 ---- */
@@ -324,7 +327,7 @@ footer b{color:var(--plain-dim);font-weight:400}
 </div></header>
 
 <!-- ============ 概念 ============ -->
-<section id="concept"><div class="wrap">
+<section id="concept" data-nav="三种范式"><div class="wrap">
   <div class="kicker">先分清楚 · The Three Paradigms</div>
   <h2>加密，<span class="han">大致只有三种思路</span></h2>
   <p class="sub">几乎所有你听过的算法都能归进这三类。先建立这张地图，后面每个算法都能立刻对号入座。</p>
@@ -355,7 +358,7 @@ footer b{color:var(--plain-dim);font-weight:400}
 </div></section>
 
 <!-- ============ 凯撒 + 维吉尼亚 ============ -->
-<section id="caesar"><div class="wrap">
+<section id="caesar" data-nav="古典 · Caesar & Vigenère"><div class="wrap">
   <div class="algo-head">
     <span class="badge sym">古典 · 替换密码</span>
     <h2 style="margin:0">Caesar &amp; Vigenère</h2>
@@ -395,7 +398,7 @@ footer b{color:var(--plain-dim);font-weight:400}
 </div></section>
 
 <!-- ============ AES ============ -->
-<section id="aes"><div class="wrap">
+<section id="aes" data-nav="对称 · AES"><div class="wrap">
   <div class="algo-head">
     <span class="badge sym">对称 · 现代主力</span>
     <h2 style="margin:0">AES</h2>
@@ -424,7 +427,7 @@ footer b{color:var(--plain-dim);font-weight:400}
 </div></section>
 
 <!-- ============ RSA ============ -->
-<section id="rsa"><div class="wrap">
+<section id="rsa" data-nav="非对称 · RSA"><div class="wrap">
   <div class="algo-head">
     <span class="badge asym">非对称 · 公钥</span>
     <h2 style="margin:0">RSA</h2>
@@ -453,7 +456,7 @@ footer b{color:var(--plain-dim);font-weight:400}
 </div></section>
 
 <!-- ============ 哈希 ============ -->
-<section id="hash"><div class="wrap">
+<section id="hash" data-nav="哈希 · SHA-256"><div class="wrap">
   <div class="algo-head">
     <span class="badge hash">不可逆 · 摘要</span>
     <h2 style="margin:0">SHA-256</h2>
@@ -484,7 +487,7 @@ footer b{color:var(--plain-dim);font-weight:400}
 </div></section>
 
 <!-- ============ Diffie-Hellman ============ -->
-<section id="dh"><div class="wrap">
+<section id="dh" data-nav="密钥交换 · DH"><div class="wrap">
   <div class="algo-head">
     <span class="badge asym">非对称 · 密钥交换</span>
     <h2 style="margin:0">Diffie–Hellman</h2>
@@ -525,7 +528,7 @@ footer b{color:var(--plain-dim);font-weight:400}
 </div></section>
 
 <!-- ============ 对比表 ============ -->
-<section id="cmp"><div class="wrap">
+<section id="cmp" data-nav="速查表"><div class="wrap">
   <div class="kicker">速查 · Cheat Sheet</div>
   <h2><span class="han">一张表收尾</span></h2>
   <table class="cmp">
