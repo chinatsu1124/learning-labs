@@ -13,6 +13,7 @@
 | `/net-lab/` | 网络实验室 | 计算机网络（分层/封装/IP/TCP/DNS/HTTP） |
 | `/pm-lab/` | 产品实验室 | 产品经理 & 产品运营（RICE/KANO/AARRR/AB 实验） |
 | `/agent-lab/` | 智能体实验室 | AI Agent（循环/工具调用/上下文/ReAct/RAG/MCP） |
+| `/micro-lab/` | 微服务实验室 | 微服务（拆分/网关/同步异步/熔断/Saga/可观测性） |
 
 ## 加新 lab
 
