@@ -6,22 +6,21 @@
 
 ## labs
 
-| path | title | topic |
-|---|---|---|
-| `/decrypt/` | 解密台 | 常见加密算法（凯撒/AES/RSA/Hash/DH） |
-| `/byte-lab/` | 字节实验室 | 字节、编码、表示形式 |
-| `/net-lab/` | 网络实验室 | 计算机网络（分层/封装/IP/TCP/DNS/HTTP） |
-| `/pm-lab/` | 产品实验室 | 产品经理 & 产品运营（RICE/KANO/AARRR/AB 实验） |
-| `/agent-lab/` | 智能体实验室 | AI Agent（循环/工具调用/上下文/ReAct/RAG/MCP） |
-| `/micro-lab/` | 微服务实验室 | 微服务（拆分/网关/同步异步/熔断/Saga/可观测性） |
+lab 列表的单一数据源是根目录的 [`labs.json`](labs.json)，首页卡片、tag 筛选和搜索都从它渲染，README 不再重复维护一份。
 
 ## 加新 lab
 
 1. `mkdir <slug>/` 放入 `index.html`（以及需要的 js/css/资源）
    - 头部引入共用资源：`/assets/base.css`（最小 reset）、`/assets/fonts.css`（自托管字体）、`/assets/term.js`（术语 tooltip）
    - 记得加 `<meta name="description">`、og 标签和 favicon（参考现有 lab 的 `<head>`）
-2. 在根 `index.html` 的 `.grid` 区块加一张 card，并在 lab 页脚加上回首页的链接（计数会自动统计，不用改）
-3. `git push` —— Cloudflare Pages 自动构建上线（CI 会先跑内链检查）
+2. 在 `labs.json` 的 `labs` 数组末尾加一条（`path` / `tag` / `title` / `sub` / `topics`），并在 lab 页脚加上回首页的链接。首页卡片、计数、tag 筛选会自动生成，不用改 `index.html`
+   - `tag` 是首页筛选用的一级分类，尽量复用已有的（crypto / encoding / networking / product / ai / backend），实在不合适再新增
+3. `git push` —— Cloudflare Pages 自动构建上线（CI 会先跑内链检查，包括 `labs.json` 里每个 `path` 是否存在）
+
+## lab 内容做深了怎么拆
+
+- 同一主题继续深入 → 在 lab 目录下加子页（如 `/net-lab/tcp/index.html`），原章节末尾放"深入 →"链接
+- 能独立成站的 → 按上面流程拆成新 lab，新旧两边互相链接
 
 ## 共用资源（`/assets/`）
 
