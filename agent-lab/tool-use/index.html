@@ -223,8 +223,7 @@
   .quiz-score b{color:var(--amber);font-size:20px}
 
   /* ---------- siblings nav ---------- */
-  .sib-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  @media(max-width:680px){.sib-grid{grid-template-columns:1fr}}
+  .sib-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
   .sib{display:block;background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;
     padding:18px;text-decoration:none;transition:all .18s}
   .sib:hover{border-color:var(--amber)}
@@ -478,6 +477,11 @@
         <div class="sn">架构模式</div>
         <div class="sd">ReAct 失败案例、重规划回路、Reflection 收益、多智能体拓扑与选型</div>
         <div class="sl">deep dive 03 →</div>
+      </a>
+      <a class="sib" href="/agent-lab/memory/">
+        <div class="sn">记忆与检索</div>
+        <div class="sd">三种记忆类型、写入蒸馏管线、RAG 检索全流程与记忆维护</div>
+        <div class="sl">deep dive 04 →</div>
       </a>
     </div>
   </section>

@@ -217,6 +217,13 @@
   .fail-detail .fix{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--teal);
     text-transform:uppercase;margin-top:12px;margin-bottom:2px}
 
+  /* ---------- deeper link ---------- */
+  .deeper{display:block;margin-top:22px;font-family:var(--mono);font-size:13px;color:var(--violet);
+    text-decoration:none;border:1px dashed var(--line);border-radius:10px;padding:13px 18px;
+    transition:all .18s;line-height:1.7}
+  .deeper:hover{border-color:var(--violet);background:var(--violet-dim)}
+  .deeper small{display:block;color:var(--faint);font-size:11.5px}
+
   /* ---------- quiz ---------- */
   .quiz-q{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
   .quiz-q .qt{font-size:15px;color:var(--ink);margin-bottom:12px;font-weight:600}
@@ -234,8 +241,7 @@
   .quiz-score b{color:var(--violet);font-size:20px}
 
   /* ---------- siblings nav ---------- */
-  .sib-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  @media(max-width:680px){.sib-grid{grid-template-columns:1fr}}
+  .sib-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
   .sib{display:block;background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;
     padding:18px;text-decoration:none;transition:all .18s}
   .sib:hover{border-color:var(--violet)}
@@ -367,6 +373,8 @@
       <div class="t">什么时候写长期记忆</div>
       <p>两种触发：<b>显式</b>——用户说"记住我用 pnpm 不用 npm"，立刻写；<b>隐式</b>——会话结束/压缩前，让模型自问"这次有什么值得下次记住的"，蒸馏成几行再存。<b>原文全存是反模式</b>：存得越糙，将来检索回来的噪音越多。</p>
     </div>
+
+    <a class="deeper" href="/agent-lab/memory/">深入 → 记忆与检索子教程<small>分层讲完了，去看管线：三种记忆类型、写入蒸馏与冲突处理、RAG 检索全流程与记忆维护</small></a>
   </section>
 
   <!-- ============ 05 失效模式 ============ -->
@@ -414,6 +422,11 @@
         <div class="sn">架构模式</div>
         <div class="sd">ReAct 失败案例、重规划回路、Reflection 收益、多智能体拓扑与选型</div>
         <div class="sl">deep dive 03 →</div>
+      </a>
+      <a class="sib" href="/agent-lab/memory/">
+        <div class="sn">记忆与检索</div>
+        <div class="sd">三种记忆类型、写入蒸馏管线、RAG 检索全流程与记忆维护</div>
+        <div class="sl">deep dive 04 →</div>
       </a>
     </div>
   </section>
