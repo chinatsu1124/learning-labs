@@ -38,6 +38,25 @@ for (const file of htmlFiles(ROOT)) {
   }
 }
 
+/* labs.json 是首页卡片的数据源（JS 渲染，上面的 href 扫描覆盖不到），单独校验 */
+{
+  const labsFile = join(ROOT, 'labs.json');
+  const { labs } = JSON.parse(readFileSync(labsFile, 'utf8'));
+  for (const lab of labs) {
+    const required = ['path', 'tag', 'title', 'sub', 'topics'];
+    for (const key of required) {
+      if (!lab[key] || (key === 'topics' && !lab[key].length)) {
+        console.error(`✗ labs.json → ${lab.path || '(no path)'} 缺少字段: ${key}`);
+        errors++;
+      }
+    }
+    if (lab.path && !existsSync(join(ROOT, lab.path, 'index.html'))) {
+      console.error(`✗ labs.json → ${lab.path} (missing: ${lab.path.slice(1)}index.html)`);
+      errors++;
+    }
+  }
+}
+
 if (errors) {
   console.error(`\n${errors} broken link(s).`);
   process.exit(1);

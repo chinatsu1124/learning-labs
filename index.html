@@ -92,6 +92,27 @@
   .card[data-accent="amber"] .card-foot .go{color:var(--accent-2)}
   .card[data-accent="blue"] .card-foot .go{color:var(--accent-3)}
 
+  /* filter bar */
+  .filters{display:flex;gap:10px;margin:0 0 16px;flex-wrap:wrap;align-items:center}
+  .filters .tags{display:flex;gap:6px;flex-wrap:wrap}
+  .tag-btn{
+    font-family:inherit;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--muted);background:transparent;border:1px solid var(--line-2);
+    padding:4px 9px;border-radius:2px;cursor:pointer;
+    transition:color .15s ease, border-color .15s ease;
+  }
+  .tag-btn:hover{color:var(--ink);border-color:var(--faint)}
+  .tag-btn.on{color:var(--bg);background:var(--accent);border-color:var(--accent)}
+  .search{
+    flex:1;min-width:180px;max-width:300px;margin-left:auto;
+    font-family:inherit;font-size:12px;color:var(--ink);
+    background:var(--bg-2);border:1px solid var(--line);border-radius:2px;
+    padding:6px 10px;outline:none;
+  }
+  .search::placeholder{color:var(--faint)}
+  .search:focus{border-color:var(--accent)}
+  .no-hit{color:var(--faint);font-size:12px;padding:24px 0;display:none}
+
   /* placeholder card */
   .card.placeholder{border-style:dashed;background:transparent;cursor:default;color:var(--faint)}
   .card.placeholder:hover{transform:none;background:transparent;border-color:var(--line)}
@@ -139,98 +160,15 @@
       <span class="count" id="lab-count"></span>
     </div>
 
-    <div class="grid">
-      <a class="card" href="/decrypt/">
-        <div class="card-row">
-          <span class="card-path">/decrypt/</span>
-          <span class="card-tag">crypto</span>
-        </div>
-        <div class="card-title">解密台</div>
-        <div class="card-sub">凯撒、AES、RSA、Hash、Diffie-Hellman —— 常见加密算法的可视化演示与暴力破解工具。</div>
-        <div class="card-foot">
-          <div class="topics"><span>caesar</span><span>aes</span><span>rsa</span><span>hash</span><span>dh</span></div>
-          <span class="go">open →</span>
-        </div>
-      </a>
-
-      <a class="card" href="/byte-lab/" data-accent="amber">
-        <div class="card-row">
-          <span class="card-path">/byte-lab/</span>
-          <span class="card-tag">encoding</span>
-        </div>
-        <div class="card-title">字节实验室</div>
-        <div class="card-sub">字节、编码、表示形式的拆解 —— 看见数据在内存里到底长什么样。</div>
-        <div class="card-foot">
-          <div class="topics"><span>bytes</span><span>encoding</span><span>binary</span></div>
-          <span class="go">open →</span>
-        </div>
-      </a>
-
-      <a class="card" href="/net-lab/" data-accent="blue">
-        <div class="card-row">
-          <span class="card-path">/net-lab/</span>
-          <span class="card-tag">networking</span>
-        </div>
-        <div class="card-title">网络实验室</div>
-        <div class="card-sub">分层模型、封装、IP 子网、TCP 握手、DNS、HTTP —— 交互式走完一次完整的网页加载。</div>
-        <div class="card-foot">
-          <div class="topics"><span>tcp/ip</span><span>dns</span><span>http</span><span>subnet</span></div>
-          <span class="go">open →</span>
-        </div>
-      </a>
-
-      <a class="card" href="/pm-lab/">
-        <div class="card-row">
-          <span class="card-path">/pm-lab/</span>
-          <span class="card-tag">product</span>
-        </div>
-        <div class="card-title">产品实验室</div>
-        <div class="card-sub">产品经理与产品运营的入门教程 —— RICE 计算器、KANO 练习、AARRR 漏斗与 A/B 实验模拟。</div>
-        <div class="card-foot">
-          <div class="topics"><span>pm</span><span>ops</span><span>rice</span><span>aarrr</span><span>ab-test</span></div>
-          <span class="go">open →</span>
-        </div>
-      </a>
-
-      <a class="card" href="/agent-lab/" data-accent="amber">
-        <div class="card-row">
-          <span class="card-path">/agent-lab/</span>
-          <span class="card-tag">ai</span>
-        </div>
-        <div class="card-title">智能体实验室</div>
-        <div class="card-sub">AI Agent 入门教程 —— Agent 循环模拟器、工具调用拆解、上下文剖析、ReAct 等架构模式与安全护栏。</div>
-        <div class="card-foot">
-          <div class="topics"><span>agent</span><span>tool-use</span><span>react</span><span>rag</span><span>mcp</span></div>
-          <span class="go">open →</span>
-        </div>
-      </a>
-
-      <a class="card" href="/micro-lab/" data-accent="blue">
-        <div class="card-row">
-          <span class="card-path">/micro-lab/</span>
-          <span class="card-tag">backend</span>
-        </div>
-        <div class="card-title">微服务实验室</div>
-        <div class="card-sub">微服务入门教程 —— 单体 vs 微服务、请求链路模拟、熔断器演示、Saga 分布式事务与可观测性。</div>
-        <div class="card-foot">
-          <div class="topics"><span>microservices</span><span>gateway</span><span>circuit-breaker</span><span>saga</span></div>
-          <span class="go">open →</span>
-        </div>
-      </a>
-
-      <div class="card placeholder">
-        <div class="card-row">
-          <span class="card-path">/_/</span>
-          <span class="card-tag">tbd</span>
-        </div>
-        <div class="card-title">more soon</div>
-        <div class="card-sub">下一个 lab 还在草稿里。</div>
-        <div class="card-foot">
-          <div class="topics"><span>wip</span></div>
-          <span class="go" style="color:var(--faint)">—</span>
-        </div>
-      </div>
+    <div class="filters" id="filters" hidden>
+      <div class="tags" id="tag-row"></div>
+      <input class="search" id="search" type="search" placeholder="搜索 lab / 主题 …" autocomplete="off">
     </div>
+
+    <div class="grid" id="grid">
+      <noscript><a class="card" href="https://github.com/chinatsu1124/learning-labs">lab 列表需要 JavaScript 渲染，也可以直接看 GitHub 仓库的 README。</a></noscript>
+    </div>
+    <p class="no-hit" id="no-hit">没有匹配的 lab。</p>
   </div>
 
   <footer>
@@ -238,13 +176,110 @@
     <span><a href="https://github.com/chinatsu1124/learning-labs">source on github</a></span>
   </footer>
   <script>
-    /* lab 计数从 .grid 里自动统计，加新 card 不用手动改数字 */
+    /* 卡片从 /labs.json 渲染（单一数据源，加新 lab 只改 json）；
+     * tag 筛选 + 关键词搜索都在客户端完成。 */
     (function(){
+      var ACCENTS = ['', 'amber', 'blue'];
       var pad = function(n){ return String(n).padStart(2, '0'); };
-      var active = document.querySelectorAll('.grid a.card').length;
-      var pending = document.querySelectorAll('.grid .card.placeholder').length;
-      document.getElementById('lab-count').textContent =
-        pad(active) + ' active · ' + pad(pending) + ' pending';
+      var grid = document.getElementById('grid');
+      var labs = [];
+      var activeTag = 'all';
+      var query = '';
+
+      function esc(s){
+        return String(s).replace(/[&<>"]/g, function(c){
+          return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
+        });
+      }
+
+      function card(lab, i){
+        var a = document.createElement('a');
+        a.className = 'card';
+        a.href = lab.path;
+        var accent = ACCENTS[i % ACCENTS.length];
+        if (accent) a.dataset.accent = accent;
+        a.innerHTML =
+          '<div class="card-row">' +
+            '<span class="card-path">' + esc(lab.path) + '</span>' +
+            '<span class="card-tag">' + esc(lab.tag) + '</span>' +
+          '</div>' +
+          '<div class="card-title">' + esc(lab.title) + '</div>' +
+          '<div class="card-sub">' + esc(lab.sub) + '</div>' +
+          '<div class="card-foot">' +
+            '<div class="topics">' + lab.topics.map(function(t){ return '<span>' + esc(t) + '</span>'; }).join('') + '</div>' +
+            '<span class="go">open →</span>' +
+          '</div>';
+        return a;
+      }
+
+      function placeholder(){
+        var d = document.createElement('div');
+        d.className = 'card placeholder';
+        d.innerHTML =
+          '<div class="card-row"><span class="card-path">/_/</span><span class="card-tag">tbd</span></div>' +
+          '<div class="card-title">more soon</div>' +
+          '<div class="card-sub">下一个 lab 还在草稿里。</div>' +
+          '<div class="card-foot"><div class="topics"><span>wip</span></div>' +
+          '<span class="go" style="color:var(--faint)">—</span></div>';
+        return d;
+      }
+
+      function matches(lab){
+        if (activeTag !== 'all' && lab.tag !== activeTag) return false;
+        if (!query) return true;
+        var hay = [lab.path, lab.tag, lab.title, lab.sub].concat(lab.topics).join(' ').toLowerCase();
+        return query.split(/\s+/).every(function(w){ return hay.indexOf(w) !== -1; });
+      }
+
+      function render(){
+        grid.textContent = '';
+        var shown = 0;
+        labs.forEach(function(lab, i){
+          if (!matches(lab)) return;
+          grid.appendChild(card(lab, i));
+          shown++;
+        });
+        var filtering = activeTag !== 'all' || query;
+        if (!filtering) grid.appendChild(placeholder());
+        document.getElementById('no-hit').style.display = shown ? 'none' : 'block';
+        document.getElementById('lab-count').textContent = filtering
+          ? pad(shown) + ' / ' + pad(labs.length) + ' labs'
+          : pad(labs.length) + ' active · 01 pending';
+      }
+
+      function buildFilters(){
+        var row = document.getElementById('tag-row');
+        var tags = ['all'].concat(labs.map(function(l){ return l.tag; })
+          .filter(function(t, i, arr){ return arr.indexOf(t) === i; }));
+        tags.forEach(function(tag){
+          var b = document.createElement('button');
+          b.className = 'tag-btn' + (tag === activeTag ? ' on' : '');
+          b.type = 'button';
+          b.textContent = tag;
+          b.addEventListener('click', function(){
+            activeTag = tag;
+            row.querySelectorAll('.tag-btn').forEach(function(x){ x.classList.toggle('on', x === b); });
+            render();
+          });
+          row.appendChild(b);
+        });
+        document.getElementById('search').addEventListener('input', function(e){
+          query = e.target.value.trim().toLowerCase();
+          render();
+        });
+        document.getElementById('filters').hidden = false;
+      }
+
+      fetch('/labs.json')
+        .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function(data){
+          labs = data.labs;
+          buildFilters();
+          render();
+        })
+        .catch(function(err){
+          grid.innerHTML = '<p class="no-hit" style="display:block">labs.json 加载失败：' + esc(err.message) + '</p>';
+        });
     })();
   </script>
 </body>

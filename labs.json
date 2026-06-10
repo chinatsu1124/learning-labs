@@ -1,0 +1,46 @@
+{
+  "labs": [
+    {
+      "path": "/decrypt/",
+      "tag": "crypto",
+      "title": "解密台",
+      "sub": "凯撒、AES、RSA、Hash、Diffie-Hellman —— 常见加密算法的可视化演示与暴力破解工具。",
+      "topics": ["caesar", "aes", "rsa", "hash", "dh"]
+    },
+    {
+      "path": "/byte-lab/",
+      "tag": "encoding",
+      "title": "字节实验室",
+      "sub": "字节、编码、表示形式的拆解 —— 看见数据在内存里到底长什么样。",
+      "topics": ["bytes", "encoding", "binary"]
+    },
+    {
+      "path": "/net-lab/",
+      "tag": "networking",
+      "title": "网络实验室",
+      "sub": "分层模型、封装、IP 子网、TCP 握手、DNS、HTTP —— 交互式走完一次完整的网页加载。",
+      "topics": ["tcp/ip", "dns", "http", "subnet"]
+    },
+    {
+      "path": "/pm-lab/",
+      "tag": "product",
+      "title": "产品实验室",
+      "sub": "产品经理与产品运营的入门教程 —— RICE 计算器、KANO 练习、AARRR 漏斗与 A/B 实验模拟。",
+      "topics": ["pm", "ops", "rice", "aarrr", "ab-test"]
+    },
+    {
+      "path": "/agent-lab/",
+      "tag": "ai",
+      "title": "智能体实验室",
+      "sub": "AI Agent 入门教程 —— Agent 循环模拟器、工具调用拆解、上下文剖析、ReAct 等架构模式与安全护栏。",
+      "topics": ["agent", "tool-use", "react", "rag", "mcp"]
+    },
+    {
+      "path": "/micro-lab/",
+      "tag": "backend",
+      "title": "微服务实验室",
+      "sub": "微服务入门教程 —— 单体 vs 微服务、请求链路模拟、熔断器演示、Saga 分布式事务与可观测性。",
+      "topics": ["microservices", "gateway", "circuit-breaker", "saga"]
+    }
+  ]
+}
