@@ -79,13 +79,14 @@
   @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
 
   /* ---------- sections ---------- */
-  section{padding:56px 0;border-top:1px solid var(--line)}
+  section{padding:72px 0}
   .secnum{font-family:var(--mono);font-size:12px;color:var(--blue);letter-spacing:.2em;
     margin-bottom:10px;display:flex;align-items:center;gap:12px}
-  .secnum::after{content:"";flex:1;height:1px;background:var(--line)}
+  .secnum::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
   h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);
     line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
-  h2 em{font-style:normal;color:var(--blue)}
+  h2 em{font-style:normal;background:linear-gradient(90deg,var(--blue),var(--teal));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
   p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
   p b{color:var(--ink);font-weight:600}
   .hl{color:var(--teal);font-weight:600}
@@ -242,6 +243,20 @@
   .deeper:hover{border-color:var(--blue);background:var(--blue-dim)}
   .deeper small{display:block;color:var(--faint);font-size:11.5px}
 
+  /* ---------- scroll progress nav ---------- */
+  .secnav{position:fixed;right:22px;top:50%;transform:translateY(-50%);z-index:5;
+    display:flex;flex-direction:column;gap:14px}
+  .secnav a{position:relative;display:block;width:8px;height:8px;border-radius:50%;
+    background:var(--line);transition:all .25s}
+  .secnav a:hover{background:var(--muted)}
+  .secnav a.on{background:var(--blue);box-shadow:0 0 10px rgba(138,169,255,.6)}
+  .secnav a::after{content:attr(data-name);position:absolute;right:18px;top:50%;
+    transform:translateY(-50%);font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+    color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:6px;
+    padding:3px 10px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
+  .secnav a:hover::after{opacity:1}
+  @media(max-width:1100px){.secnav{display:none}}
+
   footer{border-top:1px solid var(--line);padding:28px 24px 48px;text-align:center;
     font-family:var(--mono);font-size:12px;color:var(--faint)}
   footer a{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--line)}
@@ -250,6 +265,7 @@
 </head>
 <body>
 <a class="lab-home" href="/" title="返回 learning labs 首页">←&nbsp;~/labs</a>
+<nav class="secnav" id="secnav" aria-label="章节导航"></nav>
 <div class="wrap">
 
   <header>
@@ -686,6 +702,25 @@ quiz.forEach((item,qi)=>{
   qd.appendChild(exp);
   quizList.appendChild(qd);
 });
+
+/* ================= scroll progress nav ================= */
+const secnav = document.getElementById('secnav');
+const sections = [...document.querySelectorAll('section[id]')];
+sections.forEach(s=>{
+  const a = document.createElement('a');
+  a.href = '#' + s.id;
+  a.dataset.name = s.querySelector('.secnum').textContent.trim();
+  secnav.appendChild(a);
+});
+const navLinks = [...secnav.children];
+const secIO = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(!e.isIntersecting) return;
+    const i = sections.indexOf(e.target);
+    navLinks.forEach((a,j)=>a.classList.toggle('on', j===i));
+  });
+}, {rootMargin:'-40% 0px -55% 0px'});
+sections.forEach(s=>secIO.observe(s));
 </script>
 </body>
 </html>
