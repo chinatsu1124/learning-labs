@@ -12,6 +12,9 @@
 <link rel="stylesheet" href="/assets/fonts.css">
 <link rel="stylesheet" href="/assets/base.css">
 <script defer src="/assets/term.js"></script>
+<script src="/assets/quiz.js"></script>
+<script src="/assets/cards.js"></script>
+<script src="/assets/stepper.js"></script>
 <style>
   :root{
     --bg:#0a0b10;
@@ -427,24 +430,20 @@ const writeSteps = [
   {role:'ok', who:'入库 · 更新后的记忆库',
    html:'<div class="mono">{ fact: "包管理器: pnpm（用户明确禁用 npm）",\n  updated: "2026-06-10", source: "用户原话",\n  history: ["npm (2026-03-12 → 已作废)"] }\n{ fact: "仓库结构: monorepo，包位于 packages/",\n  updated: "2026-06-10", source: "用户原话" }</div><div class="note" style="margin-top:8px">8 轮对话 → <b>2 条带时间戳和出处的条目</b>。下次会话检索到的是结论，不是要重新读一遍的闲聊。这就是"蒸馏后存"和"原文全存"的差距。</div>'}
 ];
-let writeIdx = 0;
 const writeLog = document.getElementById('write-log');
-const writeNext = document.getElementById('write-next');
-writeNext.addEventListener('click', ()=>{
-  if(writeIdx >= writeSteps.length) return;
-  const s = writeSteps[writeIdx++];
-  const d = document.createElement('div');
-  d.className = 'smsg ' + s.role;
-  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
-  writeLog.appendChild(d);
-  if(writeIdx >= writeSteps.length){
-    writeNext.disabled = true;
-    writeNext.textContent = '写入完成 ✓';
-  }
-});
-document.getElementById('write-reset').addEventListener('click', ()=>{
-  writeIdx = 0; writeLog.innerHTML = '';
-  writeNext.disabled = false; writeNext.textContent = '下一步 ▸';
+Stepper.bind({
+  next: document.getElementById('write-next'),
+  reset: document.getElementById('write-reset'),
+  total: writeSteps.length,
+  doneText: '写入完成 ✓',
+  onStep(i){
+    const s = writeSteps[i];
+    const d = document.createElement('div');
+    d.className = 'smsg ' + s.role;
+    d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+    writeLog.appendChild(d);
+  },
+  onReset(){ writeLog.innerHTML = ''; }
 });
 
 /* ================= 03 rag pipeline ================= */
@@ -470,24 +469,20 @@ const ragSteps = [
   {role:'ok', who:'⑤ 生成 · 带出处的回答',
    html:'<div class="note"><b>在职期间年假不能折现</b>，只能结转（最多 5 天，次年 3 月底前有效）〔资料1〕；<b>离职结算时</b>未休部分按日薪 200% 折算现金〔资料2〕。<br><br><span style="color:var(--faint);font-style:italic;font-size:13px">对照组：没有 RAG 时，模型可能一本正经地答"按 100% 折现"——读起来同样流畅，但查无此据。出处让错误变得可发现。</span></div>'}
 ];
-let ragIdx = 0;
 const ragLog = document.getElementById('rag-log');
-const ragNext = document.getElementById('rag-next');
-ragNext.addEventListener('click', ()=>{
-  if(ragIdx >= ragSteps.length) return;
-  const s = ragSteps[ragIdx++];
-  const d = document.createElement('div');
-  d.className = 'smsg ' + s.role;
-  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
-  ragLog.appendChild(d);
-  if(ragIdx >= ragSteps.length){
-    ragNext.disabled = true;
-    ragNext.textContent = '管线跑完 ✓';
-  }
-});
-document.getElementById('rag-reset').addEventListener('click', ()=>{
-  ragIdx = 0; ragLog.innerHTML = '';
-  ragNext.disabled = false; ragNext.textContent = '下一步 ▸';
+Stepper.bind({
+  next: document.getElementById('rag-next'),
+  reset: document.getElementById('rag-reset'),
+  total: ragSteps.length,
+  doneText: '管线跑完 ✓',
+  onStep(i){
+    const s = ragSteps[i];
+    const d = document.createElement('div');
+    d.className = 'smsg ' + s.role;
+    d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+    ragLog.appendChild(d);
+  },
+  onReset(){ ragLog.innerHTML = ''; }
 });
 
 /* ================= 04 agentic tabs ================= */
@@ -525,19 +520,10 @@ const hygiene = [
    d:'用户在对话里贴过一次数据库密码、一串身份证号——蒸馏管线如果照单全收，它们就<b>永久进了记忆库</b>，还可能在不相关的会话里被检索出来展示给别人看。',
    fix:'处方：写入前过敏感信息过滤（密钥、证件号、健康信息直接拦截）；记忆对用户可见、可改、可删；导出和共享场景默认排除记忆内容。'}
 ];
-const hygGrid = document.getElementById('hyg-grid');
-const hygDetail = document.getElementById('hyg-detail');
-hygiene.forEach((p,i)=>{
-  const el = document.createElement('button');
-  el.className = 'hyg-card';
-  el.innerHTML = '<div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>';
-  el.addEventListener('click', ()=>{
-    hygGrid.querySelectorAll('.hyg-card').forEach(x=>x.classList.remove('active'));
-    el.classList.add('active');
-    hygDetail.innerHTML = p.d + '<div class="fix">处方</div>' + p.fix.slice(p.fix.indexOf('：')+1);
-  });
-  hygGrid.appendChild(el);
-  if(i===0) el.click();
+Cards.render(document.getElementById('hyg-grid'), document.getElementById('hyg-detail'), hygiene, {
+  cardClass: 'hyg-card',
+  card: p => '<div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>',
+  detail: p => p.d + '<div class="fix">处方</div>' + p.fix.slice(p.fix.indexOf('：')+1)
 });
 
 /* ================= 06 quiz ================= */
@@ -563,43 +549,11 @@ const quiz = [
    ans:1,
    exp:'<b>持久化放大了错误的半衰期</b>：会话内的错误最多祸害一次会话，入库的错误祸害之后所有会话，且离发病现场（写入时刻）很远、极难排查。所以写入要设门槛，记忆要可见、可改、可删。'}
 ];
-const quizList = document.getElementById('quiz-list');
-const quizScore = document.getElementById('quiz-score');
-let answered = 0, correct = 0;
-quiz.forEach((item,qi)=>{
-  const qd = document.createElement('div');
-  qd.className = 'quiz-q';
-  qd.innerHTML = '<div class="qt"><span class="qn">Q'+(qi+1)+'</span>'+item.q+'</div>';
-  const opts = document.createElement('div');
-  opts.className = 'quiz-opts';
-  const exp = document.createElement('div');
-  exp.className = 'quiz-exp';
-  exp.innerHTML = item.exp;
-  item.opts.forEach((o,oi)=>{
-    const b = document.createElement('button');
-    b.textContent = String.fromCharCode(65+oi) + '. ' + o;
-    b.addEventListener('click', ()=>{
-      if(qd.dataset.done) return;
-      qd.dataset.done = '1';
-      answered++;
-      if(oi === item.ans){ b.classList.add('right'); correct++; }
-      else {
-        b.classList.add('wrong');
-        opts.children[item.ans].classList.add('right');
-      }
-      exp.style.display = 'block';
-      quizScore.innerHTML = '得分 <b>'+correct+' / '+answered+'</b>' +
-        (answered === quiz.length
-          ? (correct === quiz.length ? ' 🎉 全对！可以去搭自己的记忆系统了'
-             : correct >= 3 ? ' 👍 不错，回头看看错题的解析'
-             : ' 💪 建议把两条管线的模拟器再跑一遍')
-          : '');
-    });
-    opts.appendChild(b);
-  });
-  qd.appendChild(opts);
-  qd.appendChild(exp);
-  quizList.appendChild(qd);
+Quiz.render(document.getElementById('quiz-list'), document.getElementById('quiz-score'), quiz, {
+  final: (correct, total) =>
+    correct === total ? ' 🎉 全对！可以去搭自己的记忆系统了'
+    : correct >= 3 ? ' 👍 不错，回头看看错题的解析'
+    : ' 💪 建议把两条管线的模拟器再跑一遍'
 });
 </script>
 </body>

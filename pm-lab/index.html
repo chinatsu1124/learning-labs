@@ -192,17 +192,9 @@
     border-top:1px dashed var(--line);display:none;line-height:1.7}
   .kano-exp b{color:var(--teal)}
 
-  /* ---------- funnel ---------- */
-  .funnel{display:flex;flex-direction:column;gap:6px;margin-top:18px}
-  .fstep{display:grid;grid-template-columns:120px 1fr 110px;gap:12px;align-items:center}
-  .fstep .fname{font-family:var(--mono);font-size:12.5px;color:var(--ink);text-align:right}
-  .fstep .fname small{display:block;font-size:10px;color:var(--faint)}
-  .fbar-track{background:var(--bg2);border:1px solid var(--line);border-radius:7px;height:34px;overflow:hidden}
-  .fbar{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:10px;
-    font-family:var(--mono);font-size:12px;font-weight:700;color:#0a0b10;min-width:fit-content;
-    transition:width .4s cubic-bezier(.4,0,.2,1);white-space:nowrap}
-  .fstep .fnum{font-family:var(--mono);font-size:12px;color:var(--muted)}
-  @media(max-width:560px){.fstep{grid-template-columns:86px 1fr 80px}.fstep .fname{font-size:11px}}
+  /* ---------- funnel (ECharts) ---------- */
+  #funnel-chart{height:320px;margin-top:12px}
+  @media(max-width:560px){#funnel-chart{height:260px}}
 
   /* ---------- ab test ---------- */
   .ab-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
@@ -400,7 +392,7 @@
         <input type="range" id="f-rev" min="1" max="60" step="1" value="8">
         <span class="val" id="fv-rev">8%</span>
       </div>
-      <div class="funnel" id="funnel"></div>
+      <div id="funnel-chart"></div>
       <div class="ab-result" id="funnel-insight"></div>
     </div>
 
@@ -467,6 +459,9 @@
   <span>pm lab · <a href="/">← back to learning labs</a></span>
 </footer>
 
+<script src="/assets/vendor/echarts.min.js"></script>
+<script src="/assets/quiz.js"></script>
+<script src="/assets/cards.js"></script>
 <script>
 /* ============ 02 lifecycle ============ */
 const STAGES = [
@@ -551,7 +546,10 @@ KANO.forEach((item)=>{
 /* ============ 05 funnel ============ */
 const F_IN=100000;
 const fEls={act:document.getElementById('f-act'),ret:document.getElementById('f-ret'),rev:document.getElementById('f-rev')};
-const FCOLORS=['var(--blue)','var(--violet)','var(--teal)','var(--amber)','var(--rose)'];
+const fCol=(()=>{const s=getComputedStyle(document.documentElement);return k=>s.getPropertyValue('--'+k).trim();})();
+const FCOLORS=['blue','violet','teal','amber','rose'].map(fCol);
+const fChart=echarts.init(document.getElementById('funnel-chart'),null,{renderer:'svg'});
+window.addEventListener('resize',()=>fChart.resize());
 function drawFunnel(){
   const act=+fEls.act.value/100, ret=+fEls.ret.value/100, rev=+fEls.rev.value/100;
   document.getElementById('fv-act').textContent=fEls.act.value+'%';
@@ -564,15 +562,24 @@ function drawFunnel(){
     ['Revenue','付费',F_IN*act*ret*rev],
     ['Referral','传播（按付费 30% 算）',F_IN*act*ret*rev*0.3],
   ];
-  const funnel=document.getElementById('funnel');
-  funnel.innerHTML=steps.map(([en,zh,n],i)=>{
-    const pct=Math.max(n/F_IN*100,1.5);
-    return `<div class="fstep">
-      <div class="fname">${en}<small>${zh}</small></div>
-      <div class="fbar-track"><div class="fbar" style="width:${pct}%;background:${FCOLORS[i]}">${(n/F_IN*100).toFixed(1)}%</div></div>
-      <div class="fnum">${Math.round(n).toLocaleString()} 人</div>
-    </div>`;
-  }).join('');
+  const fmt=i=>`${(steps[i][2]/F_IN*100).toFixed(1)}% · ${Math.round(steps[i][2]).toLocaleString()} 人`;
+  fChart.setOption({
+    tooltip:{trigger:'item',backgroundColor:fCol('panel'),borderColor:fCol('line'),
+      textStyle:{color:fCol('ink'),fontSize:12,fontFamily:'JetBrains Mono,monospace'},
+      formatter:p=>`${p.name} · ${steps[p.dataIndex][1]}<br>${fmt(p.dataIndex)}`},
+    series:[{
+      type:'funnel',sort:'none',
+      left:'2%',width:'52%',top:6,bottom:6,gap:4,
+      min:0,max:100,minSize:'6%',
+      label:{show:true,position:'right',color:fCol('muted'),fontSize:12,
+        fontFamily:'JetBrains Mono,monospace',
+        formatter:p=>`${p.name}  ${fmt(p.dataIndex)}`},
+      labelLine:{length:16,lineStyle:{color:fCol('line')}},
+      itemStyle:{borderWidth:0},
+      emphasis:{label:{color:fCol('ink')}},
+      data:steps.map(([en,zh,n],i)=>({name:en,value:n/F_IN*100,itemStyle:{color:FCOLORS[i]}}))
+    }]
+  });
   const payers=Math.round(F_IN*act*ret*rev);
   document.getElementById('funnel-insight').innerHTML=
     `10 万注册用户最终付费 <b>${payers.toLocaleString()}</b> 人（${(payers/F_IN*100).toFixed(2)}%）。`+
@@ -612,20 +619,12 @@ const OPS=[
 ];
 const opsGrid=document.getElementById('ops-grid');
 const opsDetail=document.getElementById('ops-detail');
-OPS.forEach((o,i)=>{
-  const b=document.createElement('button');
-  b.className='ops-card';
-  b.innerHTML=`<div class="oi">${o.i}</div><div class="on">${o.n}</div><div class="od">${o.d}</div>`;
-  b.onclick=()=>showOps(i);
-  opsGrid.appendChild(b);
+Cards.render(opsGrid, opsDetail, OPS, {
+  cardClass:'ops-card',
+  card:o=>`<div class="oi">${o.i}</div><div class="on">${o.n}</div><div class="od">${o.d}</div>`,
+  detail:o=>`<div class="dt" style="color:var(--teal)">${o.n} · ${o.d}</div>${o.detail}
+    <div class="chips" style="margin-top:8px"><span class="pchip a">核心指标</span><span class="pchip">${o.m}</span></div>`
 });
-function showOps(i){
-  [...opsGrid.children].forEach((b,j)=>b.classList.toggle('active',i===j));
-  const o=OPS[i];
-  opsDetail.innerHTML=`<div class="dt" style="color:var(--teal)">${o.n} · ${o.d}</div>${o.detail}
-    <div class="chips" style="margin-top:8px"><span class="pchip a">核心指标</span><span class="pchip">${o.m}</span></div>`;
-}
-showOps(0);
 
 /* ============ 08 quiz ============ */
 const QUIZ=[
@@ -645,32 +644,12 @@ const QUIZ=[
    o:['立刻全量上线 B,抢占红利','继续跑到预设样本量,看显著性再下结论','直接砍掉 A 组','把 B 组数据汇报成最终结论'],
    a:1,exp:'小样本 + 提前偷看 = A/B 实验两大经典错误。实验前就该算好所需样本量,跑满再做显著性检验。'},
 ];
-const quizList=document.getElementById('quiz-list');
-let answered=0,correct=0;
-QUIZ.forEach((item,i)=>{
-  const div=document.createElement('div');
-  div.className='quiz-q';
-  div.innerHTML=`<div class="qt"><span class="qn">Q${i+1}</span>${item.q}</div>
-    <div class="quiz-opts">${item.o.map((o,j)=>`<button data-j="${j}">${'ABCD'[j]}. ${o}</button>`).join('')}</div>
-    <div class="quiz-exp"></div>`;
-  const exp=div.querySelector('.quiz-exp');
-  div.querySelectorAll('button').forEach(btn=>{
-    btn.onclick=()=>{
-      if(div.dataset.done)return;
-      div.dataset.done='1';answered++;
-      const j=+btn.dataset.j;
-      if(j===item.a){btn.classList.add('right');correct++;}
-      else{btn.classList.add('wrong');div.querySelectorAll('button')[item.a].classList.add('right');}
-      exp.innerHTML=`<b>解析</b> · ${item.exp}`;
-      exp.style.display='block';
-      if(answered===QUIZ.length){
-        const pct=correct/QUIZ.length;
-        const grade=pct===1?'满分！可以去带新人了 🏆':pct>=0.8?'很稳,可以上岗 ✅':pct>=0.6?'及格,把错题解析再读一遍 📖':'回到第 01 节重新刷一遍吧 🔁';
-        document.getElementById('quiz-score').innerHTML=`你答对了 <b>${correct} / ${QUIZ.length}</b><br>${grade}`;
-      }
-    };
-  });
-  quizList.appendChild(div);
+Quiz.render(document.getElementById('quiz-list'), document.getElementById('quiz-score'),
+  QUIZ.map(it=>({q:it.q, opts:it.o, ans:it.a, exp:`<b>解析</b> · ${it.exp}`})), {
+  final:(correct,total)=>{
+    const pct=correct/total;
+    return '<br>'+(pct===1?'满分！可以去带新人了 🏆':pct>=0.8?'很稳,可以上岗 ✅':pct>=0.6?'及格,把错题解析再读一遍 📖':'回到第 01 节重新刷一遍吧 🔁');
+  }
 });
 </script>
 </body>

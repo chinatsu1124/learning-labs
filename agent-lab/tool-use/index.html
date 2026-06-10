@@ -12,6 +12,9 @@
 <link rel="stylesheet" href="/assets/fonts.css">
 <link rel="stylesheet" href="/assets/base.css">
 <script defer src="/assets/term.js"></script>
+<script src="/assets/quiz.js"></script>
+<script src="/assets/cards.js"></script>
+<script src="/assets/stepper.js"></script>
 <style>
   :root{
     --bg:#0a0b10;
@@ -506,30 +509,25 @@ const protoSteps = [
   {role:'fin', who:'响应 ② · 最终回答', phase:'res2',
    html:'<div class="note">模型读到结果，判断不再需要工具，<span class="hl">stop_reason 变成 end_turn</span>——你的循环到此退出，把文字交给用户：</div><div class="codeblock">{\n  <span class="k">"stop_reason"</span>: <span class="mark"><span class="n">"end_turn"</span></span>,\n  <span class="k">"content"</span>: [{ <span class="k">"type"</span>: <span class="s">"text"</span>,\n    <span class="k">"text"</span>: <span class="s">"东京现在是 6 月 10 日晚上 9 点半（JST）。"</span> }]\n}</div><div class="note" style="margin-top:8px">两次模型调用 + 一次本地执行 = 一次"工具调用"。如果模型还想调下一个工具，就回到请求 ② 的形态继续循环。</div>'}
 ];
-let protoIdx = 0;
 const protoLog = document.getElementById('proto-log');
-const protoNext = document.getElementById('proto-next');
 function lightProto(phase){
   document.querySelectorAll('.proto-node').forEach(n=>
     n.classList.toggle('lit', n.dataset.pn === phase));
 }
-protoNext.addEventListener('click', ()=>{
-  if(protoIdx >= protoSteps.length) return;
-  const s = protoSteps[protoIdx++];
-  const d = document.createElement('div');
-  d.className = 'pmsg ' + s.role;
-  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
-  protoLog.appendChild(d);
-  lightProto(s.phase);
-  if(protoIdx >= protoSteps.length){
-    protoNext.disabled = true;
-    protoNext.textContent = '往返完成 ✓';
-  }
-});
-document.getElementById('proto-reset').addEventListener('click', ()=>{
-  protoIdx = 0; protoLog.innerHTML = '';
-  protoNext.disabled = false; protoNext.textContent = '下一步 ▸';
-  lightProto(null);
+Stepper.bind({
+  next: document.getElementById('proto-next'),
+  reset: document.getElementById('proto-reset'),
+  total: protoSteps.length,
+  doneText: '往返完成 ✓',
+  onStep(i){
+    const s = protoSteps[i];
+    const d = document.createElement('div');
+    d.className = 'pmsg ' + s.role;
+    d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+    protoLog.appendChild(d);
+    lightProto(s.phase);
+  },
+  onReset(){ protoLog.innerHTML = ''; lightProto(null); }
 });
 
 /* ================= 02 schema explorer ================= */
@@ -582,24 +580,20 @@ const errSteps = [
   {role:'fin', who:'LLM · 最终回答', phase:null,
    html:'<div class="note"><b>iPhone 17 有货</b>：三里屯店还剩 23 台。<br><br><span style="color:var(--faint);font-style:italic;font-size:13px">一次失败 → 读错误 → 换参数 → 成功。错误信息写得好，模型就是自己的运维。</span></div>'}
 ];
-let errIdx = 0;
 const errLog = document.getElementById('err-log');
-const errNext = document.getElementById('err-next');
-errNext.addEventListener('click', ()=>{
-  if(errIdx >= errSteps.length) return;
-  const s = errSteps[errIdx++];
-  const d = document.createElement('div');
-  d.className = 'pmsg ' + s.role;
-  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
-  errLog.appendChild(d);
-  if(errIdx >= errSteps.length){
-    errNext.disabled = true;
-    errNext.textContent = '自愈完成 ✓';
-  }
-});
-document.getElementById('err-reset').addEventListener('click', ()=>{
-  errIdx = 0; errLog.innerHTML = '';
-  errNext.disabled = false; errNext.textContent = '下一步 ▸';
+Stepper.bind({
+  next: document.getElementById('err-next'),
+  reset: document.getElementById('err-reset'),
+  total: errSteps.length,
+  doneText: '自愈完成 ✓',
+  onStep(i){
+    const s = errSteps[i];
+    const d = document.createElement('div');
+    d.className = 'pmsg ' + s.role;
+    d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+    errLog.appendChild(d);
+  },
+  onReset(){ errLog.innerHTML = ''; }
 });
 
 /* ================= 05 mcp roles ================= */
@@ -614,19 +608,10 @@ const mcpRoles = [
    flow:'GitHub Server / 数据库 Server / 你自己写的 Server',
    d:'<b>真正干活的一端</b>：把某个系统的能力封装成标准的 tools / resources / prompts。写一次，所有 MCP 应用都能用。一个最小的 Server 用官方 SDK 几十行就能跑起来——定义工具名、schema、处理函数，齐活。'}
 ];
-const mcpGrid = document.getElementById('mcp-grid');
-const mcpDetail = document.getElementById('mcp-detail');
-mcpRoles.forEach((p,i)=>{
-  const el = document.createElement('button');
-  el.className = 'mcp-card';
-  el.innerHTML = '<div class="pi">'+p.icon+'</div><div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>';
-  el.addEventListener('click', ()=>{
-    mcpGrid.querySelectorAll('.mcp-card').forEach(x=>x.classList.remove('active'));
-    el.classList.add('active');
-    mcpDetail.innerHTML = '<div class="flow">'+p.flow+'</div>'+p.d;
-  });
-  mcpGrid.appendChild(el);
-  if(i===0) el.click();
+Cards.render(document.getElementById('mcp-grid'), document.getElementById('mcp-detail'), mcpRoles, {
+  cardClass: 'mcp-card',
+  card: p => '<div class="pi">'+p.icon+'</div><div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>',
+  detail: p => '<div class="flow">'+p.flow+'</div>'+p.d
 });
 
 /* ================= 06 quiz ================= */
@@ -652,43 +637,11 @@ const quiz = [
    ans:1,
    exp:'MCP 解决的是 <b>M×N 集成爆炸</b>：每个系统实现一次 Server（N），每个应用支持一次协议（M），任意组合即插即用。注意最后一个选项是反的——第三方 Server 的内容进入你的上下文，信任问题反而要更认真对待。'}
 ];
-const quizList = document.getElementById('quiz-list');
-const quizScore = document.getElementById('quiz-score');
-let answered = 0, correct = 0;
-quiz.forEach((item,qi)=>{
-  const qd = document.createElement('div');
-  qd.className = 'quiz-q';
-  qd.innerHTML = '<div class="qt"><span class="qn">Q'+(qi+1)+'</span>'+item.q+'</div>';
-  const opts = document.createElement('div');
-  opts.className = 'quiz-opts';
-  const exp = document.createElement('div');
-  exp.className = 'quiz-exp';
-  exp.innerHTML = item.exp;
-  item.opts.forEach((o,oi)=>{
-    const b = document.createElement('button');
-    b.textContent = String.fromCharCode(65+oi) + '. ' + o;
-    b.addEventListener('click', ()=>{
-      if(qd.dataset.done) return;
-      qd.dataset.done = '1';
-      answered++;
-      if(oi === item.ans){ b.classList.add('right'); correct++; }
-      else {
-        b.classList.add('wrong');
-        opts.children[item.ans].classList.add('right');
-      }
-      exp.style.display = 'block';
-      quizScore.innerHTML = '得分 <b>'+correct+' / '+answered+'</b>' +
-        (answered === quiz.length
-          ? (correct === quiz.length ? ' 🎉 全对！协议层已经通了'
-             : correct >= 3 ? ' 👍 不错，回头看看错题的解析'
-             : ' 💪 建议把 01 节的报文再逐帧过一遍')
-          : '');
-    });
-    opts.appendChild(b);
-  });
-  qd.appendChild(opts);
-  qd.appendChild(exp);
-  quizList.appendChild(qd);
+Quiz.render(document.getElementById('quiz-list'), document.getElementById('quiz-score'), quiz, {
+  final: (correct, total) =>
+    correct === total ? ' 🎉 全对！协议层已经通了'
+    : correct >= 3 ? ' 👍 不错，回头看看错题的解析'
+    : ' 💪 建议把 01 节的报文再逐帧过一遍'
 });
 </script>
 </body>

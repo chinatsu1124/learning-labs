@@ -12,6 +12,11 @@
 <link rel="stylesheet" href="/assets/fonts.css">
 <link rel="stylesheet" href="/assets/base.css">
 <script defer src="/assets/term.js"></script>
+<link rel="stylesheet" href="/assets/flow.css">
+<script src="/assets/flow.js"></script>
+<script src="/assets/quiz.js"></script>
+<script src="/assets/cards.js"></script>
+<script src="/assets/stepper.js"></script>
 <style>
   :root{
     --bg:#0a0b10;
@@ -215,8 +220,7 @@
   .pat-detail{margin-top:16px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;
     padding:18px 20px;font-size:14.5px;color:var(--muted);line-height:1.9}
   .pat-detail b{color:var(--ink)}
-  .pat-detail .flow{font-family:var(--mono);font-size:12.5px;color:var(--teal);margin:8px 0;
-    background:var(--panel-hi);border:1px solid var(--line);border-radius:8px;padding:10px 14px;overflow-x:auto;white-space:nowrap}
+  .pat-detail .fl-wrap{margin:2px 0 14px}
   .pat-detail .when{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--amber);
     text-transform:uppercase;margin-top:10px;margin-bottom:2px}
 
@@ -524,30 +528,25 @@ const loopSteps = [
   {role:'done', who:'LLM · 最终回答', phase:'done',
    html:'<span class="body-text"><b>带伞！</b>明天上海中雨（降水概率 85%），气温 18~22°C。酒店已订好：<b>外滩茂悦</b>，1 晚 ¥680，订单号 H20260611。<br><br><span class="think">模型判断两个子目标都完成 → 不再调工具，输出最终答案，循环结束。</span></span>'}
 ];
-let loopIdx = 0;
 const loopLog = document.getElementById('loop-log');
-const loopNext = document.getElementById('loop-next');
 function lightNode(phase){
   document.querySelectorAll('.loop-node').forEach(n=>
     n.classList.toggle('lit', n.dataset.ln === phase));
 }
-loopNext.addEventListener('click', ()=>{
-  if(loopIdx >= loopSteps.length) return;
-  const s = loopSteps[loopIdx++];
-  const d = document.createElement('div');
-  d.className = 'msg ' + s.role;
-  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
-  loopLog.appendChild(d);
-  lightNode(s.phase);
-  if(loopIdx >= loopSteps.length){
-    loopNext.disabled = true;
-    loopNext.textContent = '任务完成 ✓';
-  }
-});
-document.getElementById('loop-reset').addEventListener('click', ()=>{
-  loopIdx = 0; loopLog.innerHTML = '';
-  loopNext.disabled = false; loopNext.textContent = '下一步 ▸';
-  lightNode(null);
+Stepper.bind({
+  next: document.getElementById('loop-next'),
+  reset: document.getElementById('loop-reset'),
+  total: loopSteps.length,
+  doneText: '任务完成 ✓',
+  onStep(i){
+    const s = loopSteps[i];
+    const d = document.createElement('div');
+    d.className = 'msg ' + s.role;
+    d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+    loopLog.appendChild(d);
+    lightNode(s.phase);
+  },
+  onReset(){ loopLog.innerHTML = ''; lightNode(null); }
 });
 
 /* ================= 03 tool call demo ================= */
@@ -587,54 +586,85 @@ const ctxBlocks = [
   {name:'Current Turn · 本轮输入', size:'~100 tokens',
    d:'用户最新的一句话，或刚返回的工具结果。模型综合<b>以上全部内容</b>预测下一步——对模型来说，"世界"就是这个窗口里的所有 token，窗口外的一切它都不知道。'}
 ];
-const ctxStack = document.getElementById('ctx-stack');
-const ctxDetail = document.getElementById('ctx-detail');
-ctxBlocks.forEach((b,i)=>{
-  const el = document.createElement('button');
-  el.className = 'ctx-block';
-  el.innerHTML = '<span>'+b.name+'</span><span class="ctx-size">'+b.size+'</span>';
-  el.addEventListener('click', ()=>{
-    ctxStack.querySelectorAll('.ctx-block').forEach(x=>x.classList.remove('active'));
-    el.classList.add('active');
-    ctxDetail.innerHTML = '<div class="dt">'+b.name+'</div>'+b.d;
-  });
-  ctxStack.appendChild(el);
-  if(i===0) el.click();
+Cards.render(document.getElementById('ctx-stack'), document.getElementById('ctx-detail'), ctxBlocks, {
+  cardClass: 'ctx-block',
+  card: b => '<span>'+b.name+'</span><span class="ctx-size">'+b.size+'</span>',
+  detail: b => '<div class="dt">'+b.name+'</div>'+b.d
 });
 
 /* ================= 05 patterns ================= */
 const patterns = [
   {icon:'⚡', name:'ReAct', tag:'边想边做',
-   flow:'思考 → 行动 → 观察 → 思考 → 行动 → … → 答案',
    d:'最基础也最常用的模式（前面模拟器跑的就是它）：每一步都先输出推理（Reasoning），再决定行动（Acting），拿到观察结果后进入下一轮。<b>推理让行动更准，观察让推理落地。</b>',
-   when:'默认首选 · 中短链路任务、需要按结果灵活调整的场景'},
+   when:'默认首选 · 中短链路任务、需要按结果灵活调整的场景',
+   diagram:{
+     nodes:[
+       {id:'think', label:'思考', sub:'REASON',    x:1.2, y:1},
+       {id:'act',   label:'行动', sub:'TOOL CALL', x:3.6, y:1},
+       {id:'obs',   label:'观察', sub:'RESULT',    x:6,   y:1},
+       {id:'done',  label:'最终答案', sub:'ANSWER', x:3.6, y:2.9, accent:'teal'}],
+     edges:[
+       {from:'think', to:'act'},
+       {from:'act',   to:'obs'},
+       {from:'obs',   to:'think', label:'结果塞回上下文 ↺', via:[[6,1.9],[.3,1.9],[.3,1]], anim:true},
+       {from:'think', to:'done',  label:'判断任务完成', via:[[1.2,2.9]], accent:'teal'}]
+   }},
   {icon:'🗺️', name:'Plan-and-Execute', tag:'先规划后执行',
-   flow:'拆解任务 → [步骤1, 步骤2, …] → 逐步执行 → 必要时重新规划',
    d:'先让模型把大任务<b>拆成清单</b>，再逐项执行。好处是全局视野、可以并行子任务、人类能在执行前审一眼计划；代价是计划可能赶不上变化，需要"执行失败 → 重规划"的回路。',
-   when:'长链路任务 · 步骤间有依赖 · 希望先给人看计划再动手'},
+   when:'长链路任务 · 步骤间有依赖 · 希望先给人看计划再动手',
+   diagram:{
+     nodes:[
+       {id:'plan', label:'拆解任务', sub:'PLAN',    x:1.2, y:1, accent:'blue'},
+       {id:'exec', label:'执行当前步', sub:'EXECUTE', x:3.6, y:1},
+       {id:'chk',  label:'清单还有剩？', sub:'CHECK', x:6, y:1},
+       {id:'done', label:'交付', sub:'DONE', x:3.6, y:2.9, accent:'teal'}],
+     edges:[
+       {from:'plan', to:'exec'},
+       {from:'exec', to:'chk'},
+       {from:'chk',  to:'exec', label:'还有 · 下一步 ↺', via:[[6,1.9],[3.6,1.9]], anim:true},
+       {from:'exec', to:'plan', label:'某步失败 · 重规划', via:[[3.6,.1],[1.2,.1]], accent:'rose'},
+       {from:'chk',  to:'done', label:'清单清空', via:[[6,2.9]], accent:'teal'}]
+   }},
   {icon:'🪞', name:'Reflection', tag:'自我反思',
-   flow:'生成初稿 → 自我批评 → 修订 → （循环）→ 终稿',
    d:'让模型当自己的审稿人：先产出，再换个"评审"视角找毛病（漏了边界条件？代码能跑吗？），然后基于批评修订。一次反思往往能显著提升质量，<b>但每轮都是真金白银的 token</b>。',
-   when:'质量敏感的产出 · 写代码/写报告 · 有可执行的检验手段（如跑测试）时效果最好'},
+   when:'质量敏感的产出 · 写代码/写报告 · 有可执行的检验手段（如跑测试）时效果最好',
+   diagram:{
+     nodes:[
+       {id:'draft', label:'生成初稿', sub:'DRAFT',    x:1.2, y:1, accent:'violet'},
+       {id:'crit',  label:'自我批评', sub:'CRITIQUE', x:3.6, y:1, accent:'amber'},
+       {id:'rev',   label:'修订',     sub:'REVISE',   x:6,   y:1},
+       {id:'final', label:'终稿',     sub:'FINAL',    x:3.6, y:2.9, accent:'teal'}],
+     edges:[
+       {from:'draft', to:'crit'},
+       {from:'crit',  to:'rev'},
+       {from:'rev',   to:'crit',  label:'再来一轮 ↺', via:[[6,.1],[3.6,.1]], anim:true},
+       {from:'rev',   to:'final', label:'达标 / 反思预算用尽', via:[[6,2.9]], accent:'teal'}]
+   }},
   {icon:'👥', name:'Multi-Agent', tag:'多智能体协作',
-   flow:'编排者 → 分派给 [研究员 | 程序员 | 审核员] → 汇总结果',
    d:'多个各有分工的 Agent 协作：常见拓扑有<b>主管-下属</b>（<span class="term" data-name="Orchestrator · 编排者" data-tip="多智能体系统里的『项目经理』：自己不干具体活，负责拆解任务、分派给合适的子 Agent、汇总结果。">orchestrator</span> 分派子任务）和<b>流水线</b>（产出依次传递）。每个 Agent 上下文更聚焦、可以并行；但通信成本高，容易"开会开崩"。',
-   when:'任务能清晰分块 · 子任务需要不同工具/人设 · 单个上下文装不下的大型任务'}
+   when:'任务能清晰分块 · 子任务需要不同工具/人设 · 单个上下文装不下的大型任务',
+   diagram:{
+     nodes:[
+       {id:'orch', label:'编排者', sub:'ORCHESTRATOR', x:1.2, y:2, accent:'blue'},
+       {id:'r',    label:'研究员', sub:'AGENT', x:4.2, y:.8},
+       {id:'c',    label:'程序员', sub:'AGENT', x:4.2, y:2},
+       {id:'a',    label:'审核员', sub:'AGENT', x:4.2, y:3.2},
+       {id:'sum',  label:'汇总结果', sub:'MERGE', x:7, y:2, accent:'teal'}],
+     edges:[
+       {from:'orch', to:'r', label:'子任务', via:[[2.6,.8]]},
+       {from:'orch', to:'c'},
+       {from:'orch', to:'a', via:[[2.6,3.2]]},
+       {from:'r', to:'sum', via:[[5.7,.8]]},
+       {from:'c', to:'sum'},
+       {from:'a', to:'sum', via:[[5.7,3.2]]}]
+   }}
 ];
-const patGrid = document.getElementById('pat-grid');
 const patDetail = document.getElementById('pat-detail');
-patterns.forEach((p,i)=>{
-  const el = document.createElement('button');
-  el.className = 'pat-card';
-  el.innerHTML = '<div class="pi">'+p.icon+'</div><div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>';
-  el.addEventListener('click', ()=>{
-    patGrid.querySelectorAll('.pat-card').forEach(x=>x.classList.remove('active'));
-    el.classList.add('active');
-    patDetail.innerHTML = '<div class="flow">'+p.flow+'</div>'+p.d+
-      '<div class="when">适用场景</div>'+p.when;
-  });
-  patGrid.appendChild(el);
-  if(i===0) el.click();
+Cards.render(document.getElementById('pat-grid'), patDetail, patterns, {
+  cardClass: 'pat-card',
+  card: p => '<div class="pi">'+p.icon+'</div><div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>',
+  detail: p => '<div class="fl-wrap"></div>'+p.d+'<div class="when">适用场景</div>'+p.when,
+  onSelect: p => Flow.render(patDetail.querySelector('.fl-wrap'), p.diagram)
 });
 
 /* ================= 08 quiz ================= */
@@ -664,43 +694,11 @@ const quiz = [
    ans:2,
    exp:'记住口诀：模型<b>做不了</b>的操作 → 工具/MCP（调天气 API 是动作）；模型<b>不知道</b>的知识 → RAG（年假政策在你的内部文档里）。真实系统通常两者并用。'}
 ];
-const quizList = document.getElementById('quiz-list');
-const quizScore = document.getElementById('quiz-score');
-let answered = 0, correct = 0;
-quiz.forEach((item,qi)=>{
-  const qd = document.createElement('div');
-  qd.className = 'quiz-q';
-  qd.innerHTML = '<div class="qt"><span class="qn">Q'+(qi+1)+'</span>'+item.q+'</div>';
-  const opts = document.createElement('div');
-  opts.className = 'quiz-opts';
-  const exp = document.createElement('div');
-  exp.className = 'quiz-exp';
-  exp.innerHTML = item.exp;
-  item.opts.forEach((o,oi)=>{
-    const b = document.createElement('button');
-    b.textContent = String.fromCharCode(65+oi) + '. ' + o;
-    b.addEventListener('click', ()=>{
-      if(qd.dataset.done) return;
-      qd.dataset.done = '1';
-      answered++;
-      if(oi === item.ans){ b.classList.add('right'); correct++; }
-      else {
-        b.classList.add('wrong');
-        opts.children[item.ans].classList.add('right');
-      }
-      exp.style.display = 'block';
-      quizScore.innerHTML = '得分 <b>'+correct+' / '+answered+'</b>' +
-        (answered === quiz.length
-          ? (correct === quiz.length ? ' 🎉 全对！可以去写你的第一个 Agent 了'
-             : correct >= 4 ? ' 👍 不错，回头看看错题的解析'
-             : ' 💪 建议从第 01 节再过一遍')
-          : '');
-    });
-    opts.appendChild(b);
-  });
-  qd.appendChild(opts);
-  qd.appendChild(exp);
-  quizList.appendChild(qd);
+Quiz.render(document.getElementById('quiz-list'), document.getElementById('quiz-score'), quiz, {
+  final: (correct, total) =>
+    correct === total ? ' 🎉 全对！可以去写你的第一个 Agent 了'
+    : correct >= 4 ? ' 👍 不错，回头看看错题的解析'
+    : ' 💪 建议从第 01 节再过一遍'
 });
 
 /* ================= scroll progress nav ================= */

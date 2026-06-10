@@ -12,6 +12,8 @@
 <link rel="stylesheet" href="/assets/fonts.css">
 <link rel="stylesheet" href="/assets/base.css">
 <script defer src="/assets/term.js"></script>
+<script src="/assets/cards.js"></script>
+<script src="/assets/stepper.js"></script>
 <style>
   :root{
     --bg:#0a0b10;
@@ -598,33 +600,27 @@
        protos:['网线 (RJ45)','光纤','无线电'],dev:'集线器、中继器、线缆'}
     ]
   };
-  let model='tcp', sel=0;
+  let model='tcp';
   const stack=document.getElementById('layerStack');
   const detail=document.getElementById('layerDetail');
   const toggle=document.getElementById('modelToggle');
 
   function render(){
-    const layers=MODELS[model];
-    if(sel>=layers.length) sel=0;
     stack.innerHTML='';
-    layers.forEach((L,i)=>{
-      const row=document.createElement('button');
-      row.className='layer-row'+(i===sel?' active':'');
-      row.innerHTML='<span class="ln">'+L.n+'</span>'+
+    Cards.render(stack, detail, MODELS[model], {
+      cardClass:'layer-row',
+      card: L => '<span class="ln">'+L.n+'</span>'+
         '<span class="lname">'+L.name+'<small>'+L.en+'</small></span>'+
-        '<span class="lpdu">'+L.pdu+'</span>';
-      row.addEventListener('click',()=>{sel=i;render();});
-      stack.appendChild(row);
+        '<span class="lpdu">'+L.pdu+'</span>',
+      detail: L => '<div class="dt">L'+L.n+' · '+L.name+'</div>'+L.role+
+        '<div class="chips">'+L.protos.map(p=>'<span class="pchip">'+p+'</span>').join('')+'</div>'+
+        '<div style="margin-top:6px;font-size:13px">典型角色：<b>'+L.dev+'</b></div>'+
+        (model==='tcp'&&L.n==='3'?'<div style="margin-top:6px;font-size:12.5px;color:var(--faint)">* ARP 介于网络层与链路层之间，归属有争议</div>':'')
     });
-    const L=layers[sel];
-    detail.innerHTML='<div class="dt">L'+L.n+' · '+L.name+'</div>'+L.role+
-      '<div class="chips">'+L.protos.map(p=>'<span class="pchip">'+p+'</span>').join('')+'</div>'+
-      '<div style="margin-top:6px;font-size:13px">典型角色：<b>'+L.dev+'</b></div>'+
-      (model==='tcp'&&L.n==='3'?'<div style="margin-top:6px;font-size:12.5px;color:var(--faint)">* ARP 介于网络层与链路层之间，归属有争议</div>':'');
   }
   toggle.querySelectorAll('button').forEach(b=>{
     b.addEventListener('click',()=>{
-      model=b.dataset.model; sel=0;
+      model=b.dataset.model;
       toggle.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));
       render();
     });
@@ -779,7 +775,6 @@
   const desc=document.getElementById('hsDesc');
   const cState=document.getElementById('cState');
   const sState=document.getElementById('sState');
-  const next=document.getElementById('hsNext');
 
   function render(){
     const S=STEPS[step];
@@ -787,21 +782,22 @@
     cState.textContent=S.c; sState.textContent=S.s;
     cState.classList.toggle('live',S.c==='ESTABLISHED');
     sState.classList.toggle('live',S.s==='ESTABLISHED');
-    next.disabled=step===STEPS.length-1;
-    next.textContent= step===STEPS.length-1?'✓ 连接已建立':'下一步 →';
   }
-  next.addEventListener('click',()=>{
-    if(step>=STEPS.length-1) return;
-    step++;
-    const m=STEPS[step].msg;
-    const div=document.createElement('div');
-    div.className='hs-msg '+m.dir;
-    div.innerHTML='<span class="hs-lbl">'+m.label+'</span><div class="hs-line"></div>';
-    track.appendChild(div);
-    render();
-  });
-  document.getElementById('hsReset').addEventListener('click',()=>{
-    step=0; track.innerHTML=''; render();
+  Stepper.bind({
+    next: document.getElementById('hsNext'),
+    reset: document.getElementById('hsReset'),
+    total: STEPS.length-1,
+    doneText: '✓ 连接已建立',
+    onStep(i){
+      step=i+1;
+      const m=STEPS[step].msg;
+      const div=document.createElement('div');
+      div.className='hs-msg '+m.dir;
+      div.innerHTML='<span class="hs-lbl">'+m.label+'</span><div class="hs-line"></div>';
+      track.appendChild(div);
+      render();
+    },
+    onReset(){ step=0; track.innerHTML=''; render(); }
   });
   render();
 })();
@@ -827,7 +823,6 @@
   const nodesEl=document.getElementById('dnsNodes');
   const descEl=document.getElementById('dnsDesc');
   const progEl=document.getElementById('dnsProg');
-  const next=document.getElementById('dnsNext');
 
   NODES.forEach(n=>{
     const d=document.createElement('div');
@@ -848,11 +843,15 @@
       descEl.innerHTML=STEPS[step].desc;
       progEl.textContent=STEPS[step].prog;
     }
-    next.disabled= step===STEPS.length-1;
-    next.textContent= step===STEPS.length-1?'✓ 解析完成':'下一步 →';
   }
-  next.addEventListener('click',()=>{ if(step<STEPS.length-1){step++;render();} });
-  document.getElementById('dnsReset').addEventListener('click',()=>{ step=-1; render(); });
+  Stepper.bind({
+    next: document.getElementById('dnsNext'),
+    reset: document.getElementById('dnsReset'),
+    total: STEPS.length,
+    doneText: '✓ 解析完成',
+    onStep(i){ step=i; render(); },
+    onReset(){ step=-1; render(); }
+  });
   render();
 })();
 
