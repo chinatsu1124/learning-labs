@@ -59,6 +59,11 @@ section:first-of-type{border-top:none}
   background:rgba(7,11,22,.78);border-bottom:1px solid var(--line-soft)}
 .topbar .wrap{display:flex;align-items:center;justify-content:space-between;
   height:58px;padding-top:0;padding-bottom:0}
+.brand-area{display:flex;align-items:center;gap:11px;min-width:0}
+.brand-area .home{font-family:var(--mono);font-size:12px;color:var(--muted);
+  text-decoration:none;white-space:nowrap;transition:color .2s}
+.brand-area .home:hover{color:var(--plain)}
+.brand-sep{color:var(--line);font-family:var(--mono);font-size:12px}
 .brand{font-family:var(--mono);font-weight:700;font-size:14px;letter-spacing:.5px;
   color:var(--plain);display:flex;align-items:center;gap:9px}
 .brand .dot{width:9px;height:9px;border-radius:2px;background:var(--cipher);
@@ -267,7 +272,11 @@ footer b{color:var(--plain-dim);font-weight:400}
 <body>
 
 <div class="topbar"><div class="wrap">
-  <div class="brand"><span class="dot"></span>CIPHER·DESK</div>
+  <div class="brand-area">
+    <a class="home" href="/" title="返回 learning labs 首页">←&nbsp;~/labs</a>
+    <span class="brand-sep">/</span>
+    <div class="brand"><span class="dot"></span>CIPHER·DESK</div>
+  </div>
   <nav class="nav">
     <a href="#concept">三种范式</a>
     <a href="#caesar">古典</a>
