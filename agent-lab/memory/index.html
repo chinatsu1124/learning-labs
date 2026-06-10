@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="记忆与检索深入教程：情景/语义/程序三种记忆类型、写入蒸馏管线、RAG 检索管线（chunking、embedding、召回与重排）、Agentic 多跳检索与记忆维护。">
+<meta property="og:title" content="记忆与检索深入 · AGENT LAB">
+<meta property="og:description" content="记忆与检索深入教程：情景/语义/程序三种记忆类型、写入蒸馏管线、RAG 检索管线（chunking、embedding、召回与重排）、Agentic 多跳检索与记忆维护。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>记忆与检索深入 · AGENT LAB</title>
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
+<script defer src="/assets/term.js"></script>
+<style>
+  :root{
+    --bg:#0a0b10;
+    --bg2:#0f1118;
+    --panel:#13151f;
+    --panel-hi:#1a1d29;
+    --line:#262a38;
+    --ink:#dfe3ec;
+    --muted:#8a90a3;
+    --faint:#565c70;
+    --violet:#b08aff;
+    --violet-dim:#37284f;
+    --teal:#4fe3c1;
+    --teal-dim:#1f4d44;
+    --amber:#ffb648;
+    --amber-dim:#5a4422;
+    --rose:#ff7a85;
+    --rose-dim:#52262b;
+    --blue:#8aa9ff;
+    --blue-dim:#27314f;
+    --display:'Syne',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:48px 48px;
+    background-position:center top;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(255,122,133,.08),transparent 60%),
+               radial-gradient(ellipse 70% 50% at 90% 20%,rgba(138,169,255,.05),transparent 55%),
+               linear-gradient(180deg,rgba(10,11,16,.4),var(--bg) 90%);
+  }
+  .wrap{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:0 24px}
+
+  /* ---------- header ---------- */
+  header{padding:90px 0 40px;text-align:center}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:var(--rose);
+    text-transform:uppercase;margin-bottom:24px;opacity:0;animation:rise .7s .1s forwards}
+  .kicker a{color:inherit;text-decoration:none;border-bottom:1px dashed var(--rose-dim)}
+  .kicker a:hover{border-bottom-style:solid}
+  h1.hero{font-family:var(--display);font-weight:800;font-size:clamp(38px,10vw,90px);
+    line-height:.95;letter-spacing:-.03em;margin-bottom:8px}
+  h1.hero .b{display:inline-block;opacity:0;transform:translateY(40px);animation:rise .8s forwards}
+  h1.hero .b:nth-child(1){animation-delay:.15s;color:var(--rose)}
+  h1.hero .b:nth-child(2){animation-delay:.25s;color:var(--ink)}
+  .sub{font-family:var(--mono);color:var(--muted);font-size:15px;margin-top:18px;
+    opacity:0;animation:rise .7s .6s forwards}
+  .sub b{color:var(--ink);font-weight:500}
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+
+  /* ---------- sections ---------- */
+  section{padding:56px 0;border-top:1px solid var(--line)}
+  .secnum{font-family:var(--mono);font-size:12px;color:var(--rose);letter-spacing:.2em;
+    margin-bottom:10px;display:flex;align-items:center;gap:12px}
+  .secnum::after{content:"";flex:1;height:1px;background:var(--line)}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);
+    line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
+  h2 em{font-style:normal;color:var(--rose)}
+  p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
+  p b{color:var(--ink);font-weight:600}
+  .hl{color:var(--teal);font-weight:600}
+  .hl-v{color:var(--violet);font-weight:600}
+  .hl-a{color:var(--amber);font-weight:600}
+  .hl-b{color:var(--blue);font-weight:600}
+  .hl-r{color:var(--rose);font-weight:600}
+  code{font-family:var(--mono);background:var(--panel-hi);color:var(--teal);
+    padding:2px 7px;border-radius:5px;font-size:.88em;border:1px solid var(--line)}
+
+  /* ---------- panel ---------- */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:28px;margin:26px 0;position:relative;overflow:hidden}
+  .panel::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--rose),transparent);opacity:.5}
+  .panel-label{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--faint);
+    text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+  .panel-label::before{content:"●";color:var(--teal);font-size:8px}
+
+  .btn{font-family:var(--mono);font-size:13px;background:var(--panel-hi);color:var(--ink);
+    border:1px solid var(--line);border-radius:8px;padding:9px 16px;cursor:pointer;transition:all .18s}
+  .btn:hover{border-color:var(--rose);color:var(--rose)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .btn:disabled:hover{border-color:var(--line);color:var(--ink)}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .toggle-grp{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:18px;flex-wrap:wrap}
+  .toggle-grp button{font-family:var(--mono);font-size:13px;background:transparent;color:var(--muted);
+    border:0;padding:9px 18px;cursor:pointer;transition:all .18s}
+  .toggle-grp button.active{background:var(--rose-dim);color:var(--rose)}
+
+  /* ---------- callout ---------- */
+  .callout{border-left:3px solid var(--blue);background:var(--panel);border-radius:0 12px 12px 0;
+    padding:16px 20px;margin:22px 0}
+  .callout .t{font-family:var(--mono);font-size:12px;letter-spacing:.15em;color:var(--blue);
+    text-transform:uppercase;margin-bottom:6px}
+  .callout p{margin:0;font-size:15px;color:var(--ink)}
+  .callout.teal{border-color:var(--teal)}
+  .callout.teal .t{color:var(--teal)}
+  .callout.amber{border-color:var(--amber)}
+  .callout.amber .t{color:var(--amber)}
+  .callout.rose{border-color:var(--rose)}
+  .callout.rose .t{color:var(--rose)}
+
+  /* ---------- type cards ---------- */
+  .type-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .type-card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:18px}
+  .type-card .si{font-size:22px;margin-bottom:6px}
+  .type-card h3{font-family:var(--display);font-size:17px;margin-bottom:4px}
+  .type-card .sq{font-family:var(--mono);font-size:11px;color:var(--faint);margin-bottom:10px}
+  .type-card ul{list-style:none}
+  .type-card li{font-size:13.5px;color:var(--muted);padding:6px 0;border-top:1px dashed var(--line);line-height:1.6}
+  .type-card li b{color:var(--ink);font-weight:600}
+  .type-card.t1{border-color:var(--blue-dim)}
+  .type-card.t1 h3{color:var(--blue)}
+  .type-card.t2{border-color:var(--teal-dim)}
+  .type-card.t2 h3{color:var(--teal)}
+  .type-card.t3{border-color:var(--amber-dim)}
+  .type-card.t3 h3{color:var(--amber)}
+
+  /* ---------- stepper log ---------- */
+  .step-log{display:flex;flex-direction:column;gap:10px;margin-top:14px;min-height:40px}
+  .smsg{border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:14px;
+    line-height:1.7;animation:pop .3s ease;background:var(--bg2)}
+  .smsg .who{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+    margin-bottom:5px;color:var(--faint)}
+  .smsg.raw .who{color:var(--violet)}
+  .smsg.raw{border-color:var(--violet-dim)}
+  .smsg.work .who{color:var(--blue)}
+  .smsg.work{border-color:var(--blue-dim)}
+  .smsg.warn .who{color:var(--rose)}
+  .smsg.warn{border-color:var(--rose-dim)}
+  .smsg.ok .who{color:var(--teal)}
+  .smsg.ok{border-color:var(--teal-dim)}
+  .smsg .note{color:var(--muted);font-size:13.5px}
+  .smsg .note b{color:var(--ink)}
+  .smsg .mono{font-family:var(--mono);font-size:12.5px;color:var(--teal);
+    background:var(--panel-hi);border:1px solid var(--line);border-radius:8px;
+    padding:8px 12px;margin-top:8px;overflow-x:auto;white-space:pre;line-height:1.7}
+  .smsg .mono .c{color:var(--faint)}
+  .smsg .mono .x{color:var(--rose);text-decoration:line-through}
+  .smsg .mono .n{color:var(--amber)}
+
+  /* ---------- similarity bars ---------- */
+  .chunk{border:1px solid var(--line);border-radius:10px;background:var(--panel-hi);
+    padding:10px 14px;margin-top:8px;font-size:13px;color:var(--muted);line-height:1.7}
+  .chunk b{color:var(--ink)}
+  .chunk .src{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.08em}
+  .chunk .simrow{display:flex;align-items:center;gap:10px;margin-top:6px;font-family:var(--mono);font-size:11px}
+  .chunk .track{flex:1;height:8px;background:var(--bg);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+  .chunk .fillb{height:100%;border-radius:4px;background:var(--teal)}
+  .chunk.trap .fillb{background:var(--rose)}
+  .chunk.trap{border-color:var(--rose-dim)}
+  .chunk.low{opacity:.55}
+  .chunk .tag{font-family:var(--mono);font-size:10px;border:1px solid var(--line);border-radius:5px;
+    padding:1px 7px;margin-left:8px;letter-spacing:.08em;color:var(--faint)}
+  .chunk.trap .tag{color:var(--rose);border-color:var(--rose-dim)}
+  .chunk.keep .tag{color:var(--teal);border-color:var(--teal-dim)}
+
+  /* ---------- hygiene cards ---------- */
+  .hyg-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:680px){.hyg-grid{grid-template-columns:1fr}}
+  .hyg-card{background:var(--bg2);border:1.5px solid var(--rose-dim);border-radius:12px;padding:18px;
+    cursor:pointer;transition:all .18s;text-align:left;color:inherit;font:inherit;width:100%}
+  .hyg-card:hover{border-color:var(--muted)}
+  .hyg-card.active{border-color:var(--rose);background:var(--rose-dim);box-shadow:0 0 22px rgba(255,122,133,.13)}
+  .hyg-card .pn{font-family:var(--display);font-weight:700;font-size:16px;color:var(--rose)}
+  .hyg-card .pd{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:2px}
+  .hyg-detail{margin-top:16px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;
+    padding:18px 20px;font-size:14.5px;color:var(--muted);line-height:1.9}
+  .hyg-detail b{color:var(--ink)}
+  .hyg-detail .fix{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--teal);
+    text-transform:uppercase;margin-top:12px;margin-bottom:2px}
+
+  /* ---------- quiz ---------- */
+  .quiz-q{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+  .quiz-q .qt{font-size:15px;color:var(--ink);margin-bottom:12px;font-weight:600}
+  .quiz-q .qt .qn{font-family:var(--mono);color:var(--rose);margin-right:8px}
+  .quiz-opts{display:flex;flex-direction:column;gap:8px}
+  .quiz-opts button{font-size:14px;font-family:var(--body);background:var(--panel-hi);color:var(--muted);
+    border:1px solid var(--line);border-radius:8px;padding:10px 14px;cursor:pointer;transition:all .15s;text-align:left}
+  .quiz-opts button:hover{border-color:var(--muted);color:var(--ink)}
+  .quiz-opts button.right{border-color:var(--teal);background:var(--teal-dim);color:var(--teal)}
+  .quiz-opts button.wrong{border-color:var(--rose);background:var(--rose-dim);color:var(--rose)}
+  .quiz-exp{font-size:13.5px;color:var(--muted);margin-top:10px;padding-top:10px;
+    border-top:1px dashed var(--line);display:none;line-height:1.7}
+  .quiz-exp b{color:var(--teal)}
+  .quiz-score{text-align:center;font-family:var(--mono);font-size:14px;color:var(--muted);margin-top:18px}
+  .quiz-score b{color:var(--rose);font-size:20px}
+
+  /* ---------- siblings nav ---------- */
+  .sib-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .sib{display:block;background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;
+    padding:18px;text-decoration:none;transition:all .18s}
+  .sib:hover{border-color:var(--rose)}
+  .sib .sn{font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink)}
+  .sib .sd{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.6}
+  .sib .sl{font-family:var(--mono);font-size:11px;color:var(--rose);margin-top:8px;letter-spacing:.1em}
+
+  footer{border-top:1px solid var(--line);padding:28px 24px 48px;text-align:center;
+    font-family:var(--mono);font-size:12px;color:var(--faint)}
+  footer a{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--line)}
+  footer a:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+<a class="lab-home" href="/agent-lab/" title="返回 agent lab">←&nbsp;agent&nbsp;lab</a>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">// <a href="/agent-lab/">agent lab</a> · deep dive 04</div>
+    <h1 class="hero"><span class="b">MEMORY</span><span class="b">&nbsp;&amp;&nbsp;RAG</span></h1>
+    <div class="sub">记忆与检索深入 —— 窗口外的世界怎么<b>存（写入）</b>、怎么<b>取（RAG）</b>、怎么不腐烂</div>
+  </header>
+
+  <!-- ============ 01 记忆类型 ============ -->
+  <section id="types">
+    <div class="secnum">01 / MEMORY TYPES</div>
+    <h2>记忆不止一种：<em>事件、事实、规矩</em></h2>
+    <p><a href="/agent-lab/context/" style="color:var(--violet);text-decoration:none;border-bottom:1px dashed var(--violet-dim)">上下文工程</a>那页讲了记忆的<b>分层</b>（放在哪：窗口内 / scratchpad / 外部存储），这页讲另一条正交的轴——<b>类型</b>（存的是什么）。认知科学的三分法搬到 Agent 上意外地合身，因为三种记忆的<span class="hl-r">写入时机和取回方式完全不同</span>👇</p>
+
+    <div class="panel">
+      <div class="panel-label">taxonomy · 三种记忆，三套读写逻辑</div>
+      <div class="type-grid">
+        <div class="type-card t1">
+          <div class="si">📅</div>
+          <h3>情景记忆 Episodic</h3>
+          <div class="sq">发生过什么 · 带时间线的事件</div>
+          <ul>
+            <li><b>例子</b>："上次部署失败是因为漏了环境变量"、完整会话日志</li>
+            <li><b>写入</b>：随事件自动追加，几乎不加工</li>
+            <li><b>取回</b>：按时间或事件检索（"上周二我们改了什么？"）</li>
+          </ul>
+        </div>
+        <div class="type-card t2">
+          <div class="si">💡</div>
+          <h3>语义记忆 Semantic</h3>
+          <div class="sq">知道什么 · 事实与偏好</div>
+          <ul>
+            <li><b>例子</b>："用户用 pnpm"、产品文档、年假政策</li>
+            <li><b>写入</b>：从对话/文档中<b>蒸馏</b>出条目（第 02 节）</li>
+            <li><b>取回</b>：按语义相似检索——<b>RAG 的主战场</b>（第 03 节）</li>
+          </ul>
+        </div>
+        <div class="type-card t3">
+          <div class="si">📐</div>
+          <h3>程序记忆 Procedural</h3>
+          <div class="sq">怎么做事 · 规则与技能</div>
+          <ul>
+            <li><b>例子</b>：系统提示、CLAUDE.md 里的项目规范、技能文件</li>
+            <li><b>写入</b>：人工沉淀或显式"记住这条规矩"</li>
+            <li><b>取回</b>：<b>不靠检索</b>——每次会话开场整体加载</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="t">为什么这个区分有用</div>
+      <p>三种类型对应三套基建：情景记忆要<b>日志存储 + 时间索引</b>，语义记忆要<b>蒸馏管线 + 向量检索</b>，程序记忆只要<b>一个会被自动加载的文件</b>。把"用户的包管理器偏好"塞进会话日志里，或者给 CLAUDE.md 配向量库，都是类型错配——存得进去，取不出来。</p>
+    </div>
+  </section>
+
+  <!-- ============ 02 写入管线 ============ -->
+  <section id="write">
+    <div class="secnum">02 / WRITE PATH</div>
+    <h2>写入管线：<em>记什么，比记下来更难</em></h2>
+    <p>新手做记忆系统的第一反应是"把对话全存了"——存储确实便宜，但<b>检索时每一条垃圾都在稀释信号</b>。成熟的写入管线是一个漏斗：原始对话 → 蒸馏候选 → 查重处理冲突 → 入库。点击"下一步"，看一段对话怎么被消化成两条记忆👇</p>
+
+    <div class="panel">
+      <div class="panel-label">simulator · 会话结束，触发记忆写入</div>
+      <div class="step-log" id="write-log"></div>
+      <div class="btnrow">
+        <button class="btn" id="write-next">下一步 ▸</button>
+        <button class="btn" id="write-reset">重置 ↺</button>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">两种写入触发</div>
+      <p><b>显式</b>：用户说"记住我用 pnpm"——立刻写，且置信度最高；<b>隐式</b>：会话结束或压缩前，让模型自问"这次有什么值得下次记住的"。隐式写入要更保守：<b>置信度不够的宁可不记</b>，记错一条的代价（每个未来会话开局就被污染）远大于漏记一条。</p>
+    </div>
+  </section>
+
+  <!-- ============ 03 RAG 检索管线 ============ -->
+  <section id="rag">
+    <div class="secnum">03 / READ PATH · RAG</div>
+    <h2>RAG 管线：<em>从提问到带出处的回答</em></h2>
+    <p>读端就是 <span class="term" data-name="RAG · Retrieval-Augmented Generation" data-tip="检索增强生成：回答前先从知识库检索最相关的片段，连同问题一起交给模型，让答案有出处、可验证。">RAG</span>。入门篇一句话带过的"检索最相关的几块"，拆开是一条五站管线，<b>每一站都有自己的翻车方式</b>。先看准备工作，再逐站跑一个真实问题👇</p>
+
+    <div class="panel">
+      <div class="panel-label">prep · 离线准备：知识库怎么变成可检索的</div>
+      <p style="font-size:14.5px;margin-bottom:10px"><b>① 切块（<span class="term" data-name="Chunking · 切块" data-tip="把长文档切成适合检索的小段。块的边界和大小直接决定检索质量，是 RAG 里最被低估的环节。">chunking</span>）</b>：把文档切成段。<span class="hl-r">太碎</span>——"最多结转 5 天"被切离了"年假"主语，检索回来没法用；<span class="hl-r">太大</span>——整章进上下文，95% 是噪音。常用策略：按标题/段落等语义边界切，几百 token 一块，相邻块留重叠。</p>
+      <p style="font-size:14.5px;margin-bottom:0"><b>② 向量化（<span class="term" data-name="Embedding · 向量化" data-tip="把文字映射成一串数字坐标，语义相近的文字坐标相近，『搜索』变成『找最近邻』。">embedding</span>）入库</b>：每块算一个向量存进向量库。这一步离线做一次，之后增量更新——<b>文档改了块没重算，是线上答案过时的常见原因</b>。</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">simulator · 员工问：『年假没休完能折现吗？』</div>
+      <div class="step-log" id="rag-log"></div>
+      <div class="btnrow">
+        <button class="btn" id="rag-next">下一步 ▸</button>
+        <button class="btn" id="rag-reset">重置 ↺</button>
+      </div>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">评估 RAG，盯两个独立指标</div>
+      <p><b>检索质量</b>（该找到的块找到了吗）和<b>生成质量</b>（找到了之后答得对吗）要分开测——答案错了先看是哪一半的锅。检索不行调切块/embedding/重排，生成不行调提示词。混在一起测就只能玄学调参。</p>
+    </div>
+  </section>
+
+  <!-- ============ 04 Agentic 检索 ============ -->
+  <section id="agentic">
+    <div class="secnum">04 / AGENTIC RAG</div>
+    <h2>把检索交给模型：<em>从流水线到工具</em></h2>
+    <p>上面的管线是<b>固定的</b>：每个问题检索一次、用就用了。Agentic RAG 换一个思路——把检索做成一个<b>工具</b>，让模型自己决定查不查、查什么、查几次。同一个问题，两种做法对比👇</p>
+
+    <div class="panel">
+      <div class="panel-label">contrast · 问题：『对比一下我们和竞品 X 的退款政策』</div>
+      <div class="toggle-grp" id="ag-tabs">
+        <button class="active" data-t="0">固定管线</button>
+        <button data-t="1">Agentic 多跳</button>
+      </div>
+      <div id="ag-out"></div>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">代价与护栏</div>
+      <p>Agentic 检索每多跳一次就是一轮完整的模型调用，<b>延迟和成本随跳数线性涨</b>；而且"再查一次"和"原地打转"只有一线之隔——<a href="/agent-lab/patterns/" style="color:var(--teal);text-decoration:none;border-bottom:1px dashed var(--teal-dim)">架构模式</a>那页 ReAct 的防打转三件套（步数预算、重复检测、失败清单）在这里原样适用。简单问答用固定管线，开放调研才值得上 Agentic。</p>
+    </div>
+  </section>
+
+  <!-- ============ 05 记忆维护 ============ -->
+  <section id="hygiene">
+    <div class="secnum">05 / MEMORY HYGIENE</div>
+    <h2>记忆的卫生：<em>会腐烂的不只是上下文</em></h2>
+    <p>上下文工程那页讲过窗口内的四种失效，长期记忆有自己的四种慢性病——<b>而且更隐蔽：它们跨会话潜伏，每个新会话开局就发作</b>。点击查看病例和处方👇</p>
+
+    <div class="panel">
+      <div class="panel-label">pathology · 点击切换病例</div>
+      <div class="hyg-grid" id="hyg-grid"></div>
+      <div class="hyg-detail" id="hyg-detail"></div>
+    </div>
+
+    <div class="callout rose">
+      <div class="t">一条底线</div>
+      <p>记忆系统是<b>替用户保管信息</b>，不是悄悄给用户建档案。用户应该能<b>看到</b>系统记住了什么、能<b>修改</b>、能<b>一键忘掉</b>——这既是合规要求，也是发现记忆污染的最后一道防线（用户比任何 eval 都更快发现"它把我记成谁了"）。</p>
+    </div>
+  </section>
+
+  <!-- ============ 06 测验 ============ -->
+  <section id="quiz">
+    <div class="secnum">06 / QUIZ</div>
+    <h2>随堂测验：<em>检验一下</em></h2>
+    <p>5 道题。答错没关系，解析比答案重要。</p>
+
+    <div class="panel">
+      <div class="panel-label">quiz · 点击选项作答</div>
+      <div id="quiz-list"></div>
+      <div class="quiz-score" id="quiz-score"></div>
+    </div>
+  </section>
+
+  <!-- ============ 继续深入 ============ -->
+  <section id="next">
+    <div class="secnum">→ / KEEP GOING</div>
+    <h2>继续<em>深入</em></h2>
+    <div class="sib-grid">
+      <a class="sib" href="/agent-lab/tool-use/">
+        <div class="sn">工具调用</div>
+        <div class="sd">报文级拆解一次 tool call：协议往返、Schema 设计、并行、错误处理与 MCP</div>
+        <div class="sl">deep dive 01 →</div>
+      </a>
+      <a class="sib" href="/agent-lab/context/">
+        <div class="sn">上下文工程</div>
+        <div class="sd">token 预算、增长与压缩、记忆分层、四种上下文失效模式</div>
+        <div class="sl">deep dive 02 →</div>
+      </a>
+      <a class="sib" href="/agent-lab/patterns/">
+        <div class="sn">架构模式</div>
+        <div class="sd">ReAct 失败案例、重规划回路、Reflection 收益、多智能体拓扑与选型</div>
+        <div class="sl">deep dive 03 →</div>
+      </a>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <a href="/agent-lab/">← agent lab</a> &nbsp;·&nbsp; <a href="/">~/labs</a> &nbsp;·&nbsp; memory &amp; rag deep dive
+</footer>
+
+<script>
+/* ================= 02 write pipeline ================= */
+const writeSteps = [
+  {role:'raw', who:'原始素材 · 会话摘录（共 8 轮，节选）',
+   html:'<div class="note">用户在闲聊和干活之间提到了一些信息：</div><div class="mono">用户: 帮我把依赖装一下，<span class="n">我们用 pnpm</span>，别用 npm\n用户: 对了这个仓库是 <span class="n">monorepo</span>，包都在 packages/ 下面\n用户: 今天好热……算了继续。把测试也跑了吧</div>'},
+  {role:'work', who:'蒸馏 · 抽取候选条目',
+   html:'<div class="note">让模型带着标准过一遍："<b>未来会话还会用到吗？</b>"——这是唯一的准入标准：</div><div class="mono">① 包管理器偏好: pnpm（禁 npm）   <span class="c">→ 候选 ✓ 每次装依赖都用得上</span>\n② 仓库结构: monorepo, packages/   <span class="c">→ 候选 ✓ 影响所有路径操作</span>\n<span class="x">③ 今天很热</span>                        <span class="c">→ 丢弃 ✗ 无长期价值</span></div>'},
+  {role:'warn', who:'查重 · 撞上已有记忆',
+   html:'<div class="note">入库前先查：记忆库里已经有一条相关记录——</div><div class="mono">已有: { fact: "包管理器: npm", since: "2026-03-12" }\n新条目: 包管理器: pnpm（2026-06-10，用户明确说"别用 npm"）</div><div class="note" style="margin-top:8px">⚠ 直接追加 = 新旧两条并存，未来检索哪条全凭运气——这就是跨会话版的"上下文冲突"。正确动作：<b>更新原条目</b>，保留变更时间。</div>'},
+  {role:'ok', who:'入库 · 更新后的记忆库',
+   html:'<div class="mono">{ fact: "包管理器: pnpm（用户明确禁用 npm）",\n  updated: "2026-06-10", source: "用户原话",\n  history: ["npm (2026-03-12 → 已作废)"] }\n{ fact: "仓库结构: monorepo，包位于 packages/",\n  updated: "2026-06-10", source: "用户原话" }</div><div class="note" style="margin-top:8px">8 轮对话 → <b>2 条带时间戳和出处的条目</b>。下次会话检索到的是结论，不是要重新读一遍的闲聊。这就是"蒸馏后存"和"原文全存"的差距。</div>'}
+];
+let writeIdx = 0;
+const writeLog = document.getElementById('write-log');
+const writeNext = document.getElementById('write-next');
+writeNext.addEventListener('click', ()=>{
+  if(writeIdx >= writeSteps.length) return;
+  const s = writeSteps[writeIdx++];
+  const d = document.createElement('div');
+  d.className = 'smsg ' + s.role;
+  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+  writeLog.appendChild(d);
+  if(writeIdx >= writeSteps.length){
+    writeNext.disabled = true;
+    writeNext.textContent = '写入完成 ✓';
+  }
+});
+document.getElementById('write-reset').addEventListener('click', ()=>{
+  writeIdx = 0; writeLog.innerHTML = '';
+  writeNext.disabled = false; writeNext.textContent = '下一步 ▸';
+});
+
+/* ================= 03 rag pipeline ================= */
+function chunkHtml(cls, src, text, sim, tag){
+  return '<div class="chunk '+cls+'"><span class="src">'+src+'</span>'
+    + (tag ? '<span class="tag">'+tag+'</span>' : '')
+    + '<div>'+text+'</div>'
+    + '<div class="simrow"><span>相似度</span><div class="track"><div class="fillb" style="width:'+(sim*100)+'%"></div></div><span>'+sim.toFixed(2)+'</span></div></div>';
+}
+const ragSteps = [
+  {role:'raw', who:'① 查询改写',
+   html:'<div class="note">用户原话口语化，先让模型改写成更"像知识库用语"的查询，再算 embedding：</div><div class="mono">原话: "年假没休完能折现吗？"\n改写: "年假 未休 结转 折算 现金 政策"</div><div class="note" style="margin-top:8px">改写是廉价但高收益的一步——口语和文档措辞的鸿沟，靠它先填一半。</div>'},
+  {role:'work', who:'② 向量召回 · top 4',
+   html:'<div class="note">在向量库里找最近邻，注意第三条——<b>相似度高不等于相关</b>：</div>'
+     + chunkHtml('keep','员工手册 · 休假篇','「年假当年未休完的，最多可<b>结转 5 天</b>至次年 3 月底，逾期清零。」',0.82,'相关')
+     + chunkHtml('keep','员工手册 · 离职篇','「离职结算时，未休年假按日薪 <b>200% 折算现金</b>。」',0.79,'相关')
+     + chunkHtml('trap','行政通知 2025-18','「<b>病假</b>不设折现，长病假按医保政策执行……」',0.77,'高相似 · 无关')
+     + chunkHtml('low','考勤制度','「月度迟到三次以上者，扣除当月全勤奖……」',0.58,'低分')},
+  {role:'work', who:'③ 重排（rerank）· 精筛',
+   html:'<div class="note">召回用的双塔模型快但糙；重排用<b>更贵的交叉模型逐对打分</b>"这段是否真能回答这个问题"。病假那条在这一关现形：</div><div class="mono">休假篇   0.82 → rerank 0.94  <span class="c">保留</span>\n离职篇   0.79 → rerank 0.88  <span class="c">保留</span>\n<span class="x">行政通知 0.77 → rerank 0.21</span>  <span class="c">剔除：讲的是病假不是年假</span></div><div class="note" style="margin-top:8px">先粗后精——全库都跑交叉模型太贵，先用便宜的缩小范围，再用贵的把关。</div>'},
+  {role:'work', who:'④ 注入上下文',
+   html:'<div class="note">入选的两段连同指令一起进窗口。<b>指令这两句是抗幻觉的关键</b>：</div><div class="mono">[资料1·员工手册·休假篇] 年假未休最多结转5天…\n[资料2·员工手册·离职篇] 离职时按日薪200%折算…\n\n仅基于以上资料回答；资料中没有的不要编造，\n回答需标注资料出处。</div>'},
+  {role:'ok', who:'⑤ 生成 · 带出处的回答',
+   html:'<div class="note"><b>在职期间年假不能折现</b>，只能结转（最多 5 天，次年 3 月底前有效）〔资料1〕；<b>离职结算时</b>未休部分按日薪 200% 折算现金〔资料2〕。<br><br><span style="color:var(--faint);font-style:italic;font-size:13px">对照组：没有 RAG 时，模型可能一本正经地答"按 100% 折现"——读起来同样流畅，但查无此据。出处让错误变得可发现。</span></div>'}
+];
+let ragIdx = 0;
+const ragLog = document.getElementById('rag-log');
+const ragNext = document.getElementById('rag-next');
+ragNext.addEventListener('click', ()=>{
+  if(ragIdx >= ragSteps.length) return;
+  const s = ragSteps[ragIdx++];
+  const d = document.createElement('div');
+  d.className = 'smsg ' + s.role;
+  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+  ragLog.appendChild(d);
+  if(ragIdx >= ragSteps.length){
+    ragNext.disabled = true;
+    ragNext.textContent = '管线跑完 ✓';
+  }
+});
+document.getElementById('rag-reset').addEventListener('click', ()=>{
+  ragIdx = 0; ragLog.innerHTML = '';
+  ragNext.disabled = false; ragNext.textContent = '下一步 ▸';
+});
+
+/* ================= 04 agentic tabs ================= */
+const agCases = [
+  {html:'<div class="smsg work" style="animation:none"><div class="who">固定管线 · 检索一次定生死</div>'
+    +'<div class="note"><div class="mono">检索("对比我们和竞品X的退款政策")\n→ 命中: 自家《退款规则》§1-§3\n→ 竞品 X 的资料: 0 条（知识库里本来就没有）</div>'
+    +'<div style="margin-top:8px">管线没有"发现缺口"的机会，模型只好硬着头皮答：<b>自家政策详尽，竞品部分要么空白、要么开始编</b>。固定管线的天花板：检索质量再高，也只检索这一次。</div></div></div>'},
+  {html:'<div class="smsg ok" style="animation:none"><div class="who">Agentic · 检索是工具，模型掌握主动权</div>'
+    +'<div class="note"><div class="mono">跳1: search_kb("退款政策") → 自家规则 ✓\n<span class="c">思考: 竞品X的信息知识库没有，需要外部来源</span>\n跳2: web_search("竞品X 退款政策") → 官网条款 ✓\n<span class="c">思考: 两边口径都有了，可以对比了</span>\n→ 生成对比表，分别标注来源</div>'
+    +'<div style="margin-top:8px">区别不在工具更强，而在<b>模型看得到中间结果</b>：发现缺口 → 换个来源再查。改写查询、多跳补查、交叉验证，都是这个"看到结果再决定"的循环长出来的。</div></div></div>'}
+];
+const agTabs = document.getElementById('ag-tabs');
+const agOut = document.getElementById('ag-out');
+function renderAg(i){ agOut.innerHTML = agCases[i].html; }
+agTabs.addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  agTabs.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  renderAg(+b.dataset.t);
+});
+renderAg(0);
+
+/* ================= 05 hygiene ================= */
+const hygiene = [
+  {name:'Stale · 过期', tag:'三个月前的事实，今天还在生效',
+   d:'记忆库里存着"用户正在休产假"——<b>没有任何机制让它过期</b>，半年后的会话还在以此安排日程。事实分两种：稳定的（生日、母语）和易变的（在做的项目、最近的偏好），后者不带时效就是定时炸弹。',
+   fix:'处方：条目带时间戳；易变事实设 TTL 或"下次用到时先复核"；回答里引用旧记忆时连时间一起说（"按 3 月的记录…"）。'},
+  {name:'Conflict · 冲突', tag:'新旧条目并存打架',
+   d:'写入时只追加、不查重，库里同时躺着"用 npm（3月）"和"用 pnpm（6月）"。<b>检索按相似度取，不按新旧取</b>——哪条被捞回来全凭运气，Agent 的行为随机摇摆。',
+   fix:'处方：写入管线必须有查重步骤（第 02 节模拟器的第三步）；冲突时更新原条目并保留变更历史，而不是追加新条目。'},
+  {name:'Poisoning · 污染', tag:'错误结论写入，跨会话发作',
+   d:'窗口内的污染（见上下文工程页）随会话结束消失，<b>写进长期记忆的污染会在每个新会话开局自动加载</b>。一条记错的"API 不支持分页"，能让之后所有会话都绕远路——而且没人知道为什么。',
+   fix:'处方：隐式写入设置信度门槛，推断的结论标记"未验证"；给用户和 Agent 都提供"删除/修正这条记忆"的工具；定期用 eval 任务体检记忆库。'},
+  {name:'Privacy · 隐私', tag:'不该记的也记了',
+   d:'用户在对话里贴过一次数据库密码、一串身份证号——蒸馏管线如果照单全收，它们就<b>永久进了记忆库</b>，还可能在不相关的会话里被检索出来展示给别人看。',
+   fix:'处方：写入前过敏感信息过滤（密钥、证件号、健康信息直接拦截）；记忆对用户可见、可改、可删；导出和共享场景默认排除记忆内容。'}
+];
+const hygGrid = document.getElementById('hyg-grid');
+const hygDetail = document.getElementById('hyg-detail');
+hygiene.forEach((p,i)=>{
+  const el = document.createElement('button');
+  el.className = 'hyg-card';
+  el.innerHTML = '<div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>';
+  el.addEventListener('click', ()=>{
+    hygGrid.querySelectorAll('.hyg-card').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    hygDetail.innerHTML = p.d + '<div class="fix">处方</div>' + p.fix.slice(p.fix.indexOf('：')+1);
+  });
+  hygGrid.appendChild(el);
+  if(i===0) el.click();
+});
+
+/* ================= 06 quiz ================= */
+const quiz = [
+  {q:'"项目规范：提交信息用中文、测试必须过了才能 push"——这类内容属于哪种记忆？最合适的取回方式是？',
+   opts:['情景记忆；按时间检索','语义记忆；向量检索','程序记忆；每次会话开场整体加载（如 CLAUDE.md）','不该存，每次让用户重新说'],
+   ans:2,
+   exp:'规矩和做事方式是<b>程序记忆</b>：它们不是"按需查"的知识，而是每次都该生效的行为约束——所以不走检索，直接随会话加载。给规范配向量库属于类型错配。'},
+  {q:'蒸馏写入时，判断一条信息"值不值得记"的核心标准是？',
+   opts:['字数够不够长','用户语气强不强烈','未来的会话还会不会用到它','是否包含专业术语'],
+   ans:2,
+   exp:'唯一标准是<b>复用价值</b>："今天好热"再真诚也不记，"我们用 pnpm"再随口也要记。隐式写入还要叠加置信度门槛——记错的代价（跨会话污染）大于漏记。'},
+  {q:'RAG 召回的某段文字相似度 0.77 排第三，rerank 后却被剔除了。最可能的原因是？',
+   opts:['rerank 模型坏了','向量相似只代表语义接近，这段恰好"长得像"但答非所问，交叉模型逐对判断后现形','分数低于 0.8 一律剔除','它太长了'],
+   ans:1,
+   exp:'<b>相似 ≠ 相关</b>是 RAG 的核心陷阱：模拟器里"病假不可折现"和"年假能否折现"用词高度重叠，向量距离很近，但回答不了问题。召回（快而糙）+ 重排（慢而准）的两段式就是为了抓这种漏网之鱼。'},
+  {q:'知识库切块（chunking）切得过碎，典型症状是？',
+   opts:['向量库存储爆炸','检索回来的片段缺少主语和上下文，模型拿到"最多结转 5 天"却不知道说的是什么','embedding 算不出来','回答变慢'],
+   ans:1,
+   exp:'过碎的块<b>语义残缺</b>——关键信息和它的上下文被切开，召回了也用不了。反方向（过大）则是噪音稀释。所以实践里按语义边界切、控制在几百 token、相邻块留重叠。'},
+  {q:'相比窗口内的上下文污染，写入长期记忆的错误结论更危险，因为？',
+   opts:['它占用更多存储','窗口污染随会话结束消失，记忆污染会在每个新会话开局自动加载、持续发作','它会让 token 变贵','它会传染给其他用户'],
+   ans:1,
+   exp:'<b>持久化放大了错误的半衰期</b>：会话内的错误最多祸害一次会话，入库的错误祸害之后所有会话，且离发病现场（写入时刻）很远、极难排查。所以写入要设门槛，记忆要可见、可改、可删。'}
+];
+const quizList = document.getElementById('quiz-list');
+const quizScore = document.getElementById('quiz-score');
+let answered = 0, correct = 0;
+quiz.forEach((item,qi)=>{
+  const qd = document.createElement('div');
+  qd.className = 'quiz-q';
+  qd.innerHTML = '<div class="qt"><span class="qn">Q'+(qi+1)+'</span>'+item.q+'</div>';
+  const opts = document.createElement('div');
+  opts.className = 'quiz-opts';
+  const exp = document.createElement('div');
+  exp.className = 'quiz-exp';
+  exp.innerHTML = item.exp;
+  item.opts.forEach((o,oi)=>{
+    const b = document.createElement('button');
+    b.textContent = String.fromCharCode(65+oi) + '. ' + o;
+    b.addEventListener('click', ()=>{
+      if(qd.dataset.done) return;
+      qd.dataset.done = '1';
+      answered++;
+      if(oi === item.ans){ b.classList.add('right'); correct++; }
+      else {
+        b.classList.add('wrong');
+        opts.children[item.ans].classList.add('right');
+      }
+      exp.style.display = 'block';
+      quizScore.innerHTML = '得分 <b>'+correct+' / '+answered+'</b>' +
+        (answered === quiz.length
+          ? (correct === quiz.length ? ' 🎉 全对！可以去搭自己的记忆系统了'
+             : correct >= 3 ? ' 👍 不错，回头看看错题的解析'
+             : ' 💪 建议把两条管线的模拟器再跑一遍')
+          : '');
+    });
+    opts.appendChild(b);
+  });
+  qd.appendChild(opts);
+  qd.appendChild(exp);
+  quizList.appendChild(qd);
+});
+</script>
+</body>
+</html>

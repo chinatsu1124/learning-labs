@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Agent 架构模式深入教程：ReAct 失败案例与防卡死、Plan-and-Execute 重规划回路、Reflection 收益递减、多智能体拓扑对比与交互式选型决策树。">
+<meta property="og:title" content="架构模式深入 · AGENT LAB">
+<meta property="og:description" content="Agent 架构模式深入教程：ReAct 失败案例与防卡死、Plan-and-Execute 重规划回路、Reflection 收益递减、多智能体拓扑对比与交互式选型决策树。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>架构模式深入 · AGENT LAB</title>
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
+<script defer src="/assets/term.js"></script>
+<style>
+  :root{
+    --bg:#0a0b10;
+    --bg2:#0f1118;
+    --panel:#13151f;
+    --panel-hi:#1a1d29;
+    --line:#262a38;
+    --ink:#dfe3ec;
+    --muted:#8a90a3;
+    --faint:#565c70;
+    --violet:#b08aff;
+    --violet-dim:#37284f;
+    --teal:#4fe3c1;
+    --teal-dim:#1f4d44;
+    --amber:#ffb648;
+    --amber-dim:#5a4422;
+    --rose:#ff7a85;
+    --rose-dim:#52262b;
+    --blue:#8aa9ff;
+    --blue-dim:#27314f;
+    --display:'Syne',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:48px 48px;
+    background-position:center top;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(79,227,193,.08),transparent 60%),
+               radial-gradient(ellipse 70% 50% at 90% 20%,rgba(138,169,255,.05),transparent 55%),
+               linear-gradient(180deg,rgba(10,11,16,.4),var(--bg) 90%);
+  }
+  .wrap{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:0 24px}
+
+  /* ---------- header ---------- */
+  header{padding:90px 0 40px;text-align:center}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:var(--teal);
+    text-transform:uppercase;margin-bottom:24px;opacity:0;animation:rise .7s .1s forwards}
+  .kicker a{color:inherit;text-decoration:none;border-bottom:1px dashed var(--teal-dim)}
+  .kicker a:hover{border-bottom-style:solid}
+  h1.hero{font-family:var(--display);font-weight:800;font-size:clamp(40px,11vw,96px);
+    line-height:.95;letter-spacing:-.03em;margin-bottom:8px}
+  h1.hero .b{display:inline-block;opacity:0;transform:translateY(40px);animation:rise .8s forwards}
+  h1.hero .b:nth-child(1){animation-delay:.15s;color:var(--teal)}
+  h1.hero .b:nth-child(2){animation-delay:.25s;color:var(--ink)}
+  .sub{font-family:var(--mono);color:var(--muted);font-size:15px;margin-top:18px;
+    opacity:0;animation:rise .7s .6s forwards}
+  .sub b{color:var(--ink);font-weight:500}
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+
+  /* ---------- sections ---------- */
+  section{padding:56px 0;border-top:1px solid var(--line)}
+  .secnum{font-family:var(--mono);font-size:12px;color:var(--teal);letter-spacing:.2em;
+    margin-bottom:10px;display:flex;align-items:center;gap:12px}
+  .secnum::after{content:"";flex:1;height:1px;background:var(--line)}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);
+    line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
+  h2 em{font-style:normal;color:var(--teal)}
+  p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
+  p b{color:var(--ink);font-weight:600}
+  .hl{color:var(--teal);font-weight:600}
+  .hl-v{color:var(--violet);font-weight:600}
+  .hl-a{color:var(--amber);font-weight:600}
+  .hl-b{color:var(--blue);font-weight:600}
+  code{font-family:var(--mono);background:var(--panel-hi);color:var(--teal);
+    padding:2px 7px;border-radius:5px;font-size:.88em;border:1px solid var(--line)}
+
+  /* ---------- panel ---------- */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:28px;margin:26px 0;position:relative;overflow:hidden}
+  .panel::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--teal),transparent);opacity:.5}
+  .panel-label{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--faint);
+    text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+  .panel-label::before{content:"●";color:var(--teal);font-size:8px}
+
+  .btn{font-family:var(--mono);font-size:13px;background:var(--panel-hi);color:var(--ink);
+    border:1px solid var(--line);border-radius:8px;padding:9px 16px;cursor:pointer;transition:all .18s}
+  .btn:hover{border-color:var(--teal);color:var(--teal)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .btn:disabled:hover{border-color:var(--line);color:var(--ink)}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .toggle-grp{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:18px;flex-wrap:wrap}
+  .toggle-grp button{font-family:var(--mono);font-size:13px;background:transparent;color:var(--muted);
+    border:0;padding:9px 18px;cursor:pointer;transition:all .18s}
+  .toggle-grp button.active{background:var(--teal-dim);color:var(--teal)}
+
+  /* ---------- callout ---------- */
+  .callout{border-left:3px solid var(--blue);background:var(--panel);border-radius:0 12px 12px 0;
+    padding:16px 20px;margin:22px 0}
+  .callout .t{font-family:var(--mono);font-size:12px;letter-spacing:.15em;color:var(--blue);
+    text-transform:uppercase;margin-bottom:6px}
+  .callout p{margin:0;font-size:15px;color:var(--ink)}
+  .callout.teal{border-color:var(--teal)}
+  .callout.teal .t{color:var(--teal)}
+  .callout.amber{border-color:var(--amber)}
+  .callout.amber .t{color:var(--amber)}
+  .callout.rose{border-color:var(--rose)}
+  .callout.rose .t{color:var(--rose)}
+
+  /* ---------- trace log ---------- */
+  .trace-log{display:flex;flex-direction:column;gap:10px;margin-top:14px;min-height:40px}
+  .tmsg{border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:14px;
+    line-height:1.7;animation:pop .3s ease;background:var(--bg2)}
+  .tmsg .who{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+    margin-bottom:5px;color:var(--faint)}
+  .tmsg.think{border-color:var(--blue-dim)}
+  .tmsg.think .who{color:var(--blue)}
+  .tmsg.act{border-color:var(--amber-dim)}
+  .tmsg.act .who{color:var(--amber)}
+  .tmsg.bad{border-color:var(--rose-dim)}
+  .tmsg.bad .who{color:var(--rose)}
+  .tmsg.fix{border-color:var(--teal-dim)}
+  .tmsg.fix .who{color:var(--teal)}
+  .tmsg .note{color:var(--muted);font-size:13.5px}
+  .tmsg .note b{color:var(--ink)}
+  .tmsg .mono{font-family:var(--mono);font-size:12.5px;color:var(--teal);
+    background:var(--panel-hi);border:1px solid var(--line);border-radius:8px;
+    padding:8px 12px;margin-top:8px;overflow-x:auto;white-space:pre}
+
+  /* ---------- plan board ---------- */
+  .plan-board{display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
+  .plan-item{display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);
+    border-radius:10px;padding:10px 16px;background:var(--bg2);font-size:14px;color:var(--muted);
+    transition:all .25s}
+  .plan-item .st{font-family:var(--mono);font-size:11px;letter-spacing:.1em;min-width:64px;
+    text-align:center;border-radius:6px;padding:2px 8px;border:1px solid var(--line);color:var(--faint)}
+  .plan-item.doing{border-color:var(--blue)}
+  .plan-item.doing .st{color:var(--blue);border-color:var(--blue)}
+  .plan-item.ok{border-color:var(--teal-dim)}
+  .plan-item.ok .st{color:var(--teal);border-color:var(--teal-dim)}
+  .plan-item.fail{border-color:var(--rose)}
+  .plan-item.fail .st{color:var(--rose);border-color:var(--rose)}
+  .plan-item.new{border-style:dashed;border-color:var(--amber)}
+  .plan-item.new .st{color:var(--amber);border-color:var(--amber)}
+  .plan-item.skip{opacity:.45}
+  .plan-item.skip .st{text-decoration:line-through}
+  .plan-note{font-size:13.5px;color:var(--muted);background:var(--bg2);border:1px solid var(--line);
+    border-radius:10px;padding:12px 16px;margin-top:12px;line-height:1.8;min-height:44px}
+  .plan-note b{color:var(--ink)}
+
+  /* ---------- reflection chart ---------- */
+  .refl-stage{display:flex;flex-direction:column;gap:10px}
+  .refl-draft{border:1px solid var(--line);border-radius:12px;background:var(--bg2);
+    padding:14px 18px;font-size:14px;color:var(--muted);line-height:1.8;animation:pop .3s ease}
+  .refl-draft .who{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;
+    text-transform:uppercase;margin-bottom:5px}
+  .refl-draft.v1 .who{color:var(--rose)}
+  .refl-draft.crit .who{color:var(--amber)}
+  .refl-draft.v2 .who{color:var(--blue)}
+  .refl-draft.v3 .who{color:var(--teal)}
+  .refl-draft b{color:var(--ink)}
+  .refl-score{font-family:var(--mono);font-size:12px;color:var(--faint);margin-left:8px}
+  .refl-bar{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .refl-bar .track{flex:1;height:10px;background:var(--bg2);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .refl-bar .fillb{height:100%;background:linear-gradient(90deg,var(--rose),var(--amber),var(--teal));transition:width .5s}
+
+  /* ---------- topology ---------- */
+  .topo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+  .topo-card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:18px;
+    cursor:pointer;transition:all .18s;text-align:left;color:inherit;font:inherit;width:100%}
+  .topo-card:hover{border-color:var(--muted)}
+  .topo-card.active{border-color:var(--teal);background:var(--teal-dim);box-shadow:0 0 22px rgba(79,227,193,.15)}
+  .topo-card .pi{font-size:22px;margin-bottom:6px}
+  .topo-card .pn{font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink)}
+  .topo-card.active .pn{color:var(--teal)}
+  .topo-card .pd{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:2px}
+  .topo-detail{margin-top:16px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;
+    padding:18px 20px;font-size:14.5px;color:var(--muted);line-height:1.9}
+  .topo-detail b{color:var(--ink)}
+  .topo-detail .ascii{font-family:var(--mono);font-size:12.5px;color:var(--teal);margin:8px 0;
+    background:var(--panel-hi);border:1px solid var(--line);border-radius:8px;padding:12px 16px;
+    overflow-x:auto;white-space:pre;line-height:1.6}
+  .topo-detail .when{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--amber);
+    text-transform:uppercase;margin-top:10px;margin-bottom:2px}
+  .topo-detail .risk{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--rose);
+    text-transform:uppercase;margin-top:10px;margin-bottom:2px}
+
+  /* ---------- decision tree ---------- */
+  .dt-q{font-size:17px;color:var(--ink);font-weight:600;margin-bottom:14px;line-height:1.6}
+  .dt-q .dq-num{font-family:var(--mono);font-size:11px;color:var(--teal);letter-spacing:.15em;
+    display:block;margin-bottom:6px}
+  .dt-opts{display:flex;flex-direction:column;gap:8px}
+  .dt-opts button{font-size:14.5px;font-family:var(--body);background:var(--panel-hi);color:var(--muted);
+    border:1px solid var(--line);border-radius:10px;padding:12px 16px;cursor:pointer;transition:all .15s;text-align:left}
+  .dt-opts button:hover{border-color:var(--teal);color:var(--ink)}
+  .dt-result{border:1.5px solid var(--teal);border-radius:12px;background:var(--teal-dim);
+    padding:18px 20px;animation:pop .3s ease}
+  .dt-result .rn{font-family:var(--display);font-weight:700;font-size:20px;color:var(--teal);margin-bottom:6px}
+  .dt-result .rd{font-size:14.5px;color:var(--ink);line-height:1.8}
+  .dt-path{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-bottom:14px;line-height:1.9}
+  .dt-path b{color:var(--muted);font-weight:500}
+
+  /* ---------- quiz ---------- */
+  .quiz-q{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+  .quiz-q .qt{font-size:15px;color:var(--ink);margin-bottom:12px;font-weight:600}
+  .quiz-q .qt .qn{font-family:var(--mono);color:var(--teal);margin-right:8px}
+  .quiz-opts{display:flex;flex-direction:column;gap:8px}
+  .quiz-opts button{font-size:14px;font-family:var(--body);background:var(--panel-hi);color:var(--muted);
+    border:1px solid var(--line);border-radius:8px;padding:10px 14px;cursor:pointer;transition:all .15s;text-align:left}
+  .quiz-opts button:hover{border-color:var(--muted);color:var(--ink)}
+  .quiz-opts button.right{border-color:var(--teal);background:var(--teal-dim);color:var(--teal)}
+  .quiz-opts button.wrong{border-color:var(--rose);background:var(--rose-dim);color:var(--rose)}
+  .quiz-exp{font-size:13.5px;color:var(--muted);margin-top:10px;padding-top:10px;
+    border-top:1px dashed var(--line);display:none;line-height:1.7}
+  .quiz-exp b{color:var(--teal)}
+  .quiz-score{text-align:center;font-family:var(--mono);font-size:14px;color:var(--muted);margin-top:18px}
+  .quiz-score b{color:var(--teal);font-size:20px}
+
+  /* ---------- siblings nav ---------- */
+  .sib-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .sib{display:block;background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;
+    padding:18px;text-decoration:none;transition:all .18s}
+  .sib:hover{border-color:var(--teal)}
+  .sib .sn{font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink)}
+  .sib .sd{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.6}
+  .sib .sl{font-family:var(--mono);font-size:11px;color:var(--teal);margin-top:8px;letter-spacing:.1em}
+
+  footer{border-top:1px solid var(--line);padding:28px 24px 48px;text-align:center;
+    font-family:var(--mono);font-size:12px;color:var(--faint)}
+  footer a{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--line)}
+  footer a:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+<a class="lab-home" href="/agent-lab/" title="返回 agent lab">←&nbsp;agent&nbsp;lab</a>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">// <a href="/agent-lab/">agent lab</a> · deep dive 03</div>
+    <h1 class="hero"><span class="b">DESIGN</span><span class="b">&nbsp;PATTERNS</span></h1>
+    <div class="sub">架构模式深入 —— 每种模式<b>跑一遍、跑挂一遍</b>，再学会怎么选</div>
+  </header>
+
+  <!-- ============ 01 ReAct ============ -->
+  <section id="react">
+    <div class="secnum">01 / REACT, AND HOW IT BREAKS</div>
+    <h2>ReAct：好用，但会<em>原地打转</em></h2>
+    <p>入门篇的模拟器展示了 ReAct 顺风局。生产环境更值得研究的是<b>逆风局</b>：模型没有全局计划，每一步只看眼前，遇到反复失败的工具时容易陷入"换汤不换药"的重试循环。逐步播放一个真实的卡死案例和工程解法👇</p>
+
+    <div class="panel">
+      <div class="panel-label">case study · 任务：『查 ACME 公司 2025 年营收』</div>
+      <div class="trace-log" id="react-log"></div>
+      <div class="btnrow">
+        <button class="btn" id="react-next">下一步 ▸</button>
+        <button class="btn" id="react-reset">重置 ↺</button>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">防打转的三件套</div>
+      <p><b>① 步数预算</b>：超过 N 步强制停下来汇报；<b>② 重复检测</b>：连续相同的（工具, 参数）调用直接拦截，把"你在重复自己"写进上下文；<b>③ 失败记录显式化</b>：让模型维护一个"已试过 & 不行"清单——写下来的失败比埋在历史里的失败更能改变行为。</p>
+    </div>
+  </section>
+
+  <!-- ============ 02 Plan-and-Execute ============ -->
+  <section id="plan">
+    <div class="secnum">02 / PLAN-AND-EXECUTE</div>
+    <h2>先规划后执行：<em>计划赶不上变化怎么办</em></h2>
+    <p>这个模式的精髓不是"先列清单"，而是<b>清单是活的</b>。点击"推进"，看一个数据迁移任务怎么在第 3 步翻车，又怎么靠<span class="hl-a">重规划（replan）</span>救回来——注意计划修改的不是失败那一步，而是后续所有步骤👇</p>
+
+    <div class="panel">
+      <div class="panel-label">simulator · 任务：『把用户表从 MySQL 迁到 PostgreSQL』</div>
+      <div class="plan-board" id="plan-board"></div>
+      <div class="plan-note" id="plan-note">点击"推进"开始执行计划。</div>
+      <div class="btnrow">
+        <button class="btn" id="plan-next">推进 ▸</button>
+        <button class="btn" id="plan-reset">重置 ↺</button>
+      </div>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">计划的隐藏价值：给人看</div>
+      <p>计划是天然的 <b>human-in-the-loop 切入点</b>：执行前用户能审一眼（Claude Code 的 plan mode 就是这个思路），执行中清单就是进度条，出错时也容易定位"卡在第几步"。相比之下 ReAct 的决策埋在每轮思考里，人很难提前干预。</p>
+    </div>
+  </section>
+
+  <!-- ============ 03 Reflection ============ -->
+  <section id="reflection">
+    <div class="secnum">03 / REFLECTION</div>
+    <h2>自我反思：<em>收益是递减的</em></h2>
+    <p>"生成 → 批评 → 修订"听起来可以无限循环下去，实际上<b>第一轮反思吃掉大部分收益，之后快速递减</b>，而每一轮的 token 成本是恒定的。点击"再反思一轮"，体会这条曲线👇</p>
+
+    <div class="panel">
+      <div class="panel-label">simulator · 任务：『写一个 email 校验函数』</div>
+      <div class="refl-bar" style="margin-bottom:16px">
+        <span>质量</span>
+        <div class="track"><div class="fillb" id="refl-fill" style="width:0%"></div></div>
+        <span id="refl-pct">—</span>
+      </div>
+      <div class="refl-stage" id="refl-stage"></div>
+      <div class="btnrow">
+        <button class="btn" id="refl-next">生成初稿 ▸</button>
+        <button class="btn" id="refl-reset">重置 ↺</button>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">让批评有牙齿</div>
+      <p>纯"自我感觉"式反思容易空转——模型夸自己写得不错，然后改两个变量名交差。<b>反思的质量取决于反馈信号的质量</b>：能跑测试就跑测试，能 lint 就 lint，能让另一个模型当评审就别让作者自评。外部信号 ≫ 自我感觉。</p>
+    </div>
+  </section>
+
+  <!-- ============ 04 Multi-Agent ============ -->
+  <section id="multi">
+    <div class="secnum">04 / MULTI-AGENT</div>
+    <h2>多智能体：<em>拓扑决定成败</em></h2>
+    <p>"多个 Agent 协作"不是一种模式，是一族。<b>拓扑选错，沟通成本会吃掉全部并行收益</b>。点击切换四种常见拓扑，注意各自的信息流向和翻车方式👇</p>
+
+    <div class="panel">
+      <div class="panel-label">topology · 点击切换</div>
+      <div class="topo-grid" id="topo-grid"></div>
+      <div class="topo-detail" id="topo-detail"></div>
+    </div>
+
+    <div class="callout rose">
+      <div class="t">多智能体的第一定律</div>
+      <p><b>能单 Agent 解决的别上多 Agent。</b>子 Agent 之间不共享上下文，每次交接都是有损压缩——A 知道的细节传到 B 手里只剩一段转述。收益要来自真并行（互不依赖的子任务）或真隔离（每个子任务的上下文都很重），否则只是把一个模型的活拆给三个模型干，又慢又贵还容易口径不一。</p>
+    </div>
+  </section>
+
+  <!-- ============ 05 决策树 ============ -->
+  <section id="choose">
+    <div class="secnum">05 / WHICH ONE?</div>
+    <h2>选型决策树：<em>回答三个问题</em></h2>
+    <p>没有最好的模式，只有匹配任务的模式。回答下面几个问题，拿到一个起步建议（注意只是起步——真实系统经常是混合体）👇</p>
+
+    <div class="panel">
+      <div class="panel-label">decision tree · 点击作答</div>
+      <div id="dt-box"></div>
+      <div class="btnrow">
+        <button class="btn" id="dt-reset">重来 ↺</button>
+      </div>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">混搭才是常态</div>
+      <p>真实系统很少"纯血"：Claude Code 是 <b>ReAct 主循环 + 可选 plan mode + 测试驱动的 reflection + 按需派生子 Agent</b>。先用最简单的模式跑通，eval 指出短板后再针对性叠加——架构是长出来的，不是选出来的。</p>
+    </div>
+  </section>
+
+  <!-- ============ 06 测验 ============ -->
+  <section id="quiz">
+    <div class="secnum">06 / QUIZ</div>
+    <h2>随堂测验：<em>检验一下</em></h2>
+    <p>5 道题。答错没关系，解析比答案重要。</p>
+
+    <div class="panel">
+      <div class="panel-label">quiz · 点击选项作答</div>
+      <div id="quiz-list"></div>
+      <div class="quiz-score" id="quiz-score"></div>
+    </div>
+  </section>
+
+  <!-- ============ 继续深入 ============ -->
+  <section id="next">
+    <div class="secnum">→ / KEEP GOING</div>
+    <h2>继续<em>深入</em></h2>
+    <div class="sib-grid">
+      <a class="sib" href="/agent-lab/tool-use/">
+        <div class="sn">工具调用</div>
+        <div class="sd">报文级拆解一次 tool call：协议往返、Schema 设计、并行、错误处理与 MCP</div>
+        <div class="sl">deep dive 01 →</div>
+      </a>
+      <a class="sib" href="/agent-lab/context/">
+        <div class="sn">上下文工程</div>
+        <div class="sd">token 预算、增长与压缩、记忆体系、四种上下文失效模式</div>
+        <div class="sl">deep dive 02 →</div>
+      </a>
+      <a class="sib" href="/agent-lab/memory/">
+        <div class="sn">记忆与检索</div>
+        <div class="sd">三种记忆类型、写入蒸馏管线、RAG 检索全流程与记忆维护</div>
+        <div class="sl">deep dive 04 →</div>
+      </a>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <a href="/agent-lab/">← agent lab</a> &nbsp;·&nbsp; <a href="/">~/labs</a> &nbsp;·&nbsp; design patterns deep dive
+</footer>
+
+<script>
+/* ================= 01 react failure trace ================= */
+const reactSteps = [
+  {role:'think', who:'轮 1 · 思考', html:'<div class="note">查 ACME 2025 年营收，先搜索。</div><div class="mono">search("ACME 2025 revenue")</div>'},
+  {role:'act', who:'轮 1 · 观察', html:'<div class="note">结果：0 条命中。（这家公司财报里用的是全称 "ACME Holdings"）</div>'},
+  {role:'bad', who:'轮 2 · 思考（开始打转）', html:'<div class="note">没搜到……再搜一次试试。</div><div class="mono">search("ACME revenue 2025")</div><div class="note" style="margin-top:6px">⚠ 只是换了词序——<b>对检索引擎来说是同一个查询</b>。又是 0 条。</div>'},
+  {role:'bad', who:'轮 3~5 · 继续打转', html:'<div class="note"><span style="font-family:var(--mono);font-size:12px">search("ACME 营收")　search("ACME annual revenue")　search("ACME 2025")</span><br>每轮的"思考"都说要换个思路，<b>行动却始终是同一招的变体</b>。ReAct 没有全局视角，它看不出这五次失败是同一类失败。没有护栏的话，这能烧到步数耗尽。</div>'},
+  {role:'fix', who:'护栏介入', html:'<div class="note">重复检测触发，往上下文里注入一条系统消息：<b>"search 已连续失败 5 次，禁止继续调用 search。请改变策略：尝试其他工具，或先获取实体的别名/全称。"</b></div>'},
+  {role:'think', who:'轮 6 · 思考（被迫换路）', html:'<div class="note">搜索被禁了。换个思路：先查公司的注册全称。</div><div class="mono">lookup_entity("ACME")\n→ { full_name: "ACME Holdings Inc." }</div>'},
+  {role:'fix', who:'轮 7 · 成功', html:'<div class="note"><div class="mono">search("ACME Holdings 2025 revenue")\n→ 营收 ¥42.7 亿（2025 年报）</div><div style="margin-top:8px">卡点不在模型能力——换全称它一击即中。<b>卡点在"它意识不到自己在重复"</b>，这正是护栏要补的盲区。</div></div>'}
+];
+let reactIdx = 0;
+const reactLog = document.getElementById('react-log');
+const reactNext = document.getElementById('react-next');
+reactNext.addEventListener('click', ()=>{
+  if(reactIdx >= reactSteps.length) return;
+  const s = reactSteps[reactIdx++];
+  const d = document.createElement('div');
+  d.className = 'tmsg ' + s.role;
+  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+  reactLog.appendChild(d);
+  if(reactIdx >= reactSteps.length){
+    reactNext.disabled = true;
+    reactNext.textContent = '案例结束 ✓';
+  }
+});
+document.getElementById('react-reset').addEventListener('click', ()=>{
+  reactIdx = 0; reactLog.innerHTML = '';
+  reactNext.disabled = false; reactNext.textContent = '下一步 ▸';
+});
+
+/* ================= 02 plan & execute ================= */
+const planInit = [
+  '① 导出 MySQL 用户表为 CSV',
+  '② 在 PostgreSQL 建同构表',
+  '③ 直接导入 CSV',
+  '④ 校验行数一致',
+  '⑤ 切换应用连接串'
+];
+const planScript = [
+  {note:'<b>规划阶段</b>：模型先输出完整计划。这一步可以停下来让人审——发现问题的成本此时最低。', states:['','','','',''], status:['wait','wait','wait','wait','wait']},
+  {note:'执行 ①：导出成功，120 万行。', states:['ok','doing','','',''], status:['ok','doing','wait','wait','wait']},
+  {note:'执行 ②：建表成功。', states:['ok','ok','doing','',''], status:['ok','ok','doing','wait','wait']},
+  {note:'<b>执行 ③ 失败</b>：导入报错——MySQL 的零日期 <span style="font-family:var(--mono);font-size:12px">0000-00-00</span> 在 PostgreSQL 里是非法值，38 万行被拒。<b>这不是重试能解决的</b>，是计划本身漏了数据清洗。', states:['ok','ok','fail','',''], status:['ok','ok','fail','wait','wait']},
+  {note:'<b>重规划</b>：模型带着失败上下文重新规划。注意它没有死磕第 ③ 步，而是<b>插入新步骤并调整了后续</b>——原计划的 ④⑤ 顺延，校验标准也跟着变了（不能再简单比对行数）。', replan:true},
+  {note:'执行新 ③：清洗脚本把零日期转为 NULL，重新导入成功。', states2:[ 'ok','ok','ok','doing','','',''], replanDone:true},
+  {note:'后续步骤依次完成。<b>复盘</b>：Plan-and-Execute 的价值不在"计划完美"，而在失败被结构化地暴露（卡在第 ③ 步、因为什么），重规划有据可依。', final:true}
+];
+const planBoard = document.getElementById('plan-board');
+const planNote = document.getElementById('plan-note');
+const planNext = document.getElementById('plan-next');
+let planIdx = 0;
+const newPlan = [
+  '① 导出 MySQL 用户表为 CSV ✓',
+  '② 在 PostgreSQL 建同构表 ✓',
+  '③ 新增：清洗零日期 → NULL，再导入',
+  '④ 校验行数 + 抽样比对日期字段',
+  '⑤ 灰度切换连接串，保留回滚窗口'
+];
+function renderPlan(items, statuses){
+  planBoard.innerHTML = '';
+  items.forEach((txt,i)=>{
+    const d = document.createElement('div');
+    const st = statuses[i] || 'wait';
+    d.className = 'plan-item ' + (st==='ok'?'ok':st==='doing'?'doing':st==='fail'?'fail':st==='new'?'new':'');
+    const lbl = st==='ok'?'DONE':st==='doing'?'RUN':st==='fail'?'FAIL':st==='new'?'NEW':'WAIT';
+    d.innerHTML = '<span class="st">'+lbl+'</span><span>'+txt+'</span>';
+    planBoard.appendChild(d);
+  });
+}
+renderPlan(planInit, []);
+planNext.addEventListener('click', ()=>{
+  if(planIdx >= planScript.length) return;
+  const s = planScript[planIdx++];
+  if(s.replan){
+    renderPlan(newPlan, ['ok','ok','new','new','new']);
+  } else if(s.replanDone){
+    renderPlan(newPlan, ['ok','ok','doing','wait','wait']);
+  } else if(s.final){
+    renderPlan(newPlan, ['ok','ok','ok','ok','ok']);
+  } else if(s.status){
+    renderPlan(planInit, s.status);
+  }
+  planNote.innerHTML = s.note;
+  if(planIdx >= planScript.length){
+    planNext.disabled = true;
+    planNext.textContent = '迁移完成 ✓';
+  }
+});
+document.getElementById('plan-reset').addEventListener('click', ()=>{
+  planIdx = 0;
+  renderPlan(planInit, []);
+  planNote.innerHTML = '点击"推进"开始执行计划。';
+  planNext.disabled = false; planNext.textContent = '推进 ▸';
+});
+
+/* ================= 03 reflection ================= */
+const reflSteps = [
+  {cls:'v1', who:'初稿 · 质量 55%', pct:55, btn:'再反思一轮 ▸',
+   html:'<div class="note"><span class="mono" style="display:block">function isEmail(s) {\n  return s.includes("@");\n}</span><div style="margin-top:8px">能跑，但 <b>"a@" 也算合法邮箱</b>。典型的一遍过产物。</div></div>'},
+  {cls:'crit', who:'反思 ① · 评审视角（外部信号：跑了测试，4/9 失败）', pct:55, btn:'按批评修订 ▸',
+   html:'<div class="note">问题：① 没校验 @ 后面有域名；② 没处理空格；③ "a@@b.com" 会通过。<b>测试失败列表给了具体靶子</b>——这比"我觉得写得不够好"有用十倍。</div>'},
+  {cls:'v2', who:'修订 ① · 质量 85%（+30）', pct:85, btn:'再反思一轮 ▸',
+   html:'<div class="note"><span class="mono" style="display:block">const RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst isEmail = s => RE.test(s.trim());</span><div style="margin-top:8px">测试 9/9 通过。<b>第一轮反思吃掉了大部分收益。</b></div></div>'},
+  {cls:'crit', who:'反思 ② · 再挑一遍（测试已全绿）', pct:85, btn:'再修订 ▸',
+   html:'<div class="note">还能挑的：国际化域名（中文邮箱）支持？要不要 trim 由调用方决定？——已经是<b>口味问题而非错误</b>，外部信号（测试）不再提供新信息。</div>'},
+  {cls:'v3', who:'修订 ② · 质量 88%（+3）→ 边际收益已趋零', pct:88, btn:null,
+   html:'<div class="note">改进微乎其微，但这一轮的 token 花费和第一轮<b>一样贵</b>。工程上的停止条件：① 外部信号全绿；② 连续 N 轮改进低于阈值；③ 预算用完。三者任一命中就收手。</div>'}
+];
+let reflIdx = 0;
+const reflStage = document.getElementById('refl-stage');
+const reflNext = document.getElementById('refl-next');
+const reflFill = document.getElementById('refl-fill');
+const reflPct = document.getElementById('refl-pct');
+reflNext.addEventListener('click', ()=>{
+  if(reflIdx >= reflSteps.length) return;
+  const s = reflSteps[reflIdx++];
+  const d = document.createElement('div');
+  d.className = 'refl-draft ' + s.cls;
+  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+  reflStage.appendChild(d);
+  reflFill.style.width = s.pct + '%';
+  reflPct.textContent = s.pct + '%';
+  if(s.btn) reflNext.textContent = s.btn;
+  else { reflNext.disabled = true; reflNext.textContent = '已收敛 ✓'; }
+});
+document.getElementById('refl-reset').addEventListener('click', ()=>{
+  reflIdx = 0; reflStage.innerHTML = '';
+  reflFill.style.width = '0%'; reflPct.textContent = '—';
+  reflNext.disabled = false; reflNext.textContent = '生成初稿 ▸';
+});
+
+/* ================= 04 multi-agent topology ================= */
+const topos = [
+  {icon:'👑', name:'Supervisor', tag:'主管-下属',
+   ascii:'        ┌─ 研究员（只有搜索工具）\n编排者 ─┼─ 程序员（只有代码工具）\n        └─ 审核员（只读，提意见）',
+   d:'一个<b>编排者</b>拆任务、派活、汇总。子 Agent 彼此不通信，只对编排者负责——信息流是星形的。最容易调试的拓扑：出问题先看编排者的派单和汇总。',
+   when:'子任务异构（各需不同工具/人设）· 需要统一对外口径',
+   risk:'编排者是单点：它转述失真，全队跟着错；派单太碎会变成"经理比员工忙"'},
+  {icon:'🏭', name:'Pipeline', tag:'流水线',
+   ascii:'调研 Agent → 写作 Agent → 审校 Agent → 产出',
+   d:'产出物<b>单向传递</b>，每个 Agent 职责一段。和 workflow 的区别：每一站内部仍是自主的 Agent（自己决定调几次工具），只是站与站的顺序固定。',
+   when:'任务天然分阶段 · 各阶段技能差异大（调研→写作→审校）',
+   risk:'上游错误会被下游继承放大；没有回流机制时，审校发现根本性问题也只能干瞪眼'},
+  {icon:'⚔️', name:'Debate', tag:'辩论/对抗',
+   ascii:'方案 A Agent ⟷ 方案 B Agent\n        ↓ 裁判 Agent 定夺',
+   d:'让两个 Agent <b>持相反立场互相攻击</b>，裁判综合定夺。对抗能逼出单 Agent 自我反思挖不出的盲点——批评者没有"自尊心"负担。',
+   when:'高风险决策评审 · 安全审计 · 需要刻意找反例的场景',
+   risk:'成本至少 3 倍；议题没有真分歧时会表演性抬杠，凑字数不出洞见'},
+  {icon:'🐝', name:'Swarm / 并行', tag:'分片并行',
+   ascii:'        ┌─ worker（文件 1~30）\n分发器 ─┼─ worker（文件 31~60）\n        └─ worker（文件 61~90）→ 归并',
+   d:'同构任务<b>分片给 N 个相同配置的 worker</b> 并行跑，最后归并。这是多 Agent 里收益最确定的形态——子任务互不依赖，沟通只发生在分发和归并两端。',
+   when:'大批量同构任务：扫 90 个文件找漏洞、给 500 条工单分类',
+   risk:'分片粒度难拿捏；归并时口径不一致（worker A 标 high，B 同样问题标 medium）要靠统一 rubric 约束'}
+];
+const topoGrid = document.getElementById('topo-grid');
+const topoDetail = document.getElementById('topo-detail');
+topos.forEach((p,i)=>{
+  const el = document.createElement('button');
+  el.className = 'topo-card';
+  el.innerHTML = '<div class="pi">'+p.icon+'</div><div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>';
+  el.addEventListener('click', ()=>{
+    topoGrid.querySelectorAll('.topo-card').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    topoDetail.innerHTML = '<div class="ascii">'+p.ascii+'</div>'+p.d
+      +'<div class="when">适用</div>'+p.when
+      +'<div class="risk">翻车方式</div>'+p.risk;
+  });
+  topoGrid.appendChild(el);
+  if(i===0) el.click();
+});
+
+/* ================= 05 decision tree ================= */
+const dtNodes = {
+  q1:{q:'任务的步骤能不能提前写死？', num:'Q1 / 自主性',
+      opts:[['能，每次流程都一样','r0'],['大体固定，个别分支看情况','q2'],['完全开放，事先不知道要几步','q2']]},
+  q2:{q:'任务链路有多长？失败后果有多重？', num:'Q2 / 链路与风险',
+      opts:[['短链路（几步内），错了重来就行','q3'],['长链路或不可逆操作多，希望执行前能审计划','r2'],['长且各子任务差异大、可并行','r4']]},
+  q3:{q:'产出质量有没有可执行的检验手段（测试 / lint / 评分）？', num:'Q3 / 反馈信号',
+      opts:[['有，且质量要求高','r3'],['没有或要求一般，快比好重要','r1']]},
+  r0:{name:'不用 Agent，写 Workflow', d:'步骤能写死就别引入自主性——固定管道更便宜、更稳、可单测。LLM 只在需要"理解/生成"的节点出场。'},
+  r1:{name:'ReAct 单循环', d:'默认起点：一个模型 + 一组工具 + while 循环。配齐步数预算和重复检测护栏，已经能覆盖大多数中短任务。'},
+  r2:{name:'Plan-and-Execute', d:'先产出可审查的计划，执行中失败就重规划。长链路、有不可逆操作（删数据、对外发送）时，"人审计划"这道闸值回票价。'},
+  r3:{name:'ReAct + Reflection', d:'主循环用 ReAct，产出后接"批评-修订"回路，用测试/lint 这类外部信号驱动。记得设停止条件——反思的收益第一轮后递减。'},
+  r4:{name:'Multi-Agent（先从 Supervisor 或并行分片起步）', d:'子任务异构选 Supervisor，同构大批量选并行分片。前提自检：单 Agent 真的装不下吗？沟通损耗真的小于并行收益吗？'}
+};
+const dtBox = document.getElementById('dt-box');
+let dtPath = [];
+function renderDT(key){
+  const n = dtNodes[key];
+  let pathHtml = dtPath.length
+    ? '<div class="dt-path">' + dtPath.map(p=>'<b>'+p[0]+'</b> → '+p[1]).join('<br>') + '</div>' : '';
+  if(n.opts){
+    dtBox.innerHTML = pathHtml +
+      '<div class="dt-q"><span class="dq-num">'+n.num+'</span>'+n.q+'</div>' +
+      '<div class="dt-opts">' +
+      n.opts.map((o,i)=>'<button data-k="'+key+'" data-i="'+i+'">'+o[0]+'</button>').join('') +
+      '</div>';
+  } else {
+    dtBox.innerHTML = pathHtml +
+      '<div class="dt-result"><div class="rn">→ '+n.name+'</div><div class="rd">'+n.d+'</div></div>';
+  }
+}
+dtBox.addEventListener('click', e=>{
+  const b = e.target.closest('button[data-k]'); if(!b) return;
+  const n = dtNodes[b.dataset.k];
+  const opt = n.opts[+b.dataset.i];
+  dtPath.push([n.q, opt[0]]);
+  renderDT(opt[1]);
+});
+document.getElementById('dt-reset').addEventListener('click', ()=>{
+  dtPath = []; renderDT('q1');
+});
+renderDT('q1');
+
+/* ================= 06 quiz ================= */
+const quiz = [
+  {q:'01 节里 Agent 连搜五次都失败，根本卡点是什么？',
+   opts:['模型不会用搜索工具','搜索引擎坏了','ReAct 每步只看眼前，意识不到五次失败是同一类失败','任务本身无解'],
+   ans:2,
+   exp:'每一轮的局部决策（"再搜一次"）看起来都合理，<b>缺的是跨轮的全局视角</b>。所以解法不是换模型，而是把"你在重复"这个全局信号注入上下文——重复检测、失败清单都是在补这个盲区。'},
+  {q:'Plan-and-Execute 中第 3 步执行失败，正确的重规划是？',
+   opts:['把第 3 步原样重试三遍','带着失败原因重新生成计划，必要时调整后续所有步骤','跳过第 3 步直接执行第 4 步','放弃任务报错退出'],
+   ans:1,
+   exp:'失败往往说明<b>计划的假设错了</b>（比如没料到脏数据），不只是某一步运气差。重规划要吸收失败信息，且后续步骤可能连带调整——模拟器里连校验标准都跟着变了。'},
+  {q:'关于 Reflection 的成本收益，哪个说法最准确？',
+   opts:['反思轮数越多质量越高，应该尽量多跑','第一轮反思通常吃掉大部分收益，之后递减，要设停止条件','反思是免费的，因为不调用工具','只有大模型才需要反思'],
+   ans:1,
+   exp:'每轮反思的 token 成本恒定，<b>改进幅度却快速衰减</b>。工程上的停止条件：外部信号全绿 / 连续改进低于阈值 / 预算耗尽。另外"自我感觉"式反思容易空转，要用测试等外部信号驱动。'},
+  {q:'要给 600 个商品描述统一翻译并按规范重写——选哪种多智能体拓扑最合适？',
+   opts:['Debate：两个翻译互相辩论','Supervisor：编排者逐条分析后逐条指派','并行分片：N 个同构 worker 各领一批，统一 rubric 后归并','不适合多 Agent'],
+   ans:2,
+   exp:'<b>大批量同构任务是并行分片的主场</b>：子任务互不依赖，沟通只在分发和归并两端。Debate 适合有真分歧的决策；Supervisor 适合异构子任务——600 条同样的活逐条派单纯属浪费编排者。'},
+  {q:'多智能体系统中，信息从 Agent A 交接给 Agent B 时要警惕什么？',
+   opts:['B 会偷走 A 的工具','交接是有损的：B 只拿到 A 的转述，不共享 A 的完整上下文','两个 Agent 会合并成一个','token 会翻倍计费给用户'],
+   ans:1,
+   exp:'子 Agent 间<b>不共享上下文</b>，每次交接都是一次压缩转述——A 探索过程中的细节、踩过的坑，B 默认看不到。这是多 Agent 的固有税，也是"能单 Agent 就别多 Agent"的根本原因。'}
+];
+const quizList = document.getElementById('quiz-list');
+const quizScore = document.getElementById('quiz-score');
+let answered = 0, correct = 0;
+quiz.forEach((item,qi)=>{
+  const qd = document.createElement('div');
+  qd.className = 'quiz-q';
+  qd.innerHTML = '<div class="qt"><span class="qn">Q'+(qi+1)+'</span>'+item.q+'</div>';
+  const opts = document.createElement('div');
+  opts.className = 'quiz-opts';
+  const exp = document.createElement('div');
+  exp.className = 'quiz-exp';
+  exp.innerHTML = item.exp;
+  item.opts.forEach((o,oi)=>{
+    const b = document.createElement('button');
+    b.textContent = String.fromCharCode(65+oi) + '. ' + o;
+    b.addEventListener('click', ()=>{
+      if(qd.dataset.done) return;
+      qd.dataset.done = '1';
+      answered++;
+      if(oi === item.ans){ b.classList.add('right'); correct++; }
+      else {
+        b.classList.add('wrong');
+        opts.children[item.ans].classList.add('right');
+      }
+      exp.style.display = 'block';
+      quizScore.innerHTML = '得分 <b>'+correct+' / '+answered+'</b>' +
+        (answered === quiz.length
+          ? (correct === quiz.length ? ' 🎉 全对！可以去设计自己的 Agent 架构了'
+             : correct >= 3 ? ' 👍 不错，回头看看错题的解析'
+             : ' 💪 建议把几个模拟器再跑一遍')
+          : '');
+    });
+    opts.appendChild(b);
+  });
+  qd.appendChild(opts);
+  qd.appendChild(exp);
+  quizList.appendChild(qd);
+});
+</script>
+</body>
+</html>

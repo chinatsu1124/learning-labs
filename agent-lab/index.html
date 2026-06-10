@@ -235,6 +235,13 @@
   .quiz-score{text-align:center;font-family:var(--mono);font-size:14px;color:var(--muted);margin-top:18px}
   .quiz-score b{color:var(--blue);font-size:20px}
 
+  /* ---------- deeper link ---------- */
+  .deeper{display:block;margin-top:22px;font-family:var(--mono);font-size:13px;color:var(--blue);
+    text-decoration:none;border:1px dashed var(--line);border-radius:10px;padding:13px 18px;
+    transition:all .18s;line-height:1.7}
+  .deeper:hover{border-color:var(--blue);background:var(--blue-dim)}
+  .deeper small{display:block;color:var(--faint);font-size:11.5px}
+
   footer{border-top:1px solid var(--line);padding:28px 24px 48px;text-align:center;
     font-family:var(--mono);font-size:12px;color:var(--faint)}
   footer a{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--line)}
@@ -360,6 +367,8 @@
       <div class="t">写好工具描述 = 一半的成功</div>
       <p>模型选错工具、传错参数，九成原因是工具描述含糊。把工具描述当成<b>给新同事写的接口文档</b>：清楚说明什么时候该用、参数单位是什么、会返回什么。工具数量也别贪多——几十个职责重叠的工具，比五个边界清晰的更容易让模型犯错。</p>
     </div>
+
+    <a class="deeper" href="/agent-lab/tool-use/">深入 → 工具调用子教程<small>报文级拆解一次 tool call：协议往返、JSON Schema 设计、并行调用、错误自愈与 MCP 架构</small></a>
   </section>
 
   <!-- ============ 04 上下文与记忆 ============ -->
@@ -378,6 +387,8 @@
       <div class="t">窗口装不下怎么办？</div>
       <p>三板斧：<b>① 压缩</b>——把早期对话总结成摘要再继续；<b>② 外挂记忆</b>——把重要信息写进文件/数据库，需要时再检索回来（长期记忆）；<b>③ 检索增强（<span class="term" data-name="RAG · Retrieval-Augmented Generation" data-tip="检索增强生成：回答前先去知识库里搜出最相关的几段资料，连同问题一起交给模型。第 06 节会详细讲。">RAG</span>）</b>——别把整个知识库塞进去，只在用的时候按需取最相关的几段。</p>
     </div>
+
+    <a class="deeper" href="/agent-lab/context/">深入 → 上下文工程子教程<small>token 预算可视化、上下文增长模拟、三种压缩策略、记忆分层与四种失效模式</small></a>
   </section>
 
   <!-- ============ 05 架构模式 ============ -->
@@ -391,6 +402,8 @@
       <div class="pat-grid" id="pat-grid"></div>
       <div class="pat-detail" id="pat-detail"></div>
     </div>
+
+    <a class="deeper" href="/agent-lab/patterns/">深入 → 架构模式子教程<small>ReAct 卡死案例与护栏、重规划回路模拟、Reflection 收益曲线、多智能体四种拓扑与选型决策树</small></a>
   </section>
 
   <!-- ============ 06 RAG & MCP ============ -->
@@ -429,6 +442,9 @@
       <div class="t">怎么选</div>
       <p>问题是"模型<b>不知道</b>某些信息" → 上 RAG；问题是"模型<b>做不了</b>某些操作" → 接工具/MCP。很多真实系统两个都要：先检索资料，再调工具执行。</p>
     </div>
+
+    <a class="deeper" href="/agent-lab/memory/#rag">深入 → RAG 检索管线与记忆系统<small>查询改写、向量召回、重排、注入的全管线模拟，加上记忆类型、写入蒸馏与维护，在记忆与检索子教程</small></a>
+    <a class="deeper" href="/agent-lab/tool-use/#mcp">深入 → MCP 的架构细节<small>Host / Client / Server 三种角色、tools / resources / prompts 三类原语，在工具调用子教程第 05 节</small></a>
   </section>
 
   <!-- ============ 07 安全与评估 ============ -->

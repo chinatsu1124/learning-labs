@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="工具调用深入教程：一次 tool call 的完整 API 报文往返、JSON Schema 设计、并行调用、错误处理与 MCP 架构拆解。">
+<meta property="og:title" content="工具调用深入 · AGENT LAB">
+<meta property="og:description" content="工具调用深入教程：一次 tool call 的完整 API 报文往返、JSON Schema 设计、并行调用、错误处理与 MCP 架构拆解。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>工具调用深入 · AGENT LAB</title>
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
+<script defer src="/assets/term.js"></script>
+<style>
+  :root{
+    --bg:#0a0b10;
+    --bg2:#0f1118;
+    --panel:#13151f;
+    --panel-hi:#1a1d29;
+    --line:#262a38;
+    --ink:#dfe3ec;
+    --muted:#8a90a3;
+    --faint:#565c70;
+    --violet:#b08aff;
+    --violet-dim:#37284f;
+    --teal:#4fe3c1;
+    --teal-dim:#1f4d44;
+    --amber:#ffb648;
+    --amber-dim:#5a4422;
+    --rose:#ff7a85;
+    --rose-dim:#52262b;
+    --blue:#8aa9ff;
+    --blue-dim:#27314f;
+    --display:'Syne',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:48px 48px;
+    background-position:center top;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(255,182,72,.08),transparent 60%),
+               radial-gradient(ellipse 70% 50% at 90% 20%,rgba(138,169,255,.05),transparent 55%),
+               linear-gradient(180deg,rgba(10,11,16,.4),var(--bg) 90%);
+  }
+  .wrap{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:0 24px}
+
+  /* ---------- header ---------- */
+  header{padding:90px 0 40px;text-align:center}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:var(--amber);
+    text-transform:uppercase;margin-bottom:24px;opacity:0;animation:rise .7s .1s forwards}
+  .kicker a{color:inherit;text-decoration:none;border-bottom:1px dashed var(--amber-dim)}
+  .kicker a:hover{border-bottom-style:solid}
+  h1.hero{font-family:var(--display);font-weight:800;font-size:clamp(40px,11vw,96px);
+    line-height:.95;letter-spacing:-.03em;margin-bottom:8px}
+  h1.hero .b{display:inline-block;opacity:0;transform:translateY(40px);animation:rise .8s forwards}
+  h1.hero .b:nth-child(1){animation-delay:.15s;color:var(--amber)}
+  h1.hero .b:nth-child(2){animation-delay:.25s;color:var(--ink)}
+  .sub{font-family:var(--mono);color:var(--muted);font-size:15px;margin-top:18px;
+    opacity:0;animation:rise .7s .6s forwards}
+  .sub b{color:var(--ink);font-weight:500}
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+
+  /* ---------- sections ---------- */
+  section{padding:56px 0;border-top:1px solid var(--line)}
+  .secnum{font-family:var(--mono);font-size:12px;color:var(--amber);letter-spacing:.2em;
+    margin-bottom:10px;display:flex;align-items:center;gap:12px}
+  .secnum::after{content:"";flex:1;height:1px;background:var(--line)}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);
+    line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
+  h2 em{font-style:normal;color:var(--amber)}
+  p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
+  p b{color:var(--ink);font-weight:600}
+  .hl{color:var(--teal);font-weight:600}
+  .hl-v{color:var(--violet);font-weight:600}
+  .hl-a{color:var(--amber);font-weight:600}
+  .hl-b{color:var(--blue);font-weight:600}
+  code{font-family:var(--mono);background:var(--panel-hi);color:var(--teal);
+    padding:2px 7px;border-radius:5px;font-size:.88em;border:1px solid var(--line)}
+
+  /* ---------- panel ---------- */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:28px;margin:26px 0;position:relative;overflow:hidden}
+  .panel::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--amber),transparent);opacity:.5}
+  .panel-label{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--faint);
+    text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+  .panel-label::before{content:"●";color:var(--teal);font-size:8px}
+
+  .btn{font-family:var(--mono);font-size:13px;background:var(--panel-hi);color:var(--ink);
+    border:1px solid var(--line);border-radius:8px;padding:9px 16px;cursor:pointer;transition:all .18s}
+  .btn:hover{border-color:var(--amber);color:var(--amber)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .btn:disabled:hover{border-color:var(--line);color:var(--ink)}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .toggle-grp{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:18px;flex-wrap:wrap}
+  .toggle-grp button{font-family:var(--mono);font-size:13px;background:transparent;color:var(--muted);
+    border:0;padding:9px 18px;cursor:pointer;transition:all .18s}
+  .toggle-grp button.active{background:var(--amber-dim);color:var(--amber)}
+
+  /* ---------- callout ---------- */
+  .callout{border-left:3px solid var(--blue);background:var(--panel);border-radius:0 12px 12px 0;
+    padding:16px 20px;margin:22px 0}
+  .callout .t{font-family:var(--mono);font-size:12px;letter-spacing:.15em;color:var(--blue);
+    text-transform:uppercase;margin-bottom:6px}
+  .callout p{margin:0;font-size:15px;color:var(--ink)}
+  .callout.teal{border-color:var(--teal)}
+  .callout.teal .t{color:var(--teal)}
+  .callout.amber{border-color:var(--amber)}
+  .callout.amber .t{color:var(--amber)}
+  .callout.rose{border-color:var(--rose)}
+  .callout.rose .t{color:var(--rose)}
+
+  /* ---------- protocol stepper ---------- */
+  .proto-flow{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:12px;margin-bottom:20px}
+  .proto-node{border:1.5px solid var(--line);border-radius:10px;padding:8px 13px;background:var(--bg2);
+    color:var(--muted);transition:all .25s;text-align:center}
+  .proto-node small{display:block;font-size:9.5px;color:var(--faint);letter-spacing:.1em}
+  .proto-node.lit{border-color:var(--amber);background:var(--amber-dim);color:var(--amber);
+    box-shadow:0 0 22px rgba(255,182,72,.2)}
+  .proto-node.lit small{color:var(--amber);opacity:.7}
+  .proto-arr{color:var(--faint)}
+  .proto-log{display:flex;flex-direction:column;gap:10px;margin-top:14px;min-height:40px}
+  .pmsg{border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:14px;
+    line-height:1.7;animation:pop .3s ease;background:var(--bg2)}
+  .pmsg .who{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+    margin-bottom:5px;color:var(--faint)}
+  .pmsg.app{border-color:var(--violet-dim)}
+  .pmsg.app .who{color:var(--violet)}
+  .pmsg.api{border-color:var(--blue-dim)}
+  .pmsg.api .who{color:var(--blue)}
+  .pmsg.exec{border-color:var(--amber-dim)}
+  .pmsg.exec .who{color:var(--amber)}
+  .pmsg.fin{border-color:var(--teal-dim)}
+  .pmsg.fin .who{color:var(--teal)}
+  .pmsg .note{color:var(--muted);font-size:13.5px}
+  .pmsg .note b{color:var(--ink)}
+
+  .codeblock{font-family:var(--mono);font-size:12.5px;background:var(--bg2);border:1px solid var(--line);
+    border-radius:12px;padding:16px 18px;overflow-x:auto;line-height:1.8;margin-top:10px;white-space:pre}
+  .pmsg .codeblock{background:var(--panel-hi)}
+  .codeblock .k{color:var(--blue)}
+  .codeblock .s{color:var(--teal)}
+  .codeblock .c{color:var(--faint)}
+  .codeblock .n{color:var(--amber)}
+  .codeblock .bad{color:var(--rose)}
+  .codeblock .mark{background:rgba(255,182,72,.14);border-radius:3px}
+
+  /* ---------- schema explorer ---------- */
+  .schema-wrap{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
+  @media(max-width:680px){.schema-wrap{grid-template-columns:1fr}}
+  .schema-code{font-family:var(--mono);font-size:12.5px;background:var(--bg2);border:1px solid var(--line);
+    border-radius:12px;padding:16px 18px;line-height:1.9;overflow-x:auto;white-space:pre}
+  .schema-code .fld{cursor:pointer;border-radius:4px;padding:1px 3px;transition:background .15s;display:inline-block}
+  .schema-code .fld:hover{background:var(--panel-hi)}
+  .schema-code .fld.active{background:var(--amber-dim);outline:1px solid var(--amber)}
+  .schema-side{background:var(--bg2);border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;font-size:14px;color:var(--muted);line-height:1.85;align-self:start}
+  .schema-side .dt{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--amber);
+    text-transform:uppercase;margin-bottom:6px}
+  .schema-side b{color:var(--ink)}
+
+  /* ---------- compare cards ---------- */
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:680px){.cmp{grid-template-columns:1fr}}
+  .cmp-card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:18px}
+  .cmp-card h3{font-family:var(--display);font-size:16px;margin-bottom:10px}
+  .cmp-card.bad{border-color:var(--rose-dim)}
+  .cmp-card.bad h3{color:var(--rose)}
+  .cmp-card.good{border-color:var(--teal-dim)}
+  .cmp-card.good h3{color:var(--teal)}
+  .cmp-card ul{list-style:none;margin-top:10px}
+  .cmp-card li{font-size:13.5px;color:var(--muted);padding:6px 0;border-top:1px dashed var(--line);line-height:1.6}
+  .cmp-card li b{color:var(--ink)}
+  .cmp-card .codeblock{font-size:11.5px;margin-top:0}
+
+  /* ---------- mcp diagram ---------- */
+  .mcp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .mcp-card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:18px;
+    cursor:pointer;transition:all .18s;text-align:left;color:inherit;font:inherit;width:100%}
+  .mcp-card:hover{border-color:var(--muted)}
+  .mcp-card.active{border-color:var(--amber);background:var(--amber-dim);box-shadow:0 0 22px rgba(255,182,72,.15)}
+  .mcp-card .pi{font-size:22px;margin-bottom:6px}
+  .mcp-card .pn{font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink)}
+  .mcp-card.active .pn{color:var(--amber)}
+  .mcp-card .pd{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:2px}
+  .mcp-detail{margin-top:16px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;
+    padding:18px 20px;font-size:14.5px;color:var(--muted);line-height:1.9}
+  .mcp-detail b{color:var(--ink)}
+  .mcp-detail .flow{font-family:var(--mono);font-size:12.5px;color:var(--teal);margin:8px 0;
+    background:var(--panel-hi);border:1px solid var(--line);border-radius:8px;padding:10px 14px;overflow-x:auto;white-space:nowrap}
+
+  /* ---------- quiz ---------- */
+  .quiz-q{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+  .quiz-q .qt{font-size:15px;color:var(--ink);margin-bottom:12px;font-weight:600}
+  .quiz-q .qt .qn{font-family:var(--mono);color:var(--amber);margin-right:8px}
+  .quiz-opts{display:flex;flex-direction:column;gap:8px}
+  .quiz-opts button{font-size:14px;font-family:var(--body);background:var(--panel-hi);color:var(--muted);
+    border:1px solid var(--line);border-radius:8px;padding:10px 14px;cursor:pointer;transition:all .15s;text-align:left}
+  .quiz-opts button:hover{border-color:var(--muted);color:var(--ink)}
+  .quiz-opts button.right{border-color:var(--teal);background:var(--teal-dim);color:var(--teal)}
+  .quiz-opts button.wrong{border-color:var(--rose);background:var(--rose-dim);color:var(--rose)}
+  .quiz-exp{font-size:13.5px;color:var(--muted);margin-top:10px;padding-top:10px;
+    border-top:1px dashed var(--line);display:none;line-height:1.7}
+  .quiz-exp b{color:var(--teal)}
+  .quiz-score{text-align:center;font-family:var(--mono);font-size:14px;color:var(--muted);margin-top:18px}
+  .quiz-score b{color:var(--amber);font-size:20px}
+
+  /* ---------- siblings nav ---------- */
+  .sib-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .sib{display:block;background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;
+    padding:18px;text-decoration:none;transition:all .18s}
+  .sib:hover{border-color:var(--amber)}
+  .sib .sn{font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink)}
+  .sib .sd{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.6}
+  .sib .sl{font-family:var(--mono);font-size:11px;color:var(--amber);margin-top:8px;letter-spacing:.1em}
+
+  footer{border-top:1px solid var(--line);padding:28px 24px 48px;text-align:center;
+    font-family:var(--mono);font-size:12px;color:var(--faint)}
+  footer a{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--line)}
+  footer a:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+<a class="lab-home" href="/agent-lab/" title="返回 agent lab">←&nbsp;agent&nbsp;lab</a>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">// <a href="/agent-lab/">agent lab</a> · deep dive 01</div>
+    <h1 class="hero"><span class="b">TOOL</span><span class="b">&nbsp;USE</span></h1>
+    <div class="sub">工具调用深入 —— <b>报文级</b>拆开一次 tool call：协议、Schema、并行、报错与 MCP</div>
+  </header>
+
+  <!-- ============ 01 协议全貌 ============ -->
+  <section id="protocol">
+    <div class="secnum">01 / THE WIRE PROTOCOL</div>
+    <h2>一次工具调用的<em>完整报文往返</em></h2>
+    <p>入门教程里说"模型输出 JSON，你的代码执行"。现在把抽象拆掉，看<b>真实 API 层面</b>到底发生了几次 HTTP 往返、每条消息长什么样。关键认知：所谓"一次工具调用"，其实是<span class="hl-a">两次完整的模型调用</span>夹着<span class="hl-v">一次你自己的代码执行</span>——模型与外部世界之间永远隔着你的程序。点击"下一步"逐帧播放👇</p>
+
+    <div class="panel">
+      <div class="panel-label">simulator · 用户问『东京现在几点？』· 报文已简化</div>
+      <div class="proto-flow">
+        <div class="proto-node" data-pn="req1">请求 ①<small>APP → API</small></div>
+        <span class="proto-arr">→</span>
+        <div class="proto-node" data-pn="res1">响应 ①<small>tool_use</small></div>
+        <span class="proto-arr">→</span>
+        <div class="proto-node" data-pn="exec">本地执行<small>YOUR CODE</small></div>
+        <span class="proto-arr">→</span>
+        <div class="proto-node" data-pn="req2">请求 ②<small>+ tool_result</small></div>
+        <span class="proto-arr">→</span>
+        <div class="proto-node" data-pn="res2">响应 ②<small>end_turn</small></div>
+      </div>
+      <div class="proto-log" id="proto-log"></div>
+      <div class="btnrow">
+        <button class="btn" id="proto-next">下一步 ▸</button>
+        <button class="btn" id="proto-reset">重置 ↺</button>
+      </div>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">三个容易忽略的细节</div>
+      <p><b>① 无状态</b>：API 不记得上一次请求，所以请求 ② 必须把全部历史（包括模型自己的 tool_use）原样带上；<b>② id 配对</b>：<code>tool_result</code> 靠 <code>tool_use_id</code> 和调用一一对应，这是并行调用不串线的关键；<b>③ stop_reason</b>：你的循环就是在判断它——是 <code>tool_use</code> 就执行工具再发一轮，是 <code>end_turn</code> 就把文字给用户。Agent 框架的核心就这一个 while 循环。</p>
+    </div>
+  </section>
+
+  <!-- ============ 02 Schema 设计 ============ -->
+  <section id="schema">
+    <div class="secnum">02 / SCHEMA DESIGN</div>
+    <h2>JSON Schema：<em>模型的"填表说明"</em></h2>
+    <p>工具定义是模型唯一的"使用说明书"。Schema 里每个字段都在影响模型行为——<b>description 影响"何时调用"，类型与约束影响"怎么传参"</b>。点击左侧代码里的高亮字段，看它分别起什么作用👇</p>
+
+    <div class="panel">
+      <div class="panel-label">explorer · 点击字段查看作用</div>
+      <div class="schema-wrap">
+        <div class="schema-code" id="schema-code"></div>
+        <div class="schema-side" id="schema-side"></div>
+      </div>
+    </div>
+
+    <p>Schema 的语法是死的，<b>描述的写法才是手艺</b>。同一个查订单工具，两种写法对比👇</p>
+
+    <div class="panel">
+      <div class="panel-label">contrast · 含糊描述 vs 清晰描述</div>
+      <div class="cmp">
+        <div class="cmp-card bad">
+          <h3>✗ 含糊版</h3>
+          <div class="codeblock"><span class="k">"name"</span>: <span class="s">"query"</span>,
+<span class="k">"description"</span>: <span class="bad">"查询订单"</span>,
+<span class="k">"properties"</span>: {
+  <span class="k">"id"</span>: { <span class="k">"type"</span>: <span class="s">"string"</span> },
+  <span class="k">"t"</span>:  { <span class="k">"type"</span>: <span class="s">"string"</span> }
+}</div>
+          <ul>
+            <li><b>名字太泛</b>：查什么？和别的"查询"工具撞车后模型只能瞎选</li>
+            <li><b>没说边界</b>：能查别人的订单吗？查不到时返回什么？</li>
+            <li><b>参数 <code>t</code> 是谜语</b>：time？type？模型会按概率乱猜一个</li>
+          </ul>
+        </div>
+        <div class="cmp-card good">
+          <h3>✓ 清晰版</h3>
+          <div class="codeblock"><span class="k">"name"</span>: <span class="s">"get_order_status"</span>,
+<span class="k">"description"</span>: <span class="s">"查当前登录用户某笔
+ 订单的物流状态。只能查自己的订单；
+ 订单号不存在时返回 NOT_FOUND。"</span>,
+<span class="k">"properties"</span>: {
+  <span class="k">"order_id"</span>: {
+    <span class="k">"type"</span>: <span class="s">"string"</span>,
+    <span class="k">"description"</span>: <span class="s">"订单号，形如
+     ORD-20260610-001"</span>
+  }
+}</div>
+          <ul>
+            <li><b>动词 + 宾语命名</b>：一眼看出干什么</li>
+            <li><b>说清能力边界</b>：模型不会答应"帮我查同事的订单"</li>
+            <li><b>参数带格式示例</b>：传参错误率大幅下降</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">检验标准</div>
+      <p>把工具描述给一个<b>没看过你代码的新同事</b>读：如果 ta 能仅凭描述正确使用这个接口，模型大概率也能。反过来，模型反复用错的工具，先别怪模型——回头读一遍自己的 description。</p>
+    </div>
+  </section>
+
+  <!-- ============ 03 并行调用 ============ -->
+  <section id="parallel">
+    <div class="secnum">03 / PARALLEL CALLS</div>
+    <h2>并行调用：<em>一轮发出多个请求</em></h2>
+    <p>当几件事互相不依赖（查北京天气 + 查上海天气），模型可以在<b>同一条回复里输出多个 tool_use 块</b>，你的代码并发执行，再把多个结果一次性塞回去——往返次数和延迟都省一半。看报文怎么写👇</p>
+
+    <div class="panel">
+      <div class="panel-label">demo · 『对比下北京和上海明天的天气』</div>
+      <div class="codeblock"><span class="c">// 响应 ①：模型一口气输出两个 tool_use 块（注意两个不同的 id）</span>
+<span class="k">"content"</span>: [
+  { <span class="k">"type"</span>: <span class="s">"tool_use"</span>, <span class="k">"id"</span>: <span class="n">"call_A1"</span>,
+    <span class="k">"name"</span>: <span class="s">"get_weather"</span>, <span class="k">"input"</span>: { <span class="k">"city"</span>: <span class="s">"北京"</span> } },
+  { <span class="k">"type"</span>: <span class="s">"tool_use"</span>, <span class="k">"id"</span>: <span class="n">"call_B2"</span>,
+    <span class="k">"name"</span>: <span class="s">"get_weather"</span>, <span class="k">"input"</span>: { <span class="k">"city"</span>: <span class="s">"上海"</span> } }
+]
+
+<span class="c">// 你的代码：Promise.all 并发跑两个请求，然后一条消息带回两个结果</span>
+<span class="k">"content"</span>: [
+  { <span class="k">"type"</span>: <span class="s">"tool_result"</span>, <span class="k">"tool_use_id"</span>: <span class="n">"call_A1"</span>, <span class="k">"content"</span>: <span class="s">"晴 31°C"</span> },
+  { <span class="k">"type"</span>: <span class="s">"tool_result"</span>, <span class="k">"tool_use_id"</span>: <span class="n">"call_B2"</span>, <span class="k">"content"</span>: <span class="s">"中雨 22°C"</span> }
+]</div>
+    </div>
+
+    <div class="callout">
+      <div class="t">什么时候不该并行</div>
+      <p>有<b>依赖关系</b>的调用没法并行：得先 <code>search_flights</code> 拿到航班号，才能 <code>book_flight</code>。模型一般能自己判断依赖，但<b>写操作要格外小心</b>——并行发两个"扣款"就是事故。常见护栏：写操作强制串行、一轮只允许一个高危调用。</p>
+    </div>
+
+    <div class="callout rose">
+      <div class="t">工具多了怎么办</div>
+      <p>每个工具定义都常驻上下文，几十个工具就是几千 token，而且<b>职责重叠的工具会让模型选错</b>。三个缓解思路：① 合并同类（一个 <code>search</code> 带 <code>type</code> 参数，胜过五个 search_xxx）；② 按任务动态挂载工具子集；③ 分层——前面没用的工具这轮就别给。</p>
+    </div>
+  </section>
+
+  <!-- ============ 04 错误处理 ============ -->
+  <section id="errors">
+    <div class="secnum">04 / ERROR HANDLING</div>
+    <h2>工具报错了：<em>别 crash，喂回去</em></h2>
+    <p>工具会超时、会 404、会被传错参数。Agent 工程的妙处在于：<b>错误信息本身也是观察结果</b>——把它作为 <code>tool_result</code>（标记 <code>is_error: true</code>）喂回模型，模型往往能自己纠错。逐步看一个真实的自愈过程👇</p>
+
+    <div class="panel">
+      <div class="panel-label">simulator · 任务：『查一下 iPhone 17 的库存』</div>
+      <div class="proto-log" id="err-log"></div>
+      <div class="btnrow">
+        <button class="btn" id="err-next">下一步 ▸</button>
+        <button class="btn" id="err-reset">重置 ↺</button>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">错误消息也要好好写</div>
+      <p>模型能不能自愈，取决于错误信息的质量。<b>"Error 500" 没法自愈；"商品名不存在，可用的相近商品：iphone-17-pro, iphone-17"就能</b>。把错误消息当成给模型的提示词来写：说清哪里错了、合法值长什么样、下一步可以试什么。</p>
+    </div>
+
+    <div class="callout rose">
+      <div class="t">兜底护栏</div>
+      <p>自愈也可能变成<b>死循环</b>：同样的调用反复失败、模型反复重试。生产环境必须有：① <b>步数/花费上限</b>；② <b>重复检测</b>（连续 N 次相同调用直接熔断）；③ <b>幂等设计</b>——重试"创建订单"不应创建两单，给写操作带去重键（idempotency key）。</p>
+    </div>
+  </section>
+
+  <!-- ============ 05 MCP ============ -->
+  <section id="mcp">
+    <div class="secnum">05 / MCP</div>
+    <h2>MCP：把工具接入<em>标准化</em></h2>
+    <p>前面的一切都有个隐含成本：每个工具都要你亲手写定义、写执行代码。M 个 Agent 应用 × N 个工具 = M×N 次重复集成。<span class="term" data-name="MCP · Model Context Protocol" data-tip="Anthropic 发起的开放协议，统一了 AI 应用和外部工具/数据源之间的连接方式，常被比作 AI 界的 USB-C。">MCP</span> 把它变成 M+N：工具方实现一次 <b>Server</b>，任何支持 MCP 的应用都能即插即用。点击下面三个角色，看各自负责什么👇</p>
+
+    <div class="panel">
+      <div class="panel-label">architecture · 点击切换角色</div>
+      <div class="mcp-grid" id="mcp-grid"></div>
+      <div class="mcp-detail" id="mcp-detail"></div>
+    </div>
+
+    <p>MCP Server 暴露的能力不止工具一种，协议定义了三类<b>原语（primitives）</b>：</p>
+
+    <div class="panel">
+      <div class="panel-label">primitives · server 能提供的三类东西</div>
+      <div class="cmp" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+        <div class="cmp-card good">
+          <h3>🔧 Tools · 工具</h3>
+          <ul>
+            <li><b>是什么</b>：可执行的动作，模型决定何时调用</li>
+            <li><b>例子</b>：<code>create_issue</code>、<code>run_query</code></li>
+            <li><b>对应</b>：本页前四节讲的全部内容</li>
+          </ul>
+        </div>
+        <div class="cmp-card good">
+          <h3>📄 Resources · 资源</h3>
+          <ul>
+            <li><b>是什么</b>：可读取的数据（文件、表、文档），由应用决定挂载哪些进上下文</li>
+            <li><b>例子</b>：<code>file:///readme.md</code>、数据库 schema</li>
+            <li><b>区别</b>：工具是"做"，资源是"读"</li>
+          </ul>
+        </div>
+        <div class="cmp-card good">
+          <h3>💬 Prompts · 提示模板</h3>
+          <ul>
+            <li><b>是什么</b>：server 预置的提示词模板，用户主动选用（如斜杠命令）</li>
+            <li><b>例子</b>：<code>/summarize-pr</code> 带好了最佳实践提示词</li>
+            <li><b>价值</b>：把"怎么用好这个工具"也标准化了</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout rose">
+      <div class="t">MCP 不解决信任问题</div>
+      <p>接入第三方 MCP Server，等于<b>把它的工具描述和返回内容都放进你的上下文</b>——恶意 server 可以在描述里藏注入指令，或在返回里夹带"忽略之前的指示"。接 server 前像审计依赖库一样审计它，高危工具保持人工确认。</p>
+    </div>
+  </section>
+
+  <!-- ============ 06 测验 ============ -->
+  <section id="quiz">
+    <div class="secnum">06 / QUIZ</div>
+    <h2>随堂测验：<em>检验一下</em></h2>
+    <p>5 道题。答错没关系，解析比答案重要。</p>
+
+    <div class="panel">
+      <div class="panel-label">quiz · 点击选项作答</div>
+      <div id="quiz-list"></div>
+      <div class="quiz-score" id="quiz-score"></div>
+    </div>
+  </section>
+
+  <!-- ============ 继续深入 ============ -->
+  <section id="next">
+    <div class="secnum">→ / KEEP GOING</div>
+    <h2>继续<em>深入</em></h2>
+    <div class="sib-grid">
+      <a class="sib" href="/agent-lab/context/">
+        <div class="sn">上下文工程</div>
+        <div class="sd">token 预算、增长与压缩、记忆体系、四种上下文失效模式</div>
+        <div class="sl">deep dive 02 →</div>
+      </a>
+      <a class="sib" href="/agent-lab/patterns/">
+        <div class="sn">架构模式</div>
+        <div class="sd">ReAct 失败案例、重规划回路、Reflection 收益、多智能体拓扑与选型</div>
+        <div class="sl">deep dive 03 →</div>
+      </a>
+      <a class="sib" href="/agent-lab/memory/">
+        <div class="sn">记忆与检索</div>
+        <div class="sd">三种记忆类型、写入蒸馏管线、RAG 检索全流程与记忆维护</div>
+        <div class="sl">deep dive 04 →</div>
+      </a>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <a href="/agent-lab/">← agent lab</a> &nbsp;·&nbsp; <a href="/">~/labs</a> &nbsp;·&nbsp; tool use deep dive
+</footer>
+
+<script>
+/* ================= 01 protocol stepper ================= */
+const protoSteps = [
+  {role:'app', who:'请求 ① · 你的应用 → 模型 API', phase:'req1',
+   html:'<div class="note">一次普通的 HTTP POST。<b>工具定义和用户消息一起发过去</b>——模型不是"装了插件"，它只是读到了这份说明书：</div><div class="codeblock">{\n  <span class="k">"model"</span>: <span class="s">"claude-..."</span>,\n  <span class="k">"tools"</span>: [{\n    <span class="k">"name"</span>: <span class="s">"get_time"</span>,\n    <span class="k">"description"</span>: <span class="s">"查询某个城市的当前时间"</span>,\n    <span class="k">"input_schema"</span>: { <span class="k">"type"</span>: <span class="s">"object"</span>,\n      <span class="k">"properties"</span>: { <span class="k">"city"</span>: { <span class="k">"type"</span>: <span class="s">"string"</span> } },\n      <span class="k">"required"</span>: [<span class="s">"city"</span>] }\n  }],\n  <span class="k">"messages"</span>: [\n    { <span class="k">"role"</span>: <span class="s">"user"</span>, <span class="k">"content"</span>: <span class="s">"东京现在几点？"</span> }\n  ]\n}</div>'},
+  {role:'api', who:'响应 ① · 模型决定调工具', phase:'res1',
+   html:'<div class="note">模型没有直接回答，而是返回一个 <b>tool_use 内容块</b>。注意 <span class="hl-a">stop_reason</span>：它告诉你的代码"我在等工具结果"：</div><div class="codeblock">{\n  <span class="k">"stop_reason"</span>: <span class="mark"><span class="n">"tool_use"</span></span>,\n  <span class="k">"content"</span>: [{\n    <span class="k">"type"</span>: <span class="s">"tool_use"</span>,\n    <span class="k">"id"</span>: <span class="mark"><span class="n">"toolu_01A"</span></span>,   <span class="c">// 配对用的唯一 id</span>\n    <span class="k">"name"</span>: <span class="s">"get_time"</span>,\n    <span class="k">"input"</span>: { <span class="k">"city"</span>: <span class="s">"东京"</span> }\n  }]\n}</div>'},
+  {role:'exec', who:'本地执行 · 你的代码', phase:'exec',
+   html:'<div class="note">这一步<b>完全发生在你的程序里</b>，模型在"挂起等待"（其实它什么都不知道，HTTP 早结束了）：</div><div class="codeblock"><span class="c">// 伪代码：解析 → 校验 → 执行</span>\n<span class="k">const</span> call = response.content.find(b => b.type === <span class="s">"tool_use"</span>);\n<span class="k">const</span> result = <span class="k">await</span> getTime(call.input.city);  <span class="c">// 真正的 API/DB 访问</span>\n<span class="c">// result = "2026-06-10 21:30 JST"</span></div>'},
+  {role:'app', who:'请求 ② · 带着结果再来一轮', phase:'req2',
+   html:'<div class="note">API 是<b>无状态</b>的：第二次请求要带上完整历史——用户消息、<b>模型自己的 tool_use</b>、以及新的 <b>tool_result</b>（靠 id 配对）：</div><div class="codeblock"><span class="k">"messages"</span>: [\n  { <span class="k">"role"</span>: <span class="s">"user"</span>, <span class="k">"content"</span>: <span class="s">"东京现在几点？"</span> },\n  { <span class="k">"role"</span>: <span class="s">"assistant"</span>, <span class="k">"content"</span>: [ <span class="c">/* 上面的 tool_use 块 */</span> ] },\n  { <span class="k">"role"</span>: <span class="s">"user"</span>, <span class="k">"content"</span>: [{\n      <span class="k">"type"</span>: <span class="s">"tool_result"</span>,\n      <span class="k">"tool_use_id"</span>: <span class="mark"><span class="n">"toolu_01A"</span></span>,\n      <span class="k">"content"</span>: <span class="s">"2026-06-10 21:30 JST"</span>\n  }] }\n]</div>'},
+  {role:'fin', who:'响应 ② · 最终回答', phase:'res2',
+   html:'<div class="note">模型读到结果，判断不再需要工具，<span class="hl">stop_reason 变成 end_turn</span>——你的循环到此退出，把文字交给用户：</div><div class="codeblock">{\n  <span class="k">"stop_reason"</span>: <span class="mark"><span class="n">"end_turn"</span></span>,\n  <span class="k">"content"</span>: [{ <span class="k">"type"</span>: <span class="s">"text"</span>,\n    <span class="k">"text"</span>: <span class="s">"东京现在是 6 月 10 日晚上 9 点半（JST）。"</span> }]\n}</div><div class="note" style="margin-top:8px">两次模型调用 + 一次本地执行 = 一次"工具调用"。如果模型还想调下一个工具，就回到请求 ② 的形态继续循环。</div>'}
+];
+let protoIdx = 0;
+const protoLog = document.getElementById('proto-log');
+const protoNext = document.getElementById('proto-next');
+function lightProto(phase){
+  document.querySelectorAll('.proto-node').forEach(n=>
+    n.classList.toggle('lit', n.dataset.pn === phase));
+}
+protoNext.addEventListener('click', ()=>{
+  if(protoIdx >= protoSteps.length) return;
+  const s = protoSteps[protoIdx++];
+  const d = document.createElement('div');
+  d.className = 'pmsg ' + s.role;
+  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+  protoLog.appendChild(d);
+  lightProto(s.phase);
+  if(protoIdx >= protoSteps.length){
+    protoNext.disabled = true;
+    protoNext.textContent = '往返完成 ✓';
+  }
+});
+document.getElementById('proto-reset').addEventListener('click', ()=>{
+  protoIdx = 0; protoLog.innerHTML = '';
+  protoNext.disabled = false; protoNext.textContent = '下一步 ▸';
+  lightProto(null);
+});
+
+/* ================= 02 schema explorer ================= */
+const schemaFields = {
+  name:{t:'name · 工具名',
+    d:'模型选工具时<b>第一眼看的东西</b>。用「动词_宾语」的小写蛇形命名（get_weather、create_issue），别用缩写和内部黑话。名字含糊是工具被误调的头号原因。'},
+  desc:{t:'description · 工具描述',
+    d:'决定模型<b>"什么时候用它"</b>的判断依据。要写：① 干什么；② 什么场景该用 / 不该用；③ 能力边界（只读？会发邮件？）。这段文字每轮都进上下文，值得反复打磨。'},
+  type:{t:'input_schema.type',
+    d:'参数整体是一个 JSON 对象，固定写 <b>object</b>。模型的"填表"就是按这个 schema 生成一个合法的 JSON 对象。'},
+  prop:{t:'properties · 参数清单',
+    d:'每个参数的名字、类型和各自的 description。<b>参数级 description 同样重要</b>——单位是什么（摄氏还是华氏）、格式长什么样（给个示例）、默认值是什么。'},
+  enum:{t:'enum · 枚举约束',
+    d:'把自由文本变成<b>有限选项</b>。没有 enum 时模型可能传 "C"、"摄氏度"、"celsius" 任意一种，你的代码得猜；有了 enum，模型只会从合法值里选。能用 enum 的地方尽量用。'},
+  req:{t:'required · 必填项',
+    d:'声明哪些参数必须出现。没列进来的就是可选参数——<b>模型可能省略它们</b>，你的代码要准备好处理缺省。常见坑：把业务上必填的参数忘在 required 外面。'}
+};
+const schemaCode = document.getElementById('schema-code');
+const schemaSide = document.getElementById('schema-side');
+schemaCode.innerHTML =
+'{\n  <span class="fld" data-f="name"><span class="k">"name"</span>: <span class="s">"get_weather"</span></span>,\n' +
+'  <span class="fld" data-f="desc"><span class="k">"description"</span>: <span class="s">"查指定城市的实时天气。\n   仅支持中国大陆城市；不提供预报，\n   要查未来天气请用 get_forecast。"</span></span>,\n' +
+'  <span class="k">"input_schema"</span>: {\n' +
+'    <span class="fld" data-f="type"><span class="k">"type"</span>: <span class="s">"object"</span></span>,\n' +
+'    <span class="fld" data-f="prop"><span class="k">"properties"</span>: {\n      <span class="k">"city"</span>: {\n        <span class="k">"type"</span>: <span class="s">"string"</span>,\n        <span class="k">"description"</span>: <span class="s">"城市中文名，如：北京"</span>\n      },\n      <span class="k">"unit"</span>: {\n        <span class="k">"type"</span>: <span class="s">"string"</span>,</span>\n' +
+'        <span class="fld" data-f="enum"><span class="k">"enum"</span>: [<span class="s">"celsius"</span>, <span class="s">"fahrenheit"</span>]</span>\n      }\n    },\n' +
+'    <span class="fld" data-f="req"><span class="k">"required"</span>: [<span class="s">"city"</span>]</span>\n  }\n}';
+function showField(key){
+  schemaCode.querySelectorAll('.fld').forEach(x=>
+    x.classList.toggle('active', x.dataset.f === key));
+  const f = schemaFields[key];
+  schemaSide.innerHTML = '<div class="dt">'+f.t+'</div>'+f.d;
+}
+schemaCode.addEventListener('click', e=>{
+  const el = e.target.closest('.fld'); if(!el) return;
+  showField(el.dataset.f);
+});
+showField('desc');
+
+/* ================= 04 error handling stepper ================= */
+const errSteps = [
+  {role:'api', who:'LLM · 行动', phase:null,
+   html:'<div class="note">模型按用户的说法直接传了参数：</div><div class="codeblock">{ <span class="k">"type"</span>: <span class="s">"tool_use"</span>, <span class="k">"id"</span>: <span class="n">"call_01"</span>,\n  <span class="k">"name"</span>: <span class="s">"check_stock"</span>,\n  <span class="k">"input"</span>: { <span class="k">"product"</span>: <span class="s">"iPhone 17"</span> } }</div>'},
+  {role:'exec', who:'工具执行 · 失败了', phase:null,
+   html:'<div class="note">库存系统里的商品键是 slug 格式，没有空格——查询失败。<b>不要 throw，把错误包装成 tool_result 喂回去</b>，注意 is_error 标记和有引导性的错误文案：</div><div class="codeblock">{ <span class="k">"type"</span>: <span class="s">"tool_result"</span>, <span class="k">"tool_use_id"</span>: <span class="n">"call_01"</span>,\n  <span class="k">"is_error"</span>: <span class="bad">true</span>,\n  <span class="k">"content"</span>: <span class="s">"product \'iPhone 17\' 不存在。\n   相近的有效值：iphone-17, iphone-17-pro,\n   iphone-17-pro-max"</span> }</div>'},
+  {role:'api', who:'LLM · 自我修正', phase:null,
+   html:'<div class="note">模型读到错误，<b>没人写过任何重试逻辑</b>，它自己换了参数再试：</div><div class="codeblock">{ <span class="k">"type"</span>: <span class="s">"tool_use"</span>, <span class="k">"id"</span>: <span class="n">"call_02"</span>,\n  <span class="k">"name"</span>: <span class="s">"check_stock"</span>,\n  <span class="k">"input"</span>: { <span class="k">"product"</span>: <span class="s">"iphone-17"</span> } }</div>'},
+  {role:'exec', who:'工具执行 · 成功', phase:null,
+   html:'<div class="codeblock">{ <span class="k">"type"</span>: <span class="s">"tool_result"</span>, <span class="k">"tool_use_id"</span>: <span class="n">"call_02"</span>,\n  <span class="k">"content"</span>: <span class="s">"{ \'iphone-17\': { stock: 23, store: \'三里屯\' } }"</span> }</div>'},
+  {role:'fin', who:'LLM · 最终回答', phase:null,
+   html:'<div class="note"><b>iPhone 17 有货</b>：三里屯店还剩 23 台。<br><br><span style="color:var(--faint);font-style:italic;font-size:13px">一次失败 → 读错误 → 换参数 → 成功。错误信息写得好，模型就是自己的运维。</span></div>'}
+];
+let errIdx = 0;
+const errLog = document.getElementById('err-log');
+const errNext = document.getElementById('err-next');
+errNext.addEventListener('click', ()=>{
+  if(errIdx >= errSteps.length) return;
+  const s = errSteps[errIdx++];
+  const d = document.createElement('div');
+  d.className = 'pmsg ' + s.role;
+  d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+  errLog.appendChild(d);
+  if(errIdx >= errSteps.length){
+    errNext.disabled = true;
+    errNext.textContent = '自愈完成 ✓';
+  }
+});
+document.getElementById('err-reset').addEventListener('click', ()=>{
+  errIdx = 0; errLog.innerHTML = '';
+  errNext.disabled = false; errNext.textContent = '下一步 ▸';
+});
+
+/* ================= 05 mcp roles ================= */
+const mcpRoles = [
+  {icon:'🖥️', name:'Host · 宿主应用', tag:'用户面对的 AI 应用',
+   flow:'Claude Desktop / IDE 插件 / 你写的 Agent 应用',
+   d:'<b>用户直接使用的那个程序</b>。它管理模型调用、上下文组装和权限确认（"是否允许访问文件系统？"）。一个 Host 可以同时连接多个 Server——文件、数据库、浏览器各一个。'},
+  {icon:'🔁', name:'Client · 连接器', tag:'host 内部的协议端点',
+   flow:'Host 内嵌 · 与 Server 一对一连接 · 转译协议消息',
+   d:'Host 内部为<b>每个 Server 维护一条连接</b>的组件，负责能力协商（这个 server 有哪些工具？）、消息收发。对开发者基本透明——用 SDK 时它是现成的。传输层支持 <b>stdio</b>（本地子进程，最常见）和 <b>HTTP</b>（远程服务）。'},
+  {icon:'🧰', name:'Server · 能力提供方', tag:'工具/数据的封装者',
+   flow:'GitHub Server / 数据库 Server / 你自己写的 Server',
+   d:'<b>真正干活的一端</b>：把某个系统的能力封装成标准的 tools / resources / prompts。写一次，所有 MCP 应用都能用。一个最小的 Server 用官方 SDK 几十行就能跑起来——定义工具名、schema、处理函数，齐活。'}
+];
+const mcpGrid = document.getElementById('mcp-grid');
+const mcpDetail = document.getElementById('mcp-detail');
+mcpRoles.forEach((p,i)=>{
+  const el = document.createElement('button');
+  el.className = 'mcp-card';
+  el.innerHTML = '<div class="pi">'+p.icon+'</div><div class="pn">'+p.name+'</div><div class="pd">'+p.tag+'</div>';
+  el.addEventListener('click', ()=>{
+    mcpGrid.querySelectorAll('.mcp-card').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    mcpDetail.innerHTML = '<div class="flow">'+p.flow+'</div>'+p.d;
+  });
+  mcpGrid.appendChild(el);
+  if(i===0) el.click();
+});
+
+/* ================= 06 quiz ================= */
+const quiz = [
+  {q:'用户问了一个需要查一次天气的问题。从 HTTP 层面看，你的应用一共调用了几次模型 API？',
+   opts:['1 次——模型边查边答','2 次——一次拿到 tool_use，执行后再发一次拿最终回答','3 次——请求、确认、回答各一次','0 次——工具调用不经过模型'],
+   ans:1,
+   exp:'一次工具调用 = <b>两次完整的模型调用</b>夹着一次你自己的代码执行。第一次返回 stop_reason: tool_use，你执行工具后把 tool_result 连同全部历史再发一次，才拿到最终文本。'},
+  {q:'为什么请求 ② 必须把模型自己输出的 tool_use 块也原样带上？',
+   opts:['为了计费','API 是无状态的，不带上模型就不知道自己调过什么','协议规定必须凑够偶数条消息','为了让用户能看到调用记录'],
+   ans:1,
+   exp:'模型 API <b>不保存会话状态</b>，每次请求都是从零读上下文。少了那条 assistant 的 tool_use，模型看到一个凭空出现的 tool_result，行为会错乱。'},
+  {q:'模型经常给 unit 参数传 "摄氏度"、"C"、"celsius" 等五花八门的值，最直接的修复是？',
+   opts:['在代码里写一堆 if 做模糊匹配','给参数加 enum: ["celsius","fahrenheit"]','换个更大的模型','把参数删掉'],
+   ans:1,
+   exp:'<b>enum 把自由发挥变成选择题</b>。Schema 层面的约束永远优先于事后的字符串清洗——它直接塑造模型的输出，而不是容忍错误再补救。'},
+  {q:'工具执行失败时，工程上推荐的做法是？',
+   opts:['程序直接抛异常终止本轮对话','把错误包成带 is_error 的 tool_result 喂回模型，并附上可行的下一步提示','静默返回空字符串，假装成功','无限自动重试同一个调用'],
+   ans:1,
+   exp:'错误也是观察结果。<b>写清楚"哪里错了 + 合法值长什么样"</b>，模型大概率能自我修正。但要配合步数上限和重复检测，防止自愈变成死循环；静默吞错最危险——模型会基于假成功继续推理。'},
+  {q:'公司有 8 个内部系统要接给 3 个不同的 Agent 应用用，MCP 在这里省掉的是什么？',
+   opts:['模型的推理费用','8×3=24 次重复集成，变成 8 个 Server + 3 个支持 MCP 的应用','写 JSON Schema 的工作','安全审计——MCP server 天然可信'],
+   ans:1,
+   exp:'MCP 解决的是 <b>M×N 集成爆炸</b>：每个系统实现一次 Server（N），每个应用支持一次协议（M），任意组合即插即用。注意最后一个选项是反的——第三方 Server 的内容进入你的上下文，信任问题反而要更认真对待。'}
+];
+const quizList = document.getElementById('quiz-list');
+const quizScore = document.getElementById('quiz-score');
+let answered = 0, correct = 0;
+quiz.forEach((item,qi)=>{
+  const qd = document.createElement('div');
+  qd.className = 'quiz-q';
+  qd.innerHTML = '<div class="qt"><span class="qn">Q'+(qi+1)+'</span>'+item.q+'</div>';
+  const opts = document.createElement('div');
+  opts.className = 'quiz-opts';
+  const exp = document.createElement('div');
+  exp.className = 'quiz-exp';
+  exp.innerHTML = item.exp;
+  item.opts.forEach((o,oi)=>{
+    const b = document.createElement('button');
+    b.textContent = String.fromCharCode(65+oi) + '. ' + o;
+    b.addEventListener('click', ()=>{
+      if(qd.dataset.done) return;
+      qd.dataset.done = '1';
+      answered++;
+      if(oi === item.ans){ b.classList.add('right'); correct++; }
+      else {
+        b.classList.add('wrong');
+        opts.children[item.ans].classList.add('right');
+      }
+      exp.style.display = 'block';
+      quizScore.innerHTML = '得分 <b>'+correct+' / '+answered+'</b>' +
+        (answered === quiz.length
+          ? (correct === quiz.length ? ' 🎉 全对！协议层已经通了'
+             : correct >= 3 ? ' 👍 不错，回头看看错题的解析'
+             : ' 💪 建议把 01 节的报文再逐帧过一遍')
+          : '');
+    });
+    opts.appendChild(b);
+  });
+  qd.appendChild(opts);
+  qd.appendChild(exp);
+  quizList.appendChild(qd);
+});
+</script>
+</body>
+</html>
