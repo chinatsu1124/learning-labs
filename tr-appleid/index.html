@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="注册土耳其区 Apple ID 的最新方法（2026 年实测）、过时方法甄别、高信誉礼品卡购买渠道对比与充值兑换教程。">
+<meta property="og:title" content="土区 Apple ID 指南 · TR APPLE ID">
+<meta property="og:description" content="注册土耳其区 Apple ID 的最新方法（2026 年实测）、过时方法甄别、高信誉礼品卡购买渠道对比与充值兑换教程。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>土区 Apple ID 指南 · TR APPLE ID</title>
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
+<script defer src="/assets/term.js"></script>
+<style>
+  :root{
+    --bg:#0a0b10;
+    --bg2:#0f1118;
+    --panel:#13151f;
+    --panel-hi:#1a1d29;
+    --line:#262a38;
+    --ink:#dfe3ec;
+    --muted:#8a90a3;
+    --faint:#565c70;
+    --violet:#b08aff;
+    --violet-dim:#37284f;
+    --teal:#4fe3c1;
+    --teal-dim:#1f4d44;
+    --amber:#ffb648;
+    --amber-dim:#5a4422;
+    --rose:#ff7a85;
+    --rose-dim:#52262b;
+    --blue:#8aa9ff;
+    --display:'Syne',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:48px 48px;
+    background-position:center top;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(255,182,72,.08),transparent 60%),
+               radial-gradient(ellipse 70% 50% at 90% 20%,rgba(79,227,193,.05),transparent 55%),
+               linear-gradient(180deg,rgba(10,11,16,.4),var(--bg) 90%);
+  }
+  .wrap{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:0 24px}
+
+  /* ---------- header ---------- */
+  header{padding:90px 0 40px;text-align:center}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:var(--amber);
+    text-transform:uppercase;margin-bottom:24px;opacity:0;animation:rise .7s .1s forwards}
+  h1.hero{font-family:var(--display);font-weight:800;font-size:clamp(56px,14vw,130px);
+    line-height:.9;letter-spacing:-.03em;margin-bottom:8px}
+  h1.hero .b{display:inline-block;opacity:0;transform:translateY(40px);animation:rise .8s forwards}
+  h1.hero .b:nth-child(1){animation-delay:.15s;color:var(--ink)}
+  h1.hero .b:nth-child(2){animation-delay:.25s;color:var(--amber)}
+  h1.hero .b:nth-child(3){animation-delay:.35s;color:var(--teal)}
+  .sub{font-family:var(--mono);color:var(--muted);font-size:15px;margin-top:18px;
+    opacity:0;animation:rise .7s .6s forwards}
+  .sub b{color:var(--ink);font-weight:500}
+  .scrollcue{margin-top:54px;font-family:var(--mono);font-size:11px;letter-spacing:.3em;
+    color:var(--faint);opacity:0;animation:rise .7s .9s forwards;text-transform:uppercase}
+  .scrollcue span{display:block;font-size:18px;margin-top:6px;animation:bob 1.8s ease-in-out infinite}
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+  /* ---------- sections ---------- */
+  section{padding:56px 0;border-top:1px solid var(--line)}
+  .secnum{font-family:var(--mono);font-size:12px;color:var(--amber);letter-spacing:.2em;
+    margin-bottom:10px;display:flex;align-items:center;gap:12px}
+  .secnum::after{content:"";flex:1;height:1px;background:var(--line)}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);
+    line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
+  h2 em{font-style:normal;color:var(--amber)}
+  h3{font-family:var(--display);font-size:18px;margin-bottom:8px}
+  p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
+  p b{color:var(--ink);font-weight:600}
+  .hl{color:var(--teal);font-weight:600}
+  .hl-v{color:var(--violet);font-weight:600}
+  .hl-a{color:var(--amber);font-weight:600}
+  .hl-r{color:var(--rose);font-weight:600}
+  code{font-family:var(--mono);background:var(--panel-hi);color:var(--teal);
+    padding:2px 7px;border-radius:5px;font-size:.88em;border:1px solid var(--line)}
+  a{color:var(--blue);text-decoration:none;border-bottom:1px dashed rgba(138,169,255,.4)}
+  a:hover{border-bottom-style:solid}
+
+  /* ---------- panel ---------- */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:28px;margin:26px 0;position:relative;overflow:hidden}
+  .panel::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--amber),transparent);opacity:.5}
+  .panel-label{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--faint);
+    text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+  .panel-label::before{content:"●";color:var(--teal);font-size:8px}
+
+  /* ---------- callout ---------- */
+  .callout{border-left:3px solid var(--violet);background:var(--panel);border-radius:0 12px 12px 0;
+    padding:16px 20px;margin:22px 0}
+  .callout .t{font-family:var(--mono);font-size:12px;letter-spacing:.15em;color:var(--violet);
+    text-transform:uppercase;margin-bottom:6px}
+  .callout p{margin:0;font-size:15px;color:var(--ink)}
+  .callout p+p{margin-top:8px}
+  .callout.teal{border-color:var(--teal)}
+  .callout.teal .t{color:var(--teal)}
+  .callout.amber{border-color:var(--amber)}
+  .callout.amber .t{color:var(--amber)}
+  .callout.rose{border-color:var(--rose)}
+  .callout.rose .t{color:var(--rose)}
+
+  /* ---------- flow ---------- */
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+  .flow .node{flex:1;min-width:120px;background:var(--bg2);border:1.5px solid var(--line);
+    border-radius:12px;padding:14px 12px;text-align:center}
+  .flow .node .n{font-family:var(--mono);font-size:11px;color:var(--amber);letter-spacing:.15em}
+  .flow .node .k{font-weight:600;font-size:14.5px;color:var(--ink);margin-top:4px}
+  .flow .node small{display:block;color:var(--faint);font-size:11.5px;line-height:1.5;margin-top:4px}
+  .flow .arr{align-self:center;color:var(--faint);font-family:var(--mono)}
+  @media(max-width:720px){.flow{flex-direction:column}.flow .arr{transform:rotate(90deg);align-self:center}}
+
+  /* ---------- method compare (新 vs 过时) ---------- */
+  .role-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.role-grid{grid-template-columns:1fr}}
+  .role-card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:20px}
+  .role-card h3{font-family:var(--display);font-size:18px;margin-bottom:4px}
+  .role-card .rq{font-family:var(--mono);font-size:12px;color:var(--faint);margin-bottom:14px}
+  .role-card.ok{border-color:var(--teal-dim)}
+  .role-card.ok h3{color:var(--teal)}
+  .role-card.bad{border-color:var(--rose-dim)}
+  .role-card.bad h3{color:var(--rose)}
+  .role-card ul{list-style:none}
+  .role-card li{font-size:14px;color:var(--muted);padding:7px 0;border-top:1px dashed var(--line);line-height:1.6}
+  .role-card li b{color:var(--ink);font-weight:600}
+  .role-card li::before{font-family:var(--mono)}
+  .role-card.ok li::before{content:"✓ ";color:var(--teal)}
+  .role-card.bad li::before{content:"✗ ";color:var(--rose)}
+
+  /* ---------- checklist ---------- */
+  .check-list{list-style:none}
+  .check-list li{display:flex;align-items:flex-start;gap:12px;padding:11px 0;
+    border-top:1px dashed var(--line);cursor:pointer}
+  .check-list li:first-child{border-top:0}
+  .check-list .box{flex:none;width:20px;height:20px;margin-top:3px;border:1.5px solid var(--faint);
+    border-radius:6px;display:grid;place-items:center;font-size:13px;color:transparent;
+    font-family:var(--mono);transition:all .15s}
+  .check-list li.done .box{background:var(--teal-dim);border-color:var(--teal);color:var(--teal)}
+  .check-list .txt{font-size:15px;color:var(--muted);line-height:1.6}
+  .check-list .txt b{color:var(--ink)}
+  .check-list li.done .txt{color:var(--faint);text-decoration:line-through;text-decoration-color:var(--teal)}
+  .check-prog{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:14px}
+  .check-prog b{color:var(--teal)}
+
+  /* ---------- steps ---------- */
+  .step{display:flex;gap:18px;margin:26px 0;align-items:flex-start}
+  .step .no{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
+    font-family:var(--mono);font-weight:700;font-size:17px;color:var(--amber);
+    background:var(--amber-dim);border:1px solid var(--amber)}
+  .step .body{flex:1;min-width:0}
+  .step h3{color:var(--ink)}
+  .step p{font-size:15.5px;margin-bottom:10px}
+  .step ul{list-style:none;margin:8px 0 4px}
+  .step ul li{font-size:14.5px;color:var(--muted);padding:5px 0 5px 18px;position:relative;line-height:1.65}
+  .step ul li::before{content:"▸";position:absolute;left:0;color:var(--amber);font-family:var(--mono)}
+  .step ul li b{color:var(--ink)}
+
+  /* ---------- table ---------- */
+  .tbl-wrap{overflow-x:auto;margin:22px 0}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+  th{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--faint);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+  td{padding:12px;border-bottom:1px dashed var(--line);color:var(--muted);vertical-align:top;line-height:1.6}
+  td b{color:var(--ink)}
+  td .star{color:var(--amber);font-size:12px;letter-spacing:.1em}
+  tr:hover td{background:rgba(255,255,255,.015)}
+
+  /* ---------- faq ---------- */
+  .faq{border:1px solid var(--line);border-radius:12px;margin:12px 0;overflow:hidden;background:var(--bg2)}
+  .faq>button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:14px;
+    background:transparent;border:0;color:var(--ink);font-family:var(--body);font-size:15.5px;
+    font-weight:600;text-align:left;padding:16px 20px;cursor:pointer}
+  .faq>button .ic{font-family:var(--mono);color:var(--amber);transition:transform .2s;flex:none}
+  .faq.open>button .ic{transform:rotate(45deg)}
+  .faq .a{display:none;padding:0 20px 16px;color:var(--muted);font-size:14.5px;line-height:1.75}
+  .faq.open .a{display:block}
+  .faq .a b{color:var(--ink)}
+
+  /* ---------- sources ---------- */
+  .src-list{list-style:none}
+  .src-list li{padding:8px 0;border-top:1px dashed var(--line);font-size:14px;color:var(--muted)}
+  .src-list li:first-child{border-top:0}
+  .src-list .d{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-right:10px}
+
+  footer{position:relative;z-index:1;border-top:1px solid var(--line);margin-top:40px;padding:26px 24px;
+    text-align:center;font-family:var(--mono);font-size:12px;color:var(--faint)}
+  footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<a class="lab-home" href="/" title="返回 learning labs 首页">←&nbsp;~/labs</a>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">// turkey apple id</div>
+    <h1 class="hero"><span class="b">TR</span><span class="b">&nbsp;·&nbsp;</span><span class="b">ID</span></h1>
+    <div class="sub">土耳其区 Apple ID —— <b>最新注册方法</b> · <b>过时方法甄别</b> · <b>礼品卡购买与充值</b></div>
+    <div class="scrollcue">scroll<span>▾</span></div>
+  </header>
+
+  <!-- ============ 01 概览 ============ -->
+  <section id="overview">
+    <div class="secnum">01 / OVERVIEW</div>
+    <h2>为什么是土耳其区，<em>整体流程长什么样？</em></h2>
+    <p>土耳其区 App Store 的订阅价格长期显著低于美区/国区——以 AI 订阅为例，
+       土区相比美区便宜约 <span class="hl">6% ~ 46%</span>（如 ChatGPT Plus 美区 $19.99/月，土区约 ₺499.99/月），
+       iCloud+、YouTube Premium 等大宗订阅同理。同时土区 App Store 上架了大量国区没有的 App。</p>
+    <p>2026 年当前验证可行的主流路线只有一条，记住这条<b>主干流程</b>，后面所有细节都挂在它上面：</p>
+
+    <div class="panel">
+      <div class="panel-label">flow · 六步主干流程</div>
+      <div class="flow">
+        <div class="node"><div class="n">STEP 1</div><div class="k">注册账号</div><small>网页端注册新 Apple ID</small></div>
+        <div class="arr">→</div>
+        <div class="node"><div class="n">STEP 2</div><div class="k">网页转区</div><small>account.apple.com 改为土耳其</small></div>
+        <div class="arr">→</div>
+        <div class="node"><div class="n">STEP 3</div><div class="k">付款选「无」</div><small>土耳其地址 + None</small></div>
+        <div class="arr">→</div>
+        <div class="node"><div class="n">STEP 4</div><div class="k">登录店面</div><small>只登 App Store，下载免费 App</small></div>
+        <div class="arr">→</div>
+        <div class="node"><div class="n">STEP 5</div><div class="k">买礼品卡</div><small>高信誉平台买土区卡密</small></div>
+        <div class="arr">→</div>
+        <div class="node"><div class="n">STEP 6</div><div class="k">兑换充值</div><small>App Store 内兑换，余额消费</small></div>
+      </div>
+    </div>
+
+    <div class="callout rose">
+      <div class="t">先说清楚风险</div>
+      <p>跨区使用 App Store 不符合 Apple 服务条款的属地要求，理论上存在账号被风控的可能；礼品卡一经兑换<b>不可退款</b>、且<b>只能充入对应区账号</b>。请用<b>新注册的小号</b>操作、小额试错，不要拿绑了多年照片和通讯录的主力 iCloud 账号冒险。</p>
+    </div>
+  </section>
+
+  <!-- ============ 02 方法甄别 ============ -->
+  <section id="methods">
+    <div class="secnum">02 / METHODS</div>
+    <h2>方法甄别：<em>哪些还能用，哪些已经过时</em></h2>
+    <p>网上的土区教程时间跨度很大（2022 → 2026），很多老方法照着做必然失败甚至锁号。
+       先对照下面这张表，把你看到的教程<b>分到左右两栏</b>，再决定要不要照做。</p>
+
+    <div class="panel">
+      <div class="panel-label">side-by-side · 现行有效 vs 已过时/高风险</div>
+      <div class="role-grid">
+        <div class="role-card ok">
+          <h3>✅ 2026 年现行有效</h3>
+          <div class="rq">"近 3 个月教程反复实测的做法"</div>
+          <ul>
+            <li><b>网页端注册 + 网页端转区</b>：在 <code>account.apple.com</code> 注册新号（可先注册国区再转土区，成功率最高），全程不碰手机「设置」。</li>
+            <li><b>付款方式选 None/无</b>：转区填账单信息时选「无」，地址用土耳其地址生成器生成一套合法格式地址。</li>
+            <li><b>中国手机号即可</b>：注册与验证均可用 +86 号码，<b>不需要</b>土耳其手机号。</li>
+            <li><b>只在 App Store 登录</b>：登录后立刻下载一个免费 App「固定店面」。</li>
+            <li><b>正规平台自购礼品卡</b>：SEAGM / Oyunfor 等高信誉平台买卡密，自己兑换。</li>
+          </ul>
+        </div>
+        <div class="role-card bad">
+          <h3>❌ 已过时或高风险</h3>
+          <div class="rq">"老教程里常见、现在会翻车的做法"</div>
+          <ul>
+            <li><b>在 iPhone「设置」里直接注册/登录外区账号</b>：iCloud 同步会触发苹果安全风控，是锁号重灾区（2022-2023 老教程常见）。</li>
+            <li><b>App Store 内直接切地区选「无」</b>：2026 年 3 月起多名用户实测部分入口已不再出现「无/None」选项，须走网页端 + 干净 IP。</li>
+            <li><b>把主力国区账号直接转区</b>：要先清空余额、取消所有订阅、退出家庭共享，转完国区 App 更新也受影响——得不偿失，注册小号才是正解。</li>
+            <li><b>买成品共享账号</b>：随时被改密、被远程锁机（丢失模式勒索）。</li>
+            <li><b>淘宝/闲鱼低价代充</b>：黑卡风险，余额会被苹果追回甚至连带封号。</li>
+            <li><b>「无需地址直接转区」类老教程</b>：现在转区必须填写完整土耳其账单地址。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">一条快速鉴别口诀</div>
+      <p>看到教程先查发布时间：<b>2024 年以前的细节一律存疑</b>；凡是让你「在手机设置里登录」「找人代充」「买现成账号」的，直接关掉。</p>
+    </div>
+  </section>
+
+  <!-- ============ 03 准备清单 ============ -->
+  <section id="prep">
+    <div class="secnum">03 / CHECKLIST</div>
+    <h2>开工前的<em>准备清单</em></h2>
+    <p>下面每一项都和成功率直接相关，点击逐项打勾，全部完成再进入下一节👇</p>
+
+    <div class="panel">
+      <div class="panel-label">interactive · 点击打勾</div>
+      <ul class="check-list" id="prep-list">
+        <li><span class="box">✓</span><span class="txt"><b>一个全新邮箱</b>：从未注册过 Apple ID；推荐 163 / Outlook / Gmail，避免 QQ 邮箱和一次性邮箱（验证码常被拦）。</span></li>
+        <li><span class="box">✓</span><span class="txt"><b>一个手机号</b>：+86 国内号即可，但注意<b>一个号尽量只绑一个 Apple ID</b>，绑多了会被静默拒绝。</span></li>
+        <li><span class="box">✓</span><span class="txt"><b>稳定、干净的非大陆网络</b>：转区与付款环节需要<b>全局代理</b>（不要规则分流/仅浏览器代理），IP 落地建议土耳其或欧美，且尽量独享。</span></li>
+        <li><span class="box">✓</span><span class="txt"><b>一套土耳其地址</b>：搜「土耳其地址生成器」生成（城市/区/邮编格式合法即可），出生日期填 18 岁以上。</span></li>
+        <li><span class="box">✓</span><span class="txt"><b>一部 iPhone/iPad + 一台电脑（或手机浏览器隐私窗口）</b>：注册转区在网页端做，登录店面在设备上做。</span></li>
+        <li><span class="box">✓</span><span class="txt"><b>预算</b>：礼品卡平台支持支付宝/微信/银联，准备好小额试错（先买 ₺100~₺250）。</span></li>
+      </ul>
+      <div class="check-prog" id="prep-prog">0 / 6 ready</div>
+    </div>
+  </section>
+
+  <!-- ============ 04 注册步骤 ============ -->
+  <section id="register">
+    <div class="secnum">04 / REGISTER</div>
+    <h2>注册与转区：<em>逐步操作</em></h2>
+
+    <div class="step">
+      <div class="no">1</div>
+      <div class="body">
+        <h3>网页端注册一个新 Apple ID</h3>
+        <p>电脑浏览器开<b>隐私/无痕窗口</b>，访问 <code>account.apple.com</code> → 「创建你的 Apple 账户」。</p>
+        <ul>
+          <li>国家/地区：推荐<b>先选中国注册、之后再转区</b>（当前成功率最高的路线）；直接选土耳其注册也可行，但风控概率略高。</li>
+          <li>姓名用拼音或英文，出生日期 18+，邮箱用准备好的新邮箱，手机号 +86 正常接验证码。</li>
+          <li>完成邮箱验证码 + 短信验证码两步验证，注册完成。</li>
+          <li><span class="hl-r">注册完不要在 iPhone「设置」里登录它</span>，后面只在 App Store 登。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="no">2</div>
+      <div class="body">
+        <h3>开启全局代理，网页端把地区改为土耳其</h3>
+        <p>从这一步起，确认<b>全局代理已开启</b>且出口 IP 稳定（土耳其或欧美干净 IP）。
+           登录 <code>account.apple.com</code> → 「个人信息」→「国家与地区」→ 选择 <b>Türkiye（土耳其）</b>。</p>
+        <ul>
+          <li>规则分流、仅浏览器代理都会导致地区判定失败、「无」选项不出现——这是最常见的卡点。</li>
+          <li>如果提示有余额或订阅未处理，说明该账号有历史消费，换新号最省事。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="no">3</div>
+      <div class="body">
+        <h3>付款方式选「无」，填土耳其账单地址</h3>
+        <p>转区表单里：付款方式选 <code>None / 无</code>，账单地址填生成器给的那套土耳其地址，电话区号 +90 填地址生成器的号码或继续用真实可收验证码的号码（仅作账单展示，不会验证）。</p>
+        <ul>
+          <li><b>看不到「无」选项？</b>先检查是不是全局代理 + 干净 IP；换一个 IP 节点重进往往就出现了。这是 2026 年 3 月后最高频的提问。</li>
+          <li>地址各字段（İl 省 / İlçe 区 / Posta Kodu 邮编）格式要匹配，生成器直接复制即可。</li>
+          <li>保存成功后，账号已是土耳其区。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="no">4</div>
+      <div class="body">
+        <h3>设备上只登录 App Store，下载免费 App 固定店面</h3>
+        <p>iPhone 打开 <b>App Store</b> → 右上角头像 → 拉到底退出现有账号 → 登录土区新号。</p>
+        <ul>
+          <li>店面会自动切到土耳其（界面出现土耳其语/价格变 ₺）；若没切，检查代理。</li>
+          <li>立刻<b>随便下载一个免费 App</b>（如 Yandex），让账号在土区店面留下首次记录，「固定」店面。</li>
+          <li>再次强调：<span class="hl-r">不要在「设置 → 登录 iPhone」里登录这个账号</span>，iCloud 同步是触发风控锁号的头号原因。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">到这里你已经有了</div>
+      <p>一个可用的土耳其区 Apple ID + 固定好的土区店面。接下来解决花钱的问题：土区账号不能绑国内银行卡，<b>唯一可靠的支付方式是土耳其 Apple 礼品卡</b>。</p>
+    </div>
+  </section>
+
+  <!-- ============ 05 礼品卡渠道 ============ -->
+  <section id="giftcard">
+    <div class="secnum">05 / GIFT CARDS</div>
+    <h2>土耳其礼品卡：<em>在哪买才靠谱</em></h2>
+    <p>Apple 土耳其官网的礼品卡只收土耳其本地银行卡，国内用户基本走不通；
+       实际可行的是下面这些<b>经营多年、口碑可查的第三方数字商品平台</b>——自己下单、自己收卡密、自己兑换，
+       全程不把账号密码交给任何人。</p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>平台</th><th>网址</th><th>信誉背书</th><th>支付方式</th><th>备注</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>SEAGM</b><br><span class="star">★★★★★ 首选</span></td>
+            <td><a href="https://www.seagm.com/en-us/itunes-gift-card-turkey" rel="noopener">seagm.com</a></td>
+            <td>东南亚老牌游戏点卡平台（2009 年起），中文支持完善</td>
+            <td>支付宝 / 微信 / 银联等</td>
+            <td>常有促销，对国内用户支付最顺，即时发码；买「iTunes Gift Card (TR)」即土区苹果卡</td>
+          </tr>
+          <tr>
+            <td><b>Oyunfor</b><br><span class="star">★★★★☆</span></td>
+            <td><a href="https://www.oyunfor.com" rel="noopener">oyunfor.com</a></td>
+            <td>土耳其本土知名平台，走 iyzico 正规支付网关</td>
+            <td>Visa / MasterCard / 银联（外卡手续费约 2.5%）</td>
+            <td>本土价格直接；缺点是外卡偶发扣款失败，2025 年后失败率有上升的用户反馈</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout rose">
+      <div class="t">避开这些渠道</div>
+      <p><b>淘宝 / 闲鱼 / 拼多多代充与低价卡密</b>：低于正常汇率的卡大概率是盗刷信用卡买的「黑卡」，苹果稽查后会<b>追回余额、禁用账号</b>；「代充」更要把账号密码交给陌生人。省的差价远不够赔。</p>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">面额与试错</div>
+      <p>礼品卡常见面额 ₺25 / ₺50 / ₺100 / ₺250 / ₺500 / ₺1000。<b>第一次只买小额（₺100 左右）</b>，确认兑换到账后再按订阅需要补充。土区卡<b>只能</b>充进土耳其区账号，买错区无法退换。</p>
+    </div>
+  </section>
+
+  <!-- ============ 06 充值兑换 ============ -->
+  <section id="redeem">
+    <div class="secnum">06 / REDEEM</div>
+    <h2>买到卡密后：<em>三分钟完成充值</em></h2>
+
+    <div class="step">
+      <div class="no">1</div>
+      <div class="body">
+        <h3>下单收码</h3>
+        <p>在上一节平台选「Apple Gift Card / iTunes Gift Card <b>(Turkey/TR)</b>」→ 选面额 → 支付。
+           付款后在「订单/购买记录」或邮箱里拿到一串 16 位兑换码（形如 <code>X349…</code>）。</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="no">2</div>
+      <div class="body">
+        <h3>App Store 内兑换</h3>
+        <p>iPhone 打开 App Store（已登录土区账号）→ 右上角头像 → <b>「兑换充值卡或代码 / Redeem Gift Card or Code」</b> → 手动输入或镜头扫码 → 确认。</p>
+        <ul>
+          <li>成功后头像下方出现 ₺ 余额；兑换瞬间完成，无需等待。</li>
+          <li>提示「此代码无法兑换」多半是<b>区不匹配</b>或代理 IP 漂移，确认账号地区并换稳定节点重试。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="no">3</div>
+      <div class="body">
+        <h3>用余额消费 / 订阅</h3>
+        <p>购买付费 App、App 内购买（如 ChatGPT Plus、YouTube Premium、iCloud+）会<b>优先扣礼品卡余额</b>。</p>
+        <ul>
+          <li>订阅前确保余额 ≥ 首期价格，否则会弹出绑卡要求。</li>
+          <li>自动续订同理：<b>续费日前保持余额充足</b>，避免触发「请更新付款方式」。</li>
+          <li>内购偶发失败属土区常态，等 24~48 小时再试，不要频繁重试触发风控。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 07 FAQ ============ -->
+  <section id="faq">
+    <div class="secnum">07 / PITFALLS</div>
+    <h2>高频翻车点 <em>FAQ</em></h2>
+
+    <div class="faq">
+      <button type="button"><span>转区时找不到「无 / None」付款选项？</span><span class="ic">＋</span></button>
+      <div class="a">2026 年 3 月后最高频的问题。九成原因是 <b>IP 不干净或不是全局代理</b>：关闭规则分流、换一个独享/干净节点（土耳其或欧美）、用浏览器隐私窗口重新进入 <b>account.apple.com</b> 修改付款方式，一般就会出现。仍不行就隔天再试或换节点。</div>
+    </div>
+    <div class="faq">
+      <button type="button"><span>注册时收不到邮箱验证码？</span><span class="ic">＋</span></button>
+      <div class="a">先查垃圾邮件；企业/学校邮箱常整封拦截，换 163 或 Outlook 等主流个人邮箱。同一邮箱只能注册一次，确认没注册过 Apple。</div>
+    </div>
+    <div class="faq">
+      <button type="button"><span>登录后 App Store 还是中国区？</span><span class="ic">＋</span></button>
+      <div class="a">店面跟随<b>账号地区</b>而非手机设置。先确认网页端转区已保存成功；再完全退出 App Store 账号重新登录；仍异常就开着全局代理重启 App Store。<b>不要</b>去「设置→通用→语言与地区」改手机区域，那个不相关。</div>
+    </div>
+    <div class="faq">
+      <button type="button"><span>账号会被封吗？怎么降低风险？</span><span class="ic">＋</span></button>
+      <div class="a">风险客观存在但可控：<b>专号专用</b>（土区号只用于 App Store，不开 iCloud、不当主力机账号）；同一设备一年内别批量注册多个账号；同一手机号别绑多个 ID；只用正规平台的礼品卡。出问题大多源于共享账号、黑卡代充和 iCloud 登录这三件事。</div>
+    </div>
+    <div class="faq">
+      <button type="button"><span>礼品卡买错区了 / 想退款？</span><span class="ic">＋</span></button>
+      <div class="a">礼品卡<b>跨区不通用、兑换即不可逆</b>。美区卡充不进土区号，反之亦然。买之前盯紧商品名里的 <b>(TR / Turkey / Türkiye)</b> 字样；未兑换的卡可尝试找平台客服，但多数平台虚拟卡密发出后不退。</div>
+    </div>
+    <div class="faq">
+      <button type="button"><span>需要一直挂代理吗？</span><span class="ic">＋</span></button>
+      <div class="a">注册、转区、首次登录、兑换这些<b>敏感操作</b>建议全程全局代理且 IP 一致；日常浏览土区商店和下载 App 国内网络通常也可以直连，但订阅扣费等支付动作前最好恢复同样的网络环境，避免风控误判。</div>
+    </div>
+  </section>
+
+  <!-- ============ 08 来源 ============ -->
+  <section id="sources">
+    <div class="secnum">08 / SOURCES</div>
+    <h2>参考来源<em>（按时效排序）</em></h2>
+    <p>本页内容综合以下 2025–2026 年的实测教程与平台资料整理，细节可能随苹果策略调整而变化，动手前建议再扫一眼最新的一两篇：</p>
+    <ul class="src-list">
+      <li><span class="d">2026-05</span><a href="https://jerrykik.github.io/ai-subscribe-guide/articles/turkey-apple-id-register-recharge-gift-card-guide-2026/" rel="noopener">2026 保姆级：零基础注册土耳其区 Apple ID 并充值礼品卡（完整避坑指南）</a></li>
+      <li><span class="d">2026-04</span><a href="https://weakyon.com/2026/04/25/How-to-Register-a-Turkey-Apple-ID-and-Subscribe-to-ChatGPT-Plus.html" rel="noopener">Weakyon：注册土耳其区 Apple ID 订阅 ChatGPT Plus 教程</a></li>
+      <li><span class="d">2026</span><a href="https://opentherank.com/zh/ai-pricing/apple-id-registration/" rel="noopener">OpenTheRank：2026 年土耳其 Apple ID 注册全流程实测指南</a></li>
+      <li><span class="d">2026</span><a href="https://zhuanlan.zhihu.com/p/2021976845952762095" rel="noopener">知乎：2026 年土耳其区 Apple ID 注册教程及避坑指南</a></li>
+      <li><span class="d">2025</span><a href="https://zblogs.top/apple-turkiye-gift-card-purchase-guide/" rel="noopener">Justin：国内用户苹果土耳其礼品卡购买全攻略（注册、充值、避坑）</a></li>
+      <li><span class="d">平台</span><a href="https://www.seagm.com/en-us/itunes-gift-card-turkey" rel="noopener">SEAGM 土区卡页</a> · <a href="https://www.oyunfor.com" rel="noopener">Oyunfor</a></li>
+      <li><span class="d">官方</span><a href="https://support.apple.com/en-us/118283" rel="noopener">Apple 官方：更改 Apple 账户国家或地区</a></li>
+    </ul>
+  </section>
+
+</div>
+
+<footer>
+  <span>tr apple id · 仅供学习参考，跨区使用请自担条款风险 · <a href="/">← back to learning labs</a></span>
+</footer>
+
+<script>
+/* ============ 03 checklist ============ */
+(function(){
+  var list = document.getElementById('prep-list');
+  var prog = document.getElementById('prep-prog');
+  var items = list.querySelectorAll('li');
+  function update(){
+    var done = list.querySelectorAll('li.done').length;
+    prog.innerHTML = '<b>' + done + '</b> / ' + items.length + (done === items.length ? ' ready · 全部就绪，开工 🚀' : ' ready');
+  }
+  list.addEventListener('click', function(e){
+    var li = e.target.closest('li');
+    if(!li) return;
+    li.classList.toggle('done');
+    update();
+  });
+  update();
+})();
+
+/* ============ 07 faq ============ */
+document.querySelectorAll('.faq>button').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    btn.parentElement.classList.toggle('open');
+  });
+});
+</script>
+</body>
+</html>
