@@ -3,13 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="凯撒、维吉尼亚、AES、RSA、SHA-256、Diffie-Hellman —— 常见加密算法的交互式可视化教学与演示。">
+<meta property="og:title" content="解密台 · 常见加密算法教学">
+<meta property="og:description" content="凯撒、维吉尼亚、AES、RSA、SHA-256、Diffie-Hellman —— 常见加密算法的交互式可视化教学与演示。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title>解密台 · 常见加密算法教学</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
 <script defer src="/assets/term.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
 <style>
 :root{
   --ink:#070b16;          /* 最深台面 */
@@ -29,8 +33,8 @@
   --violet:#9a8cff;       /* 非对称强调 */
   --mono:'JetBrains Mono',ui-monospace,monospace;
   --disp:'Space Grotesk',var(--han),sans-serif;
-  --han:'Noto Sans SC',sans-serif;
-  --serif:'Noto Serif SC',serif;
+  --han:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  --serif:'Noto Serif SC','Songti SC','STSong','SimSun',serif;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -536,11 +540,12 @@ footer b{color:var(--plain-dim);font-weight:400}
 </div></section>
 
 <footer><div class="wrap">
+  <a href="/">← back to learning labs</a><br>
   CIPHER·DESK — 常见加密算法交互教学<br>
   <b>本页所有「真实」演示（AES-GCM / SHA-256）均在你的浏览器本地运行，使用原生 Web Crypto API，数据不离开本机。</b><br>
   <b>古典密码与 RSA 小素数演示仅用于理解原理，切勿用于任何真实场景。</b>
 </div></footer>
 
-<script src="app.js"></script>
+<script defer src="app.js"></script>
 </body>
 </html>

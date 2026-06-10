@@ -3,10 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="位、字节、进制、有无符号整数、KB 与 KiB、UTF-8 编码 —— 交互式拆解数据在内存里到底长什么样。">
+<meta property="og:title" content="字节实验室 · BYTE LAB">
+<meta property="og:description" content="位、字节、进制、有无符号整数、KB 与 KiB、UTF-8 编码 —— 交互式拆解数据在内存里到底长什么样。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <title>字节实验室 · BYTE LAB</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
 <script defer src="/assets/term.js"></script>
 <style>
   :root{
@@ -219,6 +223,9 @@
   .recap .x{font-size:14px;color:var(--muted);line-height:1.5}
   .recap .x b{color:var(--ink)}
   footer .sig{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.2em}
+  footer .back{margin-top:22px;font-family:var(--mono);font-size:13px}
+  footer .back a{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--line)}
+  footer .back a:hover{color:var(--ink)}
 
   @media(max-width:560px){
     .conv-row{grid-template-columns:70px 1fr}
@@ -446,6 +453,7 @@
       <div><div class="n">06</div><div class="x">UTF-8 里中文/日文常占 <b>3 字节</b></div></div>
     </div>
     <div class="sig">BYTE LAB · 01000010 01111001 01110100 01100101</div>
+    <div class="back"><a href="/">← back to learning labs</a></div>
   </div>
 </footer>
 

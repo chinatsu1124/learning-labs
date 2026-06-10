@@ -85,7 +85,14 @@ renderVigenere();
    3 · AES-GCM（Web Crypto 真实加密，PBKDF2 派生密钥）
    ============================================================ */
 const enc = new TextEncoder(), dec = new TextDecoder();
-const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+// 分块转换，避免长输入时 String.fromCharCode(...bytes) 展开参数爆栈
+const b64 = buf => {
+  const bytes = new Uint8Array(buf);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000)
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+};
 const unb64 = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));
 
 async function deriveKey(pass, salt){
