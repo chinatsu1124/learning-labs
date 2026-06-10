@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="/assets/fonts.css">
 <link rel="stylesheet" href="/assets/base.css">
 <script defer src="/assets/term.js"></script>
+<script defer src="/assets/secnav.js"></script>
 <script src="/assets/quiz.js"></script>
 <script src="/assets/cards.js"></script>
 <script src="/assets/stepper.js"></script>
@@ -80,13 +81,13 @@
   @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
 
   /* ---------- sections ---------- */
-  section{padding:56px 0;border-top:1px solid var(--line)}
+  section{padding:72px 0}
   .secnum{font-family:var(--mono);font-size:12px;color:var(--teal);letter-spacing:.2em;
     margin-bottom:10px;display:flex;align-items:center;gap:12px}
-  .secnum::after{content:"";flex:1;height:1px;background:var(--line)}
+  .secnum::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
   h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);
     line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
-  h2 em{font-style:normal;color:var(--teal)}
+  h2 em{font-style:normal;background:linear-gradient(90deg,var(--teal),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
   p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
   p b{color:var(--ink);font-weight:600}
   .hl{color:var(--teal);font-weight:600}
