@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="CPU 与 GPU 的区别：少量强核心 vs 海量弱核心、硅片面积都花在哪、并行竞速模拟、延迟 vs 吞吐、PCIe 数据搬运成本，以及哪些任务该交给谁。">
+<meta property="og:title" content="芯片实验室 · CHIP LAB">
+<meta property="og:description" content="CPU 与 GPU 的区别：少量强核心 vs 海量弱核心、硅片面积都花在哪、并行竞速模拟、延迟 vs 吞吐、PCIe 数据搬运成本，以及哪些任务该交给谁。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>芯片实验室 · CHIP LAB</title>
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
+<script defer src="/assets/term.js"></script>
+<script defer src="/assets/secnav.js"></script>
+<script src="/assets/quiz.js"></script>
+<script src="/assets/stepper.js"></script>
+<style>
+  :root{
+    --bg:#090c0e;
+    --bg2:#0e1216;
+    --panel:#11161b;
+    --panel-hi:#171e25;
+    --line:#232c35;
+    --ink:#e0e5ea;
+    --muted:#8a94a0;
+    --faint:#566270;
+    --teal:#4fe3c1;
+    --teal-dim:#1d4a40;
+    --amber:#ffb648;
+    --amber-dim:#5a4422;
+    --rose:#ff7a85;
+    --rose-dim:#52262b;
+    --blue:#8aa9ff;
+    --blue-dim:#27314f;
+    --violet:#b08aff;
+    --violet-dim:#37284f;
+    --display:'Syne',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:48px 48px;
+    background-position:center top;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 80% 60% at 30% -10%,rgba(138,169,255,.09),transparent 60%),
+               radial-gradient(ellipse 70% 50% at 90% 20%,rgba(79,227,193,.06),transparent 55%),
+               linear-gradient(180deg,rgba(9,12,14,.4),var(--bg) 90%);
+  }
+  .wrap{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:0 24px}
+
+  /* ---------- header ---------- */
+  header{padding:90px 0 40px;text-align:center}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:var(--blue);
+    text-transform:uppercase;margin-bottom:24px;opacity:0;animation:rise .7s .1s forwards}
+  h1.hero{font-family:var(--display);font-weight:800;font-size:clamp(46px,12vw,118px);
+    line-height:.9;letter-spacing:-.03em;margin-bottom:8px}
+  h1.hero .b{display:inline-block;opacity:0;transform:translateY(40px);animation:rise .8s forwards}
+  h1.hero .b:nth-child(1){animation-delay:.15s;color:var(--blue)}
+  h1.hero .b:nth-child(2){animation-delay:.25s;color:var(--faint);font-size:.45em;vertical-align:middle;margin:0 .25em}
+  h1.hero .b:nth-child(3){animation-delay:.35s;color:var(--teal)}
+  .sub{font-family:var(--mono);color:var(--muted);font-size:15px;margin-top:18px;
+    opacity:0;animation:rise .7s .6s forwards}
+  .sub b{color:var(--ink);font-weight:500}
+  .scrollcue{margin-top:54px;font-family:var(--mono);font-size:11px;letter-spacing:.3em;
+    color:var(--faint);opacity:0;animation:rise .7s .9s forwards;text-transform:uppercase}
+  .scrollcue span{display:block;font-size:18px;margin-top:6px;animation:bob 1.8s ease-in-out infinite}
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+  @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+
+  /* ---------- sections ---------- */
+  section{padding:72px 0}
+  .secnum{font-family:var(--mono);font-size:12px;color:var(--blue);letter-spacing:.2em;
+    margin-bottom:10px;display:flex;align-items:center;gap:12px}
+  .secnum::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);
+    line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
+  h2 em{font-style:normal;background:linear-gradient(90deg,var(--blue),var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent}
+  p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
+  p b{color:var(--ink);font-weight:600}
+  .hl{color:var(--teal);font-weight:600}
+  .hl-v{color:var(--violet);font-weight:600}
+  .hl-a{color:var(--amber);font-weight:600}
+  .hl-b{color:var(--blue);font-weight:600}
+  .hl-r{color:var(--rose);font-weight:600}
+  code{font-family:var(--mono);background:var(--panel-hi);color:var(--teal);
+    padding:2px 7px;border-radius:5px;font-size:.88em;border:1px solid var(--line)}
+
+  /* ---------- panel ---------- */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:28px;margin:26px 0;position:relative;overflow:hidden}
+  .panel::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--blue),var(--teal),transparent);opacity:.5}
+  .panel-label{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--faint);
+    text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+  .panel-label::before{content:"●";color:var(--teal);font-size:8px}
+
+  .btn{font-family:var(--mono);font-size:13px;background:var(--panel-hi);color:var(--ink);
+    border:1px solid var(--line);border-radius:8px;padding:9px 16px;cursor:pointer;transition:all .18s}
+  .btn:hover{border-color:var(--teal);color:var(--teal)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .btn:disabled:hover{border-color:var(--line);color:var(--ink)}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}
+  .toggle-grp{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:18px;flex-wrap:wrap}
+  .toggle-grp button{font-family:var(--mono);font-size:13px;background:transparent;color:var(--muted);
+    border:0;padding:9px 18px;cursor:pointer;transition:all .18s}
+  .toggle-grp button.active{background:var(--teal-dim);color:var(--teal)}
+
+  /* ---------- callout ---------- */
+  .callout{border-left:3px solid var(--teal);background:var(--panel);border-radius:0 12px 12px 0;
+    padding:16px 20px;margin:22px 0}
+  .callout .t{font-family:var(--mono);font-size:12px;letter-spacing:.15em;color:var(--teal);
+    text-transform:uppercase;margin-bottom:6px}
+  .callout p{margin:0;font-size:15px;color:var(--ink)}
+  .callout.blue{border-color:var(--blue)}
+  .callout.blue .t{color:var(--blue)}
+  .callout.amber{border-color:var(--amber)}
+  .callout.amber .t{color:var(--amber)}
+  .callout.rose{border-color:var(--rose)}
+  .callout.rose .t{color:var(--rose)}
+
+  /* ---------- 对比卡片 ---------- */
+  .vs-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+  @media(max-width:680px){.vs-grid{grid-template-columns:1fr}}
+  .vs-card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:18px}
+  .vs-card .si{font-size:22px;margin-bottom:6px}
+  .vs-card h3{font-family:var(--display);font-size:17px;margin-bottom:4px}
+  .vs-card .sq{font-family:var(--mono);font-size:11px;color:var(--faint);margin-bottom:10px}
+  .vs-card ul{list-style:none}
+  .vs-card li{font-size:13.5px;color:var(--muted);padding:6px 0;border-top:1px dashed var(--line);line-height:1.6}
+  .vs-card li b{color:var(--ink);font-weight:600}
+  .vs-card.cpu{border-color:var(--blue-dim)}
+  .vs-card.cpu h3{color:var(--blue)}
+  .vs-card.gpu{border-color:var(--teal-dim)}
+  .vs-card.gpu h3{color:var(--teal)}
+
+  /* ---------- 02 die 面积图 ---------- */
+  .die-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:680px){.die-grid{grid-template-columns:1fr}}
+  .die{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:16px}
+  .die.cpu{border-color:var(--blue-dim)}
+  .die.gpu{border-color:var(--teal-dim)}
+  .die-title{font-family:var(--mono);font-size:12px;letter-spacing:.15em;margin-bottom:4px;text-transform:uppercase}
+  .die.cpu .die-title{color:var(--blue)}
+  .die.gpu .die-title{color:var(--teal)}
+  .die-sub{font-family:var(--mono);font-size:11px;color:var(--faint);margin-bottom:12px}
+  .die-map{display:grid;gap:5px}
+  .cpu-map{grid-template-columns:repeat(6,1fr);grid-auto-rows:46px}
+  .gpu-map{grid-template-columns:repeat(12,1fr);grid-auto-rows:17px}
+  .dblk{border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:11.5px;line-height:1.4;text-align:center;padding:2px}
+  .dblk small{font-size:9px;opacity:.75;letter-spacing:.04em}
+  .dblk.ctrl{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(255,182,72,.35)}
+  .dblk.cache{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(138,169,255,.35)}
+  .dblk.alu{background:var(--teal-dim);color:var(--teal);border:1px solid rgba(79,227,193,.35)}
+  .cpu-map .ctrl{grid-column:1/4;grid-row:1/3}
+  .cpu-map .cache{grid-column:4/7;grid-row:1/3}
+  .gpu-map .ctrl{grid-column:1/13}
+  .gpu-map .cache{grid-column:1/13}
+  .gpu-map .alu{font-size:8px}
+  .die-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .die-legend span::before{content:"■ ";font-size:13px}
+  .die-legend .lg-ctrl::before{color:var(--amber)}
+  .die-legend .lg-cache::before{color:var(--blue)}
+  .die-legend .lg-alu::before{color:var(--teal)}
+
+  /* ---------- 03 竞速模拟器 ---------- */
+  .race-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:680px){.race-grid{grid-template-columns:1fr}}
+  .race-lane{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:14px}
+  .race-lane.cpu{border-color:var(--blue-dim)}
+  .race-lane.gpu{border-color:var(--teal-dim)}
+  .race-head{font-family:var(--mono);font-size:12px;letter-spacing:.08em;margin-bottom:10px;
+    display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .race-lane.cpu .race-head{color:var(--blue)}
+  .race-lane.gpu .race-head{color:var(--teal)}
+  .race-cells{display:grid;grid-template-columns:repeat(12,1fr);gap:3px}
+  .rc{aspect-ratio:1;border-radius:2px;background:var(--panel-hi);border:1px solid var(--line);transition:all .12s}
+  .race-lane.cpu .rc.on{background:var(--blue);border-color:var(--blue);box-shadow:0 0 6px rgba(138,169,255,.5)}
+  .race-lane.gpu .rc.half{background:var(--teal-dim);border-color:var(--teal-dim)}
+  .race-lane.gpu .rc.on{background:var(--teal);border-color:var(--teal);box-shadow:0 0 6px rgba(79,227,193,.5)}
+  .rc.idle{opacity:.28}
+  .race-status{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:10px;min-height:34px;line-height:1.6}
+  .race-status b{color:var(--ink);font-weight:500}
+  .race-status .win{color:var(--amber)}
+  .race-note{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:14px}
+
+  /* ---------- 04 时间线 codeblock ---------- */
+  .codeblock{font-family:var(--mono);font-size:12.5px;background:var(--bg2);border:1px solid var(--line);
+    border-radius:12px;padding:16px 18px;overflow-x:auto;line-height:1.9;margin-top:14px;white-space:pre}
+  .codeblock .k{color:var(--blue)}
+  .codeblock .s{color:var(--teal)}
+  .codeblock .c{color:var(--faint)}
+  .codeblock .n{color:var(--amber)}
+  .codeblock .r{color:var(--rose)}
+
+  /* ---------- 05 步进日志 ---------- */
+  .chatlog{display:flex;flex-direction:column;gap:10px;margin-top:14px;min-height:60px}
+  .msg{border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:14px;
+    line-height:1.7;animation:pop .3s ease;background:var(--bg2)}
+  .msg .who{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+    margin-bottom:5px;color:var(--faint)}
+  .msg.cpu{border-color:var(--blue-dim)}
+  .msg.cpu .who{color:var(--blue)}
+  .msg.bus{border-color:var(--amber-dim)}
+  .msg.bus .who{color:var(--amber)}
+  .msg.gpu{border-color:var(--teal-dim)}
+  .msg.gpu .who{color:var(--teal)}
+  .msg.ok{border-color:var(--teal-dim)}
+  .msg.ok .who{color:var(--teal)}
+  .msg.bad{border-color:var(--rose-dim)}
+  .msg.bad .who{color:var(--rose)}
+  .msg .think{color:var(--faint);font-style:italic;font-size:13px}
+  .msg pre{font-family:var(--mono);font-size:12px;background:var(--panel-hi);border:1px solid var(--line);
+    border-radius:8px;padding:10px 12px;margin-top:8px;overflow-x:auto;color:var(--teal);line-height:1.6}
+  .msg .body-text{color:var(--muted)}
+  .msg .body-text b{color:var(--ink)}
+  .hop-map{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:12.5px;margin-bottom:20px}
+  .hop-node{border:1.5px solid var(--line);border-radius:10px;padding:9px 13px;background:var(--bg2);
+    color:var(--muted);transition:all .25s;text-align:center}
+  .hop-node small{display:block;font-size:9.5px;color:var(--faint);letter-spacing:.08em}
+  .hop-node.lit{border-color:var(--teal);background:var(--teal-dim);color:var(--teal);
+    box-shadow:0 0 22px rgba(79,227,193,.22)}
+  .hop-node.lit small{color:var(--teal);opacity:.7}
+  .hop-arr{color:var(--faint)}
+
+  /* ---------- quiz / 调度练习 ---------- */
+  .quiz-q{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+  .quiz-q .qt{font-size:15px;color:var(--ink);margin-bottom:12px;font-weight:600}
+  .quiz-q .qt .qn{font-family:var(--mono);color:var(--teal);margin-right:8px}
+  .quiz-opts{display:flex;flex-direction:column;gap:8px}
+  .quiz-opts button{font-size:14px;font-family:var(--body);background:var(--panel-hi);color:var(--muted);
+    border:1px solid var(--line);border-radius:8px;padding:10px 14px;cursor:pointer;transition:all .15s;text-align:left}
+  .quiz-opts button:hover{border-color:var(--muted);color:var(--ink)}
+  .quiz-opts button.right{border-color:var(--teal);background:var(--teal-dim);color:var(--teal)}
+  .quiz-opts button.wrong{border-color:var(--rose);background:var(--rose-dim);color:var(--rose)}
+  .quiz-exp{font-size:13.5px;color:var(--muted);margin-top:10px;padding-top:10px;
+    border-top:1px dashed var(--line);display:none;line-height:1.7}
+  .quiz-exp b{color:var(--teal)}
+  .quiz-score{text-align:center;font-family:var(--mono);font-size:14px;color:var(--muted);margin-top:18px}
+  .quiz-score b{color:var(--teal);font-size:20px}
+  #sched-list .quiz-opts{flex-direction:row}
+  #sched-list .quiz-opts button{flex:1;text-align:center;font-family:var(--mono)}
+
+  footer{border-top:1px solid var(--line);padding:28px 24px 48px;text-align:center;
+    font-family:var(--mono);font-size:12px;color:var(--faint)}
+  footer a{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--line)}
+  footer a:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+<a class="lab-home" href="/" title="返回 learning labs 首页">←&nbsp;~/labs</a>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">// chip lab</div>
+    <h1 class="hero"><span class="b">CPU</span><span class="b">vs</span><span class="b">GPU</span></h1>
+    <div class="sub">一个是<b>几位教授</b>，一个是<b>五千名小学生</b> —— 架构、并行、延迟、带宽，把两颗芯片的区别全拆开讲</div>
+    <div class="scrollcue">scroll<span>▾</span></div>
+  </header>
+
+  <!-- ============ 01 它们到底是什么 ============ -->
+  <section id="what">
+    <div class="secnum">01 / TWO PHILOSOPHIES</div>
+    <h2>先说清楚：<em>它们到底是什么？</em></h2>
+    <p><span class="hl-b">CPU（中央处理器）</span>是电脑的「大脑」：<b>少量（4～16 个）非常强的核心</b>，主频高、缓存大、控制逻辑极其复杂，什么任务都能接，尤其擅长<b>逻辑分支多、步骤之间环环相扣的串行任务</b>。<span class="hl">GPU（图形处理器）</span>最初是为渲染画面而生：屏幕上几百万个像素要做<b>几乎一样的计算</b>，于是它选择了完全相反的路——<b>把成千上万个简单核心铺满芯片</b>，单个核心很弱，但一起上就是洪流。</p>
+
+    <div class="panel">
+      <div class="panel-label">side by side · 同一块硅片，两种花法</div>
+      <div class="vs-grid">
+        <div class="vs-card cpu">
+          <div class="si">🧠</div>
+          <h3>CPU · 全能指挥官</h3>
+          <div class="sq">少而强 · 低延迟优先</div>
+          <ul>
+            <li><b>核心</b>：4～16 个「重型」核心，每个都会<span class="term" data-name="Out-of-Order Execution · 乱序执行" data-tip="CPU 不死等：后面的指令只要不依赖前面的结果，就先拿来执行，硬件再保证最终效果和按顺序执行一样。为此要付出巨大的控制电路面积。">乱序执行</span>、<span class="term" data-name="Branch Prediction · 分支预测" data-tip="遇到 if 还没算出走哪边时，CPU 先『猜』一个方向执行起来，猜对了白赚，猜错了回退重来。现代 CPU 猜对率超过 95%。">分支预测</span></li>
+            <li><b>主频</b>：3～5 GHz，单核速度拉满</li>
+            <li><b>缓存</b>：几十 MB 三级缓存，把常用数据贴身放</li>
+            <li><b>擅长</b>：操作系统、业务逻辑、数据库——<b>分支多、依赖强、要求快速响应</b>的活</li>
+          </ul>
+        </div>
+        <div class="vs-card gpu">
+          <div class="si">🌊</div>
+          <h3>GPU · 人海战术</h3>
+          <div class="sq">多而简 · 高吞吐优先</div>
+          <ul>
+            <li><b>核心</b>：数千到上万个「轻型」核心，32 个一组<span class="term" data-name="SIMT · Single Instruction, Multiple Threads" data-tip="单指令多线程：一组（warp，32 个）线程锁步执行同一条指令，只是各自处理不同的数据。控制电路一份摊给 32 个线程，核心才能做得又小又多。">锁步执行</span>同一条指令</li>
+            <li><b>主频</b>：1～2 GHz，单核比 CPU 慢得多</li>
+            <li><b>显存</b>：GDDR / <span class="term" data-name="HBM · High Bandwidth Memory" data-tip="高带宽显存：把内存颗粒堆叠后用超宽总线直连 GPU，带宽可达每秒几 TB——是普通内存条（几十 GB/s）的几十倍。AI 芯片抢的就是它。">HBM</span>，带宽是普通内存的几十倍</li>
+            <li><b>擅长</b>：图形渲染、矩阵运算、深度学习——<b>海量数据做同一种计算</b>的活</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="t">一句话记住它</div>
+      <p><b>CPU 像 4 位数学教授，GPU 像 5000 名小学生。</b>一道高难度微积分，教授完胜；5000 道两位数加法，小学生军团碾压。<b>区别不在谁更强，而在任务长什么样。</b></p>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">常见误解</div>
+      <p>GPU 不是「更高级的 CPU」，也替代不了 CPU。<b>你的电脑里两者一直在协作</b>：CPU 跑操作系统、调度一切，遇到大规模并行计算才把活「外包」给 GPU——GPU 是 CPU 指挥下的<b>加速器</b>，自己一个人开不了机。</p>
+    </div>
+  </section>
+
+  <!-- ============ 02 硅片面积 ============ -->
+  <section id="die">
+    <div class="secnum">02 / SILICON BUDGET</div>
+    <h2>看图说话：<em>晶体管都花在哪了？</em></h2>
+    <p>芯片设计的本质是<b>分配预算</b>——硅片面积就这么大，每平方毫米给谁？CPU 把大头给了<span class="hl-a">控制电路</span>（乱序执行、分支预测）和<span class="hl-b">缓存</span>，真正做计算的 <span class="term" data-name="ALU · Arithmetic Logic Unit" data-tip="算术逻辑单元：真正执行加减乘除、与或非的电路。讽刺的是，在 CPU 里它只占很小一块面积——大部分面积都花在『伺候』它的控制电路和缓存上。">ALU</span> 只占一小块；GPU 反过来，<b>控制和缓存压到最薄，把面积铺满运算单元</b>。</p>
+
+    <div class="panel">
+      <div class="panel-label">die map · 同样大小的硅片，面积分配示意</div>
+      <div class="die-grid">
+        <div class="die cpu">
+          <div class="die-title">CPU</div>
+          <div class="die-sub">运算单元 ≈ 20% 面积</div>
+          <div class="die-map cpu-map">
+            <div class="dblk ctrl">控制单元<small>乱序执行 · 分支预测 · 预取</small></div>
+            <div class="dblk cache">缓存 L1/L2/L3<small>几十 MB · 贴身存放热数据</small></div>
+            <div class="dblk alu">核1</div><div class="dblk alu">核2</div><div class="dblk alu">核3</div>
+            <div class="dblk alu">核4</div><div class="dblk alu">核5</div><div class="dblk alu">核6</div>
+          </div>
+        </div>
+        <div class="die gpu">
+          <div class="die-title">GPU</div>
+          <div class="die-sub">运算单元 ≈ 80% 面积</div>
+          <div class="die-map gpu-map" id="gpu-die">
+            <div class="dblk ctrl">控制（极薄 · 32 线程共享一份）</div>
+            <div class="dblk cache">缓存（小 · 靠带宽和换人补）</div>
+            <!-- 小 ALU 由 JS 生成 -->
+          </div>
+        </div>
+      </div>
+      <div class="die-legend">
+        <span class="lg-ctrl">控制电路</span>
+        <span class="lg-cache">缓存</span>
+        <span class="lg-alu">运算单元 ALU</span>
+      </div>
+    </div>
+
+    <div class="callout blue">
+      <div class="t">CPU 为什么"浪费"这么多面积？</div>
+      <p>因为它的使命是<b>把单个线程的延迟压到极限</b>。分支预测猜对率 95%+、乱序执行填满流水线空隙、大缓存把内存访问从几百周期降到几个周期——这些都不直接做计算，但能让<b>那一个线程</b>快得飞起。</p>
+    </div>
+
+    <div class="callout">
+      <div class="t">GPU 核心为什么能做到几千个？</div>
+      <p>靠「拼单」：32 个线程编成一个 <span class="term" data-name="Warp · 线程束" data-tip="GPU 调度的基本单位：32 个线程一组，锁步执行同一条指令。NVIDIA 叫 warp，AMD 叫 wavefront（64 个）。">warp</span>，<b>共享同一套取指、译码电路</b>——控制成本摊到每个线程头上只剩 1/32。省下来的面积全部换成 ALU。代价是：32 个线程必须走同一条指令，<b>队形不能乱</b>（后面会看到乱了会怎样）。</p>
+    </div>
+  </section>
+
+  <!-- ============ 03 竞速 ============ -->
+  <section id="race">
+    <div class="secnum">03 / THE RACE</div>
+    <h2>跑个比赛：<em>谁快，取决于任务</em></h2>
+    <p>口说无凭，让两颗芯片当场比一比。这里有两个任务：<span class="hl">并行任务</span>——给 1,152 个像素调亮度，每个像素互不相干；<span class="hl-r">串行任务</span>——30 步依赖链，<b>每一步都要用上一步的结果</b>，想并行也并行不了。切换任务，点「开跑」👇</p>
+
+    <div class="panel">
+      <div class="panel-label">simulator · 数字为教学示意：CPU 6 核·快时钟，GPU 1,152 核·慢 4 倍时钟</div>
+      <div class="toggle-grp" id="race-tabs">
+        <button class="active" data-t="0">🖼 并行：1,152 像素调亮</button>
+        <button data-t="1">⛓ 串行：30 步依赖链</button>
+      </div>
+      <p id="race-desc" style="font-size:14px"></p>
+      <div class="race-grid">
+        <div class="race-lane cpu">
+          <div class="race-head"><span>CPU · 6 核 · 快时钟</span><span id="race-cpu-time"></span></div>
+          <div class="race-cells" id="race-cpu-cells"></div>
+          <div class="race-status" id="race-cpu-status">待命</div>
+        </div>
+        <div class="race-lane gpu">
+          <div class="race-head"><span>GPU · 1,152 核 · 慢时钟</span><span id="race-gpu-time"></span></div>
+          <div class="race-cells" id="race-gpu-cells"></div>
+          <div class="race-status" id="race-gpu-status">待命</div>
+        </div>
+      </div>
+      <div class="btnrow">
+        <button class="btn" id="race-start">开跑 ▸</button>
+        <button class="btn" id="race-reset">重置 ↺</button>
+      </div>
+      <div class="race-note">* 每格代表一份工作量；「拍」= 时钟周期的示意单位。</div>
+    </div>
+
+    <div class="callout">
+      <div class="t">并行任务：GPU 一拍洪流</div>
+      <p>1,152 个像素 ÷ 6 核 = CPU 要排 192 轮；GPU 一人领一个像素，<b>一波就完</b>——就算它的时钟慢 4 倍，吞吐还是甩开 CPU 几十倍。<b>数据量越大，差距越夸张</b>：真实 GPU 跑图形和矩阵运算，比 CPU 快 10～100 倍是常态。</p>
+    </div>
+
+    <div class="callout rose">
+      <div class="t">串行任务：1,151 个核心围观</div>
+      <p>每一步都要等上一步的结果，<b>同一时刻只有一个核心有活干</b>——GPU 的人海优势完全归零，只剩「单核比 CPU 慢几倍」这个劣势。这就是<span class="term" data-name="Amdahl's Law · 阿姆达尔定律" data-tip="程序加速的上限由『不可并行的部分』决定：哪怕 95% 的代码无限加速，剩下 5% 串行部分卡死了上限——最多快 20 倍。">阿姆达尔定律</span>的画面版：<b>串行部分决定加速上限</b>。</p>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">还有一个隐形减速带：分支发散</div>
+      <p>GPU 的 32 线程 warp 锁步走同一条指令。代码里来个 <code>if/else</code>，一半线程要走 A、一半要走 B 怎么办？答案很笨：<b>整个 warp 把两条路都走一遍</b>，走 A 时 B 组干瞪眼，走 B 时 A 组干瞪眼——这叫<span class="term" data-name="Branch Divergence · 分支发散" data-tip="warp 内线程在分支处走向不同时，硬件串行执行每个分支、用掩码关掉不相干的线程。分支越多，浪费越大——所以 GPU 代码要尽量『少 if』。">分支发散</span>。所以分支密集的代码（业务逻辑、解析器）天生不适合 GPU。</p>
+    </div>
+  </section>
+
+  <!-- ============ 04 延迟 vs 吞吐 ============ -->
+  <section id="latency">
+    <div class="secnum">04 / LATENCY VS THROUGHPUT</div>
+    <h2>设计哲学：<em>跑车，还是重载火车？</em></h2>
+    <p>两颗芯片面对同一个敌人——<b>内存太慢</b>（一次内存访问要几百个时钟周期，够 ALU 算几百次）。但它们的应对完全相反：CPU 选择<span class="hl-b">把延迟降下来</span>（大缓存 + 预测 + 预取），GPU 选择<span class="hl">把延迟藏起来</span>（线程多到永远有人有活干）。这是「跑车 vs 重载火车」：跑车 2 个座位但极快——<b>延迟低</b>；火车 1000 个座位但启动慢——<b>吞吐大</b>。</p>
+
+    <div class="panel">
+      <div class="panel-label">timeline · 同样遇到「读内存要等 400 拍」，两种应对</div>
+      <div class="toggle-grp" id="lat-tabs">
+        <button class="active" data-t="0">CPU：把延迟降下来</button>
+        <button data-t="1">GPU：把延迟藏起来</button>
+      </div>
+      <div id="lat-out"></div>
+    </div>
+
+    <div class="callout blue">
+      <div class="t">为什么游戏逻辑、网页响应离不开 CPU</div>
+      <p>用户点了一下按钮，要的是<b>这一次操作立刻有反馈</b>——这是延迟问题，跑车的主场。哪怕 GPU 吞吐再大，让它处理单次点击，就像为了送一个包裹发一整列火车。</p>
+    </div>
+
+    <div class="callout">
+      <div class="t">为什么 AI 训练、视频渲染离不开 GPU</div>
+      <p>训练时没人在乎「单个像素何时算完」，在乎的是<b>每秒总共能算多少</b>——这是吞吐问题，火车的主场。单个线程慢一点完全无所谓，反正几万个线程一起在跑。</p>
+    </div>
+  </section>
+
+  <!-- ============ 05 数据搬运 ============ -->
+  <section id="memory">
+    <div class="secnum">05 / THE DATA TOLL</div>
+    <h2>隐藏成本：<em>数据过桥要交税</em></h2>
+    <p>GPU 再快，有个绕不开的麻烦：<b>它只能直接访问自己的显存</b>。数据住在内存（CPU 这边），想让 GPU 算，得先过 <span class="term" data-name="PCIe · PCI Express" data-tip="CPU 与 GPU（及其它扩展卡）之间的高速通道。PCIe 4.0 x16 约 32 GB/s——听着不慢，但和显存内部每秒上 TB 的带宽比，是几十倍的落差，常常成为整个流程的瓶颈。">PCIe</span> 这座「桥」搬到显存，算完再搬回来。<b>桥上的车速比两岸慢几十倍</b>——很多时候，搬运比计算本身还贵。走一遍完整流程👇</p>
+
+    <div class="panel">
+      <div class="panel-label">simulator · 让 GPU 给 1 GB 的数组每个元素 ×2</div>
+      <div class="hop-map">
+        <div class="hop-node" data-hn="cpu">CPU + 内存<small>HOST</small></div>
+        <span class="hop-arr">→</span>
+        <div class="hop-node" data-hn="bus">PCIe 桥<small>32 GB/s</small></div>
+        <span class="hop-arr">→</span>
+        <div class="hop-node" data-hn="gpu">GPU + 显存<small>1 TB/s</small></div>
+        <span class="hop-arr">→</span>
+        <div class="hop-node" data-hn="back">结果返回<small>D2H</small></div>
+      </div>
+      <div class="chatlog" id="mem-log"></div>
+      <div class="btnrow">
+        <button class="btn" id="mem-next">下一步 ▸</button>
+        <button class="btn" id="mem-reset">重置 ↺</button>
+      </div>
+    </div>
+
+    <div class="callout rose">
+      <div class="t">结论：小任务别过桥</div>
+      <p>排序 1,000 个数、算一次哈希——这种活交给 GPU，<b>光搬运和启动的固定开销就远超计算本身</b>，CPU 早就当场算完了。GPU 划算的条件：<b>① 数据量足够大；② 或者数据能留在显存里反复使用</b>。</p>
+    </div>
+
+    <div class="callout">
+      <div class="t">深度学习恰好两条全占</div>
+      <p>训练开始时把模型权重搬进显存，之后<b>成千上万轮迭代全在显存里进行</b>，过桥只发生在喂数据时——固定成本被摊薄到忽略不计。这（加上矩阵乘法本身极度并行）就是 AI 长在 GPU 上的根本原因。顺带一提：大模型时代天天听到的「显存不够」，就是模型权重塞不进 VRAM 的意思。</p>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">延伸：苹果 M 系列的「不过桥」方案</div>
+      <p>Apple Silicon 把 CPU 和 GPU 做进同一颗芯片、共用同一块<b>统一内存（Unified Memory）</b>——数据不用搬，两边直接访问同一份。代价是内存焊死不能扩展、带宽上限不如顶级独显的 HBM，但「零搬运」让它跑中小模型格外舒服。</p>
+    </div>
+  </section>
+
+  <!-- ============ 06 调度练习 ============ -->
+  <section id="sched">
+    <div class="secnum">06 / YOU ARE THE SCHEDULER</div>
+    <h2>角色扮演：<em>你来当调度器</em></h2>
+    <p>判断标准已经齐了：<b>① 能不能大规模并行？② 分支多不多？③ 要低延迟还是高吞吐？④ 数据过桥划不划算？</b>下面 8 个任务，你来决定交给谁👇</p>
+
+    <div class="panel">
+      <div class="panel-label">exercise · 每个任务选 CPU 或 GPU</div>
+      <div id="sched-list"></div>
+      <div class="quiz-score" id="sched-score"></div>
+    </div>
+
+    <div class="callout">
+      <div class="t">现实世界是异构协作</div>
+      <p>真实系统从来不是二选一：手机 SoC 里 CPU、GPU、<span class="term" data-name="NPU · Neural Processing Unit" data-tip="神经网络处理器：比 GPU 更进一步的专用芯片，电路直接为矩阵乘加定制，能效比极高，但灵活性更低——典型的『更专用 = 更快但更窄』。手机上的人脸解锁、照片增强多由它执行。">NPU</span>、视频编解码器各司其职；游戏里 CPU 跑逻辑、GPU 跑画面，每一帧都在交接棒。<b>未来属于异构计算：让每种任务跑在最适合它的电路上。</b></p>
+    </div>
+  </section>
+
+  <!-- ============ 07 测验 ============ -->
+  <section id="quiz">
+    <div class="secnum">07 / QUIZ</div>
+    <h2>随堂测验：<em>检验一下</em></h2>
+    <p>6 道题，覆盖前面所有章节。答错没关系，解析比答案重要。</p>
+
+    <div class="panel">
+      <div class="panel-label">quiz · 点击选项作答</div>
+      <div id="quiz-list"></div>
+      <div class="quiz-score" id="quiz-score"></div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <a href="/">← back to labs</a> &nbsp;·&nbsp; chip lab · learning-labs
+</footer>
+
+<script>
+/* ================= 02 GPU die：生成小 ALU ================= */
+(function(){
+  const die = document.getElementById('gpu-die');
+  for(let i=0;i<60;i++){
+    const d = document.createElement('div');
+    d.className = 'dblk alu';
+    die.appendChild(d);
+  }
+})();
+
+/* ================= 03 竞速模拟器 ================= */
+const raceModes = [
+  { /* 并行 */
+    desc:'1,152 个像素各自调亮，互不依赖 —— CPU 6 核一轮处理 6 个；GPU 人手一个像素，一波带走（时钟慢 4 倍）。',
+    cells:144, gpuIdle:0,
+    cpuTick:35, cpuPer:6,
+    cpuDone:'完成 ✓ · 1,152 ÷ 6 核 = <b>192 拍</b>',
+    gpuDone:'完成 ✓ · 一波并行 × 慢时钟 ≈ <b>4 拍</b>',
+    cpuLogic:192, gpuLogic:4
+  },
+  { /* 串行 */
+    desc:'30 步依赖链，每一步要用上一步的结果 —— 谁都只能一个核单干，比的是单核速度。',
+    cells:30, gpuIdle:30,
+    cpuTick:30, cpuPer:1, gpuTick:120,
+    cpuDone:'完成 ✓ · 30 步 × 1 拍 = <b>30 拍</b>',
+    gpuDone:'完成 ✓ · 30 步 × 4 拍 = <b>120 拍</b>（其余 1,151 核全程围观）',
+    cpuLogic:30, gpuLogic:120
+  }
+];
+const Race = { mode:0, timers:[], finished:0 };
+const raceDesc = document.getElementById('race-desc');
+const raceCpuCells = document.getElementById('race-cpu-cells');
+const raceGpuCells = document.getElementById('race-gpu-cells');
+const raceCpuStatus = document.getElementById('race-cpu-status');
+const raceGpuStatus = document.getElementById('race-gpu-status');
+const raceCpuTime = document.getElementById('race-cpu-time');
+const raceGpuTime = document.getElementById('race-gpu-time');
+const raceStart = document.getElementById('race-start');
+const raceTabs = document.getElementById('race-tabs');
+
+function raceStop(){ Race.timers.forEach(clearInterval); Race.timers = []; }
+function raceBuild(){
+  raceStop();
+  Race.finished = 0;
+  const m = raceModes[Race.mode];
+  raceDesc.textContent = m.desc;
+  raceCpuCells.innerHTML = ''; raceGpuCells.innerHTML = '';
+  for(let i=0;i<m.cells;i++) raceCpuCells.appendChild(rc());
+  for(let i=0;i<m.cells;i++) raceGpuCells.appendChild(rc());
+  for(let i=0;i<m.gpuIdle;i++) raceGpuCells.appendChild(rc('idle'));
+  raceCpuStatus.textContent = '待命'; raceGpuStatus.textContent = '待命';
+  raceCpuTime.textContent = ''; raceGpuTime.textContent = '';
+  raceStart.disabled = false;
+  raceStart.textContent = '开跑 ▸';
+  function rc(extra){ const d = document.createElement('div'); d.className = 'rc' + (extra ? ' ' + extra : ''); return d; }
+}
+function raceFinish(side, html, logic){
+  Race.finished++;
+  const first = Race.finished === 1;
+  const statusEl = side === 'cpu' ? raceCpuStatus : raceGpuStatus;
+  const timeEl = side === 'cpu' ? raceCpuTime : raceGpuTime;
+  statusEl.innerHTML = (first ? '<span class="win">🏆 先到！</span> ' : '') + html;
+  timeEl.textContent = logic + ' 拍';
+}
+raceStart.addEventListener('click', ()=>{
+  raceBuild();
+  raceStart.disabled = true;
+  raceStart.textContent = '比赛中…';
+  const m = raceModes[Race.mode];
+  const cpu = [...raceCpuCells.children];
+  const gpu = [...raceGpuCells.children].filter(c=>!c.classList.contains('idle'));
+  /* CPU：每拍点亮 cpuPer 格 */
+  let ci = 0;
+  const cpuTimer = setInterval(()=>{
+    for(let k=0;k<m.cpuPer && ci<cpu.length;k++) cpu[ci++].classList.add('on');
+    if(ci >= cpu.length){
+      clearInterval(cpuTimer);
+      raceFinish('cpu', m.cpuDone, m.cpuLogic);
+      maybeDone();
+    } else {
+      raceCpuStatus.textContent = '处理中… ' + ci + ' / ' + cpu.length;
+    }
+  }, m.cpuTick);
+  Race.timers.push(cpuTimer);
+  if(Race.mode === 0){
+    /* GPU 并行：半亮 → 全亮，两拍洪流 */
+    raceGpuStatus.textContent = '1,152 核同时领工…';
+    Race.timers.push(setTimeout(()=>{ gpu.forEach(c=>c.classList.add('half')); raceGpuStatus.textContent = '锁步执行中…'; }, 130));
+    Race.timers.push(setTimeout(()=>{ gpu.forEach(c=>c.classList.add('on')); raceFinish('gpu', m.gpuDone, m.gpuLogic); maybeDone(); }, 280));
+  } else {
+    /* GPU 串行：单核慢慢爬 */
+    let gi = 0;
+    const gpuTimer = setInterval(()=>{
+      gpu[gi++].classList.add('on');
+      if(gi >= gpu.length){
+        clearInterval(gpuTimer);
+        raceFinish('gpu', m.gpuDone, m.gpuLogic);
+        maybeDone();
+      } else {
+        raceGpuStatus.textContent = '单核苦干中… ' + gi + ' / ' + gpu.length;
+      }
+    }, m.gpuTick);
+    Race.timers.push(gpuTimer);
+  }
+  function maybeDone(){
+    if(Race.finished >= 2){
+      raceStop();
+      raceStart.disabled = false;
+      raceStart.textContent = '再跑一次 ▸';
+    }
+  }
+});
+document.getElementById('race-reset').addEventListener('click', raceBuild);
+raceTabs.addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  raceTabs.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  Race.mode = +b.dataset.t;
+  raceBuild();
+});
+raceBuild();
+
+/* ================= 04 延迟 vs 吞吐 时间线 ================= */
+const latCases = [
+  {note:'跑车哲学：不惜一切代价，让「这一个线程」别等。降延迟的电路（缓存/预测/预取）吃掉了 80% 的硅片面积。',
+   code:'<span class="c">// CPU 核心的一拍拍人生（单线程视角）</span>\n取数据 x   → <span class="s">L1 缓存命中 ✓ 4 拍拿到</span>      <span class="c">// 大缓存：95% 的访问根本不碰内存</span>\nif (x &gt; 0) → <span class="s">分支预测器：猜「真」，先跑起来</span>  <span class="c">// 猜对率 95%+，猜错才回退</span>\n下一批数据 → <span class="s">预取器早就提前搬好了</span>          <span class="c">// 趁你计算时偷偷取下一块</span>\n\n<span class="n">罕见情况：缓存未命中 → 真等 400 拍 → 乱序执行找别的指令填空</span>\n\n<span class="c">// 总结：延迟没法忍 → 用海量电路把延迟「降」下来</span>'},
+  {note:'火车哲学：等就等，反正车多。单个 warp 等 400 拍无所谓，调度器手里有几十个 warp 随时顶上——ALU 一拍都不闲。',
+   code:'<span class="c">// GPU 流式多处理器的一拍拍人生（调度器视角）</span>\nwarp 0：读显存… <span class="r">要等 400 拍</span> → 调度器：<span class="s">你等着，换人</span>\nwarp 1：上！算 32 个像素 → 也去读显存 → <span class="s">换人</span>\nwarp 2：上！算 32 个像素 → 也去读显存 → <span class="s">换人</span>\n<span class="c">…几十个 warp 轮流补位…</span>\n400 拍后：warp 0 的数据到了 → <span class="s">排队回来继续算 ✓</span>\n\n<span class="c">// 总结：延迟没消失，被人海「藏」起来了</span>\n<span class="c">// 前提：得有几万个线程可换 —— 所以小任务喂不饱 GPU</span>'}
+];
+const latTabs = document.getElementById('lat-tabs');
+const latOut = document.getElementById('lat-out');
+function renderLat(i){
+  latOut.innerHTML =
+    '<p style="font-size:14px;margin-bottom:0">'+latCases[i].note+'</p>' +
+    '<div class="codeblock">'+latCases[i].code+'</div>';
+}
+latTabs.addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  latTabs.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  renderLat(+b.dataset.t);
+});
+renderLat(0);
+
+/* ================= 05 数据搬运 stepper ================= */
+const memSteps = [
+  {role:'cpu', who:'① CPU · 准备数据', node:'cpu',
+   html:'<span class="body-text">1 GB 的浮点数组躺在<b>内存</b>里。GPU 够不着——它只能直接访问自己的<b>显存（VRAM）</b>，所以第一步永远是：搬家。</span>'},
+  {role:'bus', who:'② PCIe 桥 · 搬运过去（H2D）', node:'bus',
+   html:'<span class="body-text">数组经 PCIe 拷贝到显存：</span><pre>memcpy HostToDevice, 1 GB\nPCIe 4.0 ×16 ≈ 32 GB/s → 约 <b>31 ms</b> 🐢</pre>'},
+  {role:'cpu', who:'③ CPU · 发射 kernel', node:'cpu',
+   html:'<span class="body-text">CPU 向 GPU 发出指令「每个元素 ×2」（这段在 GPU 上跑的小程序叫 <span class="term" data-name="Kernel · 核函数" data-tip="提交给 GPU 执行的函数：写一份代码，由成千上万个线程各自带着不同的数据并行执行。CUDA / OpenCL / Metal 写的就是它。">kernel</span>），发射本身只要几微秒，<b>CPU 不用等，转头干别的去了</b>。</span>'},
+  {role:'gpu', who:'④ GPU · 并行计算', node:'gpu',
+   html:'<span class="body-text">数千核心一拥而上，显存带宽 1 TB/s 全开：</span><pre>读 1 GB + 写 1 GB = 2 GB ÷ 1 TB/s ≈ <b>2 ms</b> ⚡</pre>'},
+  {role:'bus', who:'⑤ PCIe 桥 · 搬运回来（D2H）', node:'back',
+   html:'<span class="body-text">结果再过一次桥拷回内存：又是 <b>31 ms</b> 🐢。</span>'},
+  {role:'ok', who:'⑥ 结账', node:'back',
+   html:'<span class="body-text"><b>计算 2 ms，搬运 62 ms —— 搬运占了 97%。</b><br><br><span class="think">GPU 算力快了几十倍，总耗时却被桥拖死。如果这 1 GB 接下来还要算 1000 轮（比如训练神经网络），搬运费摊薄成 0.1%，GPU 血赚；只算这一次？CPU 在原地早就算完了。</span></span>'}
+];
+const memLog = document.getElementById('mem-log');
+function memLight(node){
+  document.querySelectorAll('.hop-node').forEach(n=>
+    n.classList.toggle('lit', n.dataset.hn === node));
+}
+Stepper.bind({
+  next: document.getElementById('mem-next'),
+  reset: document.getElementById('mem-reset'),
+  total: memSteps.length,
+  doneText: '流程走完 ✓',
+  onStep(i){
+    const s = memSteps[i];
+    const d = document.createElement('div');
+    d.className = 'msg ' + s.role;
+    d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+    memLog.appendChild(d);
+    memLight(s.node);
+  },
+  onReset(){ memLog.innerHTML = ''; memLight(null); }
+});
+
+/* ================= 06 调度练习 ================= */
+const schedTasks = [
+  {q:'渲染 4K 游戏画面 —— 800 万个像素各自计算颜色，互不依赖',
+   ans:1, exp:'GPU 的本行：海量同质计算、零依赖，<b>纯吞吐问题</b>。这正是 GPU 被发明出来的原因。'},
+  {q:'游戏剧情逻辑 —— 处理玩家操作，大量 if/else 和状态机',
+   ans:0, exp:'分支密集 + 步骤依赖 + 要求即时响应：三条全踩在 CPU 的主场。放 GPU 上会被<b>分支发散</b>折磨到比 CPU 慢得多。'},
+  {q:'训练神经网络 —— 几十亿次矩阵乘加，权重常驻显存反复用',
+   ans:1, exp:'矩阵乘法 = 海量独立的乘加运算，且数据留在显存反复使用、过桥成本摊薄——<b>GPU 划算的两个条件全占</b>。'},
+  {q:'数据库事务 —— 加锁、随机访问、毫秒级响应要求',
+   ans:0, exp:'锁与事务是<b>强依赖的串行逻辑</b>，随机访问砸缓存，还要低延迟——每一条都和 GPU 的设计哲学相反。'},
+  {q:'视频转码 —— 每一帧的像素块做同样的变换',
+   ans:1, exp:'像素块之间高度独立、操作同质，典型吞吐任务。实际上显卡里还有更专用的<b>硬件编解码电路</b>（NVENC 等），比通用 GPU 核心更高效——「越专用越快」的又一例。'},
+  {q:'编译代码 —— 递归遍历语法树，符号表互相引用',
+   ans:0, exp:'树形递归、复杂依赖、分支无处不在——并行度有限且形状不规则，CPU 的乱序执行和大缓存才啃得动。'},
+  {q:'给 1 亿个数字各乘以 2 —— 但只算这一次，算完就要结果',
+   ans:0, exp:'有点狡猾：计算本身完美并行，但<b>只算一次</b>——数据过 PCIe 桥来回的时间远超计算时间（第 05 节的账单）。CPU 原地算完更快。数据量再大十倍、或要反复算，答案才翻转给 GPU。'},
+  {q:'运行操作系统 —— 调度进程、响应中断、管理一切硬件',
+   ans:0, exp:'操作系统是<b>串行逻辑 + 低延迟响应</b>的极致，而且 GPU 本身就是被 OS 管理的设备之一——它自己开不了机。'}
+];
+Quiz.render(document.getElementById('sched-list'), document.getElementById('sched-score'),
+  schedTasks.map(t => ({q:t.q, opts:['交给 CPU 🧠','交给 GPU 🌊'], ans:t.ans, exp:t.exp})), {
+  final: (correct, total) =>
+    correct === total ? ' 🎉 满分调度器，可以去写驱动了'
+    : correct >= 6 ? ' 👍 不错，错的那几题解析值得再看一眼'
+    : ' 💪 回到第 03、05 节再找找判断标准'
+});
+
+/* ================= 07 quiz ================= */
+const quiz = [
+  {q:'CPU 和 GPU 最本质的设计取向区别是？',
+   opts:['CPU 是硅做的，GPU 是更先进的材料','CPU 为低延迟优化，GPU 为高吞吐优化','GPU 比 CPU 主频更高','CPU 只能算整数，GPU 只能算小数'],
+   ans:1,
+   exp:'一切差异（核心数、缓存、控制电路）都是这一条的推论：<b>CPU 让单个任务尽快完成（跑车），GPU 让单位时间总量最大（火车）</b>。主频恰恰相反——CPU 更高。'},
+  {q:'GPU 有几千个核心，为什么不干脆取代 CPU？',
+   opts:['因为太贵了','因为功耗太高','单核太弱且 32 线程锁步，跑串行/分支任务比 CPU 慢得多，连操作系统都跑不动','因为厂商不允许'],
+   ans:2,
+   exp:'GPU 的核心是「拼单」省出来的：<b>弱、慢、必须列队行进</b>。遇到依赖链和 if/else 密集的代码，人海优势归零、劣势全暴露。它是 CPU 指挥下的加速器，不是替代品。'},
+  {q:'一个 warp 的 32 个线程遇到 if/else，16 个要走 A、16 个要走 B，硬件会怎么办？',
+   opts:['分成两个小组同时各走各的','整个 warp 把 A、B 两条路都走一遍，每次掩蔽掉不相干的一半','随机选一条路','报错退出'],
+   ans:1,
+   exp:'SIMT 锁步意味着<b>一条指令喂全组</b>：分叉时只能串行走完两个分支、各自掩蔽另一半——这就是分支发散，分支越多浪费越大，所以 GPU 代码讲究「少 if」。'},
+  {q:'读一次显存要等 400 拍，GPU 靠什么不让核心闲着？',
+   opts:['做一个比 CPU 更大的缓存','把显存做到零延迟','等待时切换到其他几十个 warp 干活，用海量线程把延迟「藏」起来','暂停时钟省电'],
+   ans:2,
+   exp:'CPU 用大缓存把延迟<b>降下来</b>，GPU 用海量线程把延迟<b>藏起来</b>——warp 0 等数据时 warp 1、2、3… 轮流顶上。这也解释了为什么小任务喂不饱 GPU：没有足够的线程可换。'},
+  {q:'排序 1,000 个数，交给 GPU 划算吗？',
+   opts:['划算，GPU 核多必然快','不划算，数据过 PCIe 搬运 + 启动 kernel 的固定开销远大于计算本身','划算，但要用专门的排序指令','取决于显卡品牌'],
+   ans:1,
+   exp:'GPU 划算的条件是<b>数据量大，或数据留在显存反复用</b>。1,000 个数的计算量是微秒级，而过桥和发射的固定成本就有几十微秒到毫秒级——CPU 在原地早算完了。'},
+  {q:'深度学习为什么"长"在 GPU 上？',
+   opts:['神经网络是图形，所以用图形处理器','深度学习的核心是海量同质的矩阵乘加（高吞吐、易并行），且权重常驻显存反复使用','CPU 算不了浮点数','纯属历史巧合'],
+   ans:1,
+   exp:'矩阵乘法是<b>完美的吞吐型任务</b>：海量独立乘加、规则的内存访问、几乎没有分支；训练时权重常驻显存几万轮迭代，搬运成本摊薄到忽略不计。新一代 GPU 还加了专算矩阵的 Tensor Core，更是量身定做。'}
+];
+Quiz.render(document.getElementById('quiz-list'), document.getElementById('quiz-score'), quiz, {
+  final: (correct, total) =>
+    correct === total ? ' 🎉 全对！下次买电脑你就是全家最懂的人'
+    : correct >= 4 ? ' 👍 不错，回头看看错题的解析'
+    : ' 💪 建议从第 01 节再过一遍'
+});
+</script>
+</body>
+</html>

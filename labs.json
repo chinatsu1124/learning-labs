@@ -43,6 +43,13 @@
       "topics": ["microservices", "gateway", "circuit-breaker", "saga"]
     },
     {
+      "path": "/chip-lab/",
+      "tag": "hardware",
+      "title": "芯片实验室",
+      "sub": "CPU 与 GPU 的区别 —— 架构对比、硅片面积图解、并行竞速模拟、延迟 vs 吞吐、PCIe 搬运成本与调度练习。",
+      "topics": ["cpu", "gpu", "parallel", "throughput", "cuda"]
+    },
+    {
       "path": "/tr-appleid/",
       "tag": "guide",
       "title": "土区 Apple ID",
