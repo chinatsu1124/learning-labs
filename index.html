@@ -182,7 +182,7 @@
       var pad = function(n){ return String(n).padStart(2, '0'); };
       var grid = document.getElementById('grid');
       var labs = [];
-      var activeTag = 'all';
+      var activeTag = '全部';
       var query = '';
 
       function esc(s){
@@ -215,7 +215,7 @@
         var d = document.createElement('div');
         d.className = 'card placeholder';
         d.innerHTML =
-          '<div class="card-row"><span class="card-path">/_/</span><span class="card-tag">tbd</span></div>' +
+          '<div class="card-row"><span class="card-path">/_/</span><span class="card-tag">待定</span></div>' +
           '<div class="card-title">敬请期待</div>' +
           '<div class="card-sub">下一个 lab 还在草稿里。</div>' +
           '<div class="card-foot"><div class="topics"><span>wip</span></div>' +
@@ -224,7 +224,7 @@
       }
 
       function matches(lab){
-        if (activeTag !== 'all' && lab.tag !== activeTag) return false;
+        if (activeTag !== '全部' && lab.tag !== activeTag) return false;
         if (!query) return true;
         var hay = [lab.path, lab.tag, lab.title, lab.sub].concat(lab.topics).join(' ').toLowerCase();
         return query.split(/\s+/).every(function(w){ return hay.indexOf(w) !== -1; });
@@ -238,7 +238,7 @@
           grid.appendChild(card(lab, i));
           shown++;
         });
-        var filtering = activeTag !== 'all' || query;
+        var filtering = activeTag !== '全部' || query;
         if (!filtering) grid.appendChild(placeholder());
         document.getElementById('no-hit').style.display = shown ? 'none' : 'block';
         document.getElementById('lab-count').textContent = filtering
@@ -248,7 +248,7 @@
 
       function buildFilters(){
         var row = document.getElementById('tag-row');
-        var tags = ['all'].concat(labs.map(function(l){ return l.tag; })
+        var tags = ['全部'].concat(labs.map(function(l){ return l.tag; })
           .filter(function(t, i, arr){ return arr.indexOf(t) === i; }));
         tags.forEach(function(tag){
           var b = document.createElement('button');
