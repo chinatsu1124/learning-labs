@@ -57,6 +57,46 @@ for (const file of htmlFiles(ROOT)) {
   }
 }
 
+/* agent-lab/tutorials.json 是 Agent 子教程导航的数据源（JS 渲染），单独校验 */
+{
+  const tutorialsFile = join(ROOT, 'agent-lab', 'tutorials.json');
+  const { root, tutorials } = JSON.parse(readFileSync(tutorialsFile, 'utf8'));
+  if (!root?.path || !root?.title || !root?.description) {
+    console.error('✗ agent-lab/tutorials.json → root 缺少 path/title/description');
+    errors++;
+  }
+  if (root?.path && !existsSync(join(ROOT, root.path, 'index.html'))) {
+    console.error(`✗ agent-lab/tutorials.json → ${root.path} (missing: ${root.path.slice(1)}index.html)`);
+    errors++;
+  }
+
+  const ids = new Set();
+  const orders = new Set();
+  for (const tutorial of tutorials || []) {
+    const required = ['id', 'order', 'path', 'title', 'label', 'description'];
+    for (const key of required) {
+      if (tutorial[key] === undefined || tutorial[key] === '') {
+        console.error(`✗ agent-lab/tutorials.json → ${tutorial.path || tutorial.id || '(unknown)'} 缺少字段: ${key}`);
+        errors++;
+      }
+    }
+    if (ids.has(tutorial.id)) {
+      console.error(`✗ agent-lab/tutorials.json → 重复 id: ${tutorial.id}`);
+      errors++;
+    }
+    ids.add(tutorial.id);
+    if (orders.has(tutorial.order)) {
+      console.error(`✗ agent-lab/tutorials.json → 重复 order: ${tutorial.order}`);
+      errors++;
+    }
+    orders.add(tutorial.order);
+    if (tutorial.path && !existsSync(join(ROOT, tutorial.path, 'index.html'))) {
+      console.error(`✗ agent-lab/tutorials.json → ${tutorial.path} (missing: ${tutorial.path.slice(1)}index.html)`);
+      errors++;
+    }
+  }
+}
+
 if (errors) {
   console.error(`\n${errors} broken link(s).`);
   process.exit(1);
