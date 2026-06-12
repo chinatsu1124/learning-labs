@@ -33,7 +33,13 @@
       "tag": "AI",
       "title": "智能体实验室",
       "sub": "AI Agent 入门教程 —— Agent 循环模拟器、工具调用拆解、上下文剖析、ReAct 等架构模式与安全护栏。",
-      "topics": ["agent", "tool-use", "react", "rag", "mcp"]
+      "topics": ["agent", "tool-use", "react", "rag", "mcp"],
+      "children": [
+        { "title": "工具调用", "path": "/agent-lab/tool-use/" },
+        { "title": "上下文工程", "path": "/agent-lab/context/" },
+        { "title": "架构模式", "path": "/agent-lab/patterns/" },
+        { "title": "记忆与检索", "path": "/agent-lab/memory/" }
+      ]
     },
     {
       "path": "/micro-lab/",
@@ -54,7 +60,12 @@
       "tag": "AI",
       "title": "线性代数实验室",
       "sub": "AI 路上的线性代数 —— 向量与相似度、矩阵即变换、线性相关与秩、特征值、SVD 与 PCA，全程可视化。",
-      "topics": ["vector", "matrix", "rank", "eigenvalue", "svd", "pca"]
+      "topics": ["vector", "matrix", "rank", "eigenvalue", "svd", "pca"],
+      "children": [
+        { "title": "向量与相似度", "path": "/linalg-lab/vectors/" },
+        { "title": "矩阵与线性变换", "path": "/linalg-lab/transform/" },
+        { "title": "特征值与 SVD", "path": "/linalg-lab/decomposition/" }
+      ]
     },
     {
       "path": "/tr-appleid/",
