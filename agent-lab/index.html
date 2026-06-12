@@ -18,6 +18,7 @@
 <script src="/assets/quiz.js"></script>
 <script src="/assets/cards.js"></script>
 <script src="/assets/stepper.js"></script>
+<script defer src="/assets/tutorial-nav.js"></script>
 <style>
   :root{
     --bg:#0a0b10;
@@ -41,99 +42,14 @@
     --display:'Syne',sans-serif;
     --mono:'JetBrains Mono',ui-monospace,monospace;
     --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+    --accent:var(--blue);
+    --accent-dim:var(--blue-dim);
+    --accent-em:var(--teal);
+    --hero-size:clamp(54px,14vw,130px);
+    --hero-line:.9;
+    --hero-glow-1:rgba(138,169,255,.10);
+    --hero-glow-2:rgba(79,227,193,.05);
   }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{
-    background:var(--bg);
-    color:var(--ink);
-    font-family:var(--body);
-    line-height:1.75;
-    -webkit-font-smoothing:antialiased;
-    overflow-x:hidden;
-    background-image:
-      linear-gradient(var(--line) 1px,transparent 1px),
-      linear-gradient(90deg,var(--line) 1px,transparent 1px);
-    background-size:48px 48px;
-    background-position:center top;
-  }
-  body::before{
-    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-    background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(138,169,255,.10),transparent 60%),
-               radial-gradient(ellipse 70% 50% at 90% 20%,rgba(79,227,193,.05),transparent 55%),
-               linear-gradient(180deg,rgba(10,11,16,.4),var(--bg) 90%);
-  }
-  .wrap{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:0 24px}
-
-  /* ---------- header ---------- */
-  header{padding:90px 0 40px;text-align:center}
-  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:var(--blue);
-    text-transform:uppercase;margin-bottom:24px;opacity:0;animation:rise .7s .1s forwards}
-  h1.hero{font-family:var(--display);font-weight:800;font-size:clamp(54px,14vw,130px);
-    line-height:.9;letter-spacing:-.03em;margin-bottom:8px}
-  h1.hero .b{display:inline-block;opacity:0;transform:translateY(40px);animation:rise .8s forwards}
-  h1.hero .b:nth-child(1){animation-delay:.15s;color:var(--blue)}
-  h1.hero .b:nth-child(2){animation-delay:.25s;color:var(--ink)}
-  .sub{font-family:var(--mono);color:var(--muted);font-size:15px;margin-top:18px;
-    opacity:0;animation:rise .7s .6s forwards}
-  .sub b{color:var(--ink);font-weight:500}
-  .scrollcue{margin-top:54px;font-family:var(--mono);font-size:11px;letter-spacing:.3em;
-    color:var(--faint);opacity:0;animation:rise .7s .9s forwards;text-transform:uppercase}
-  .scrollcue span{display:block;font-size:18px;margin-top:6px;animation:bob 1.8s ease-in-out infinite}
-  @keyframes rise{to{opacity:1;transform:translateY(0)}}
-  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
-  @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
-
-  /* ---------- sections ---------- */
-  section{padding:72px 0}
-  .secnum{font-family:var(--mono);font-size:12px;color:var(--blue);letter-spacing:.2em;
-    margin-bottom:10px;display:flex;align-items:center;gap:12px}
-  .secnum::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
-  h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);
-    line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
-  h2 em{font-style:normal;background:linear-gradient(90deg,var(--blue),var(--teal));
-    -webkit-background-clip:text;background-clip:text;color:transparent}
-  p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
-  p b{color:var(--ink);font-weight:600}
-  .hl{color:var(--teal);font-weight:600}
-  .hl-v{color:var(--violet);font-weight:600}
-  .hl-a{color:var(--amber);font-weight:600}
-  .hl-b{color:var(--blue);font-weight:600}
-  code{font-family:var(--mono);background:var(--panel-hi);color:var(--teal);
-    padding:2px 7px;border-radius:5px;font-size:.88em;border:1px solid var(--line)}
-
-  /* ---------- panel ---------- */
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;
-    padding:28px;margin:26px 0;position:relative;overflow:hidden}
-  .panel::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;
-    background:linear-gradient(90deg,transparent,var(--blue),transparent);opacity:.5}
-  .panel-label{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--faint);
-    text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}
-  .panel-label::before{content:"●";color:var(--teal);font-size:8px}
-
-  .btn{font-family:var(--mono);font-size:13px;background:var(--panel-hi);color:var(--ink);
-    border:1px solid var(--line);border-radius:8px;padding:9px 16px;cursor:pointer;transition:all .18s}
-  .btn:hover{border-color:var(--blue);color:var(--blue)}
-  .btn:disabled{opacity:.4;cursor:default}
-  .btn:disabled:hover{border-color:var(--line);color:var(--ink)}
-  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
-  .toggle-grp{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:18px;flex-wrap:wrap}
-  .toggle-grp button{font-family:var(--mono);font-size:13px;background:transparent;color:var(--muted);
-    border:0;padding:9px 18px;cursor:pointer;transition:all .18s}
-  .toggle-grp button.active{background:var(--blue-dim);color:var(--blue)}
-
-  /* ---------- callout ---------- */
-  .callout{border-left:3px solid var(--blue);background:var(--panel);border-radius:0 12px 12px 0;
-    padding:16px 20px;margin:22px 0}
-  .callout .t{font-family:var(--mono);font-size:12px;letter-spacing:.15em;color:var(--blue);
-    text-transform:uppercase;margin-bottom:6px}
-  .callout p{margin:0;font-size:15px;color:var(--ink)}
-  .callout.teal{border-color:var(--teal)}
-  .callout.teal .t{color:var(--teal)}
-  .callout.amber{border-color:var(--amber)}
-  .callout.amber .t{color:var(--amber)}
-  .callout.rose{border-color:var(--rose)}
-  .callout.rose .t{color:var(--rose)}
 
   /* ---------- spectrum (LLM→workflow→agent) ---------- */
   .spectrum{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:6px}
@@ -225,34 +141,8 @@
   .pat-detail .when{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--amber);
     text-transform:uppercase;margin-top:10px;margin-bottom:2px}
 
-  /* ---------- quiz ---------- */
-  .quiz-q{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
-  .quiz-q .qt{font-size:15px;color:var(--ink);margin-bottom:12px;font-weight:600}
-  .quiz-q .qt .qn{font-family:var(--mono);color:var(--blue);margin-right:8px}
-  .quiz-opts{display:flex;flex-direction:column;gap:8px}
-  .quiz-opts button{font-size:14px;font-family:var(--body);background:var(--panel-hi);color:var(--muted);
-    border:1px solid var(--line);border-radius:8px;padding:10px 14px;cursor:pointer;transition:all .15s;text-align:left}
-  .quiz-opts button:hover{border-color:var(--muted);color:var(--ink)}
-  .quiz-opts button.right{border-color:var(--teal);background:var(--teal-dim);color:var(--teal)}
-  .quiz-opts button.wrong{border-color:var(--rose);background:var(--rose-dim);color:var(--rose)}
-  .quiz-exp{font-size:13.5px;color:var(--muted);margin-top:10px;padding-top:10px;
-    border-top:1px dashed var(--line);display:none;line-height:1.7}
-  .quiz-exp b{color:var(--teal)}
-  .quiz-score{text-align:center;font-family:var(--mono);font-size:14px;color:var(--muted);margin-top:18px}
-  .quiz-score b{color:var(--blue);font-size:20px}
-
-  /* ---------- deeper link ---------- */
-  .deeper{display:block;margin-top:22px;font-family:var(--mono);font-size:13px;color:var(--blue);
-    text-decoration:none;border:1px dashed var(--line);border-radius:10px;padding:13px 18px;
-    transition:all .18s;line-height:1.7}
-  .deeper:hover{border-color:var(--blue);background:var(--blue-dim)}
-  .deeper small{display:block;color:var(--faint);font-size:11.5px}
-
-  footer{border-top:1px solid var(--line);padding:28px 24px 48px;text-align:center;
-    font-family:var(--mono);font-size:12px;color:var(--faint)}
-  footer a{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--line)}
-  footer a:hover{color:var(--ink)}
 </style>
+<link rel="stylesheet" href="/assets/tutorial.css">
 </head>
 <body>
 <a class="lab-home" href="/" title="返回 learning labs 首页">←&nbsp;~/labs</a>

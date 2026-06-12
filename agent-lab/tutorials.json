@@ -1,0 +1,41 @@
+{
+  "root": {
+    "path": "/agent-lab/",
+    "title": "智能体实验室",
+    "description": "AI Agent 入门教程：循环、工具、上下文、架构模式、RAG / MCP 与安全评估。"
+  },
+  "tutorials": [
+    {
+      "id": "tool-use",
+      "order": 1,
+      "path": "/agent-lab/tool-use/",
+      "title": "工具调用",
+      "label": "deep dive 01",
+      "description": "报文级拆解一次 tool call：协议往返、Schema 设计、并行、错误处理与 MCP"
+    },
+    {
+      "id": "context",
+      "order": 2,
+      "path": "/agent-lab/context/",
+      "title": "上下文工程",
+      "label": "deep dive 02",
+      "description": "token 预算、增长与压缩、记忆分层、四种上下文失效模式"
+    },
+    {
+      "id": "patterns",
+      "order": 3,
+      "path": "/agent-lab/patterns/",
+      "title": "架构模式",
+      "label": "deep dive 03",
+      "description": "ReAct 失败案例、重规划回路、Reflection 收益、多智能体拓扑与选型"
+    },
+    {
+      "id": "memory",
+      "order": 4,
+      "path": "/agent-lab/memory/",
+      "title": "记忆与检索",
+      "label": "deep dive 04",
+      "description": "三种记忆类型、写入蒸馏管线、RAG 检索全流程与记忆维护"
+    }
+  ]
+}
