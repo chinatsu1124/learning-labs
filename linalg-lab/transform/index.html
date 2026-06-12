@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="矩阵与线性变换深入教程：2×2 变换可视化操场、矩阵乘法即复合、行列式与面积、秩与线性相关、神经网络里的 Wx+b。">
+<meta property="og:title" content="矩阵与线性变换 · LINALG LAB">
+<meta property="og:description" content="矩阵与线性变换深入教程：2×2 变换可视化操场、矩阵乘法即复合、行列式与面积、秩与线性相关、神经网络里的 Wx+b。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>矩阵与线性变换 · LINALG LAB</title>
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
+<script defer src="/assets/term.js"></script>
+<script defer src="/assets/secnav.js"></script>
+<script src="/assets/quiz.js"></script>
+<script defer src="/assets/tutorial-nav.js"></script>
+<style>
+  :root{
+    --bg:#0a0b10;
+    --bg2:#0f1118;
+    --panel:#13151f;
+    --panel-hi:#1a1d29;
+    --line:#262a38;
+    --ink:#dfe3ec;
+    --muted:#8a90a3;
+    --faint:#565c70;
+    --violet:#b08aff;
+    --violet-dim:#37284f;
+    --teal:#4fe3c1;
+    --teal-dim:#1f4d44;
+    --amber:#ffb648;
+    --amber-dim:#5a4422;
+    --rose:#ff7a85;
+    --rose-dim:#52262b;
+    --blue:#8aa9ff;
+    --blue-dim:#27314f;
+    --display:'Syne',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+    --accent:var(--amber);
+    --accent-dim:var(--amber-dim);
+    --accent-em:var(--teal);
+    --hero-glow-1:rgba(255,182,72,.08);
+    --hero-glow-2:rgba(79,227,193,.05);
+  }
+
+  .lab-canvas{width:100%;border:1px solid var(--line);border-radius:12px;background:var(--bg2);display:block}
+  .readout{font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:12px;line-height:1.9}
+  .readout b{color:var(--amber)}
+  .readout .ok{color:var(--teal)}
+  .readout .bad{color:var(--rose)}
+
+  .sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 24px;margin:14px 0 16px}
+  .sld{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .sld label{min-width:24px}
+  .sld input{flex:1;accent-color:var(--amber)}
+  .sld .val{min-width:42px;text-align:right;color:var(--ink)}
+
+  .mtx-show{display:flex;gap:28px;flex-wrap:wrap;align-items:center;font-family:var(--mono);
+    font-size:14px;color:var(--muted);margin-top:6px}
+  .mtx-show .m{background:var(--panel-hi);border:1px solid var(--line);border-radius:8px;
+    padding:10px 16px;white-space:pre;line-height:1.7}
+  .mtx-show .m .e1{color:var(--teal)}
+  .mtx-show .m .e2{color:var(--violet)}
+
+  .codeblock{font-family:var(--mono);font-size:12.5px;background:var(--bg2);border:1px solid var(--line);
+    border-radius:12px;padding:16px 18px;overflow-x:auto;line-height:1.8;margin-top:14px;white-space:pre}
+  .codeblock .k{color:var(--blue)}
+  .codeblock .s{color:var(--teal)}
+  .codeblock .c{color:var(--faint)}
+  .codeblock .n{color:var(--amber)}
+</style>
+<link rel="stylesheet" href="/assets/tutorial.css">
+</head>
+<body data-tutorial="transform">
+<a class="lab-home" href="/linalg-lab/" title="返回 linalg lab">←&nbsp;linalg&nbsp;lab</a>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">// <a href="/linalg-lab/">linalg lab</a> · deep dive 02</div>
+    <h1 class="hero"><span class="b">MATRIX</span><span class="b">&nbsp;=&nbsp;MAP</span></h1>
+    <div class="sub">矩阵与线性变换 —— 看见矩阵把<b>整个平面</b>怎么折腾，行列式、秩、Wx+b 一并打通</div>
+  </header>
+
+  <!-- ============ 01 变换操场 ============ -->
+  <section id="playground">
+    <div class="secnum">01 / THE PLAYGROUND</div>
+    <h2>一个 2×2 矩阵，<em>搬动整个平面</em></h2>
+    <p>读懂矩阵的钥匙只有一句话：<b>矩阵的每一列，是基向量变换后落脚的位置</b>。<span class="hl">第 1 列 = e₁(1,0) 去哪了</span>，<span class="hl-v">第 2 列 = e₂(0,1) 去哪了</span>——确定了这两支箭，整个平面上每个点的去向就全部确定（这就是"线性"的含义）。点预设、拖滑杆，看网格和单位方块怎么变👇</p>
+
+    <div class="panel">
+      <div class="panel-label">playground · 点预设或拖滑杆，实时变换</div>
+      <div class="toggle-grp" id="preset-tabs">
+        <button data-p="id">恒等</button>
+        <button class="active" data-p="rot">旋转 45°</button>
+        <button data-p="scale">拉伸</button>
+        <button data-p="shear">剪切</button>
+        <button data-p="reflect">反射</button>
+        <button data-p="sing">压扁（奇异）</button>
+      </div>
+      <div class="sliders">
+        <div class="sld"><label>a</label><input type="range" id="ma" min="-2" max="2" step="0.05" value="0.71"><span class="val" id="mav"></span></div>
+        <div class="sld"><label>b</label><input type="range" id="mb" min="-2" max="2" step="0.05" value="-0.71"><span class="val" id="mbv"></span></div>
+        <div class="sld"><label>c</label><input type="range" id="mc" min="-2" max="2" step="0.05" value="0.71"><span class="val" id="mcv"></span></div>
+        <div class="sld"><label>d</label><input type="range" id="md" min="-2" max="2" step="0.05" value="0.71"><span class="val" id="mdv"></span></div>
+      </div>
+      <canvas class="lab-canvas" id="tf-canvas" height="360"></canvas>
+      <div class="mtx-show">
+        <div class="m" id="mtx-text"></div>
+        <div class="readout" id="tf-read" style="margin-top:0"></div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="t">为什么叫"线性"变换</div>
+      <p>线性变换保两件事：<b>原点不动</b>、<b>直线还是直线且等距刻度不变</b>（网格变形后依然是平行等距的网格）。代数上即 <code>A(u+v) = Au+Av</code>、<code>A(kv) = kAv</code>——变换"尊重"加法和数乘，这正是上一篇里向量空间仅有的两个操作。</p>
+    </div>
+  </section>
+
+  <!-- ============ 02 复合 ============ -->
+  <section id="compose">
+    <div class="secnum">02 / COMPOSITION</div>
+    <h2>矩阵乘法 = <em>变换接力，顺序有讲究</em></h2>
+    <p>两个矩阵相乘 <code>AB</code>，意思是"先做 B，再做 A"（离向量近的先执行：<code>A(Bx)</code>）。矩阵乘法的一切怪规则——为什么行乘列、为什么 <span class="hl-r">AB ≠ BA</span>——都是"变换复合"的自然结果。下面用<b>旋转 45°（R）</b>和<b>剪切（S）</b>两个动作做实验，切换执行顺序👇</p>
+
+    <div class="panel">
+      <div class="panel-label">experiment · 同样两个动作，不同顺序</div>
+      <div class="toggle-grp" id="comp-tabs">
+        <button class="active" data-o="0">R·S — 先剪切，再旋转</button>
+        <button data-o="1">S·R — 先旋转，再剪切</button>
+      </div>
+      <canvas class="lab-canvas" id="comp-canvas" height="320"></canvas>
+      <div class="mtx-show">
+        <div class="m" id="comp-mtx"></div>
+        <div class="readout" id="comp-read" style="margin-top:0"></div>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">深度网络 = 一长串复合</div>
+      <p>一个 N 层网络的前向传播就是 <code>W₃·σ(W₂·σ(W₁x))</code> 式的接力。注意中间夹着的<b>非线性激活 σ</b>非常关键：没有它，<code>W₃W₂W₁</code> 可以预先乘成一个矩阵——<b>一百层线性层等价于一层</b>，网络再深也只会画直线边界。深度学习的表达力 = 线性变换 × 非线性弯折的交替。</p>
+    </div>
+  </section>
+
+  <!-- ============ 03 行列式与秩 ============ -->
+  <section id="det">
+    <div class="secnum">03 / DETERMINANT &amp; RANK</div>
+    <h2>行列式与秩：<em>变换的"体检报告"</em></h2>
+    <p>回到第 01 节的操场，其实读数里一直显示着一项 <b>det（行列式）</b>。对 2×2 矩阵，<code>det = ad − bc</code>，它的几何含义干净利落：<span class="hl-a">单位方块变换后的面积倍数</span>（带符号：负数 = 平面被翻了个面）。</p>
+
+    <div class="panel">
+      <div class="panel-label">cheatsheet · det 一眼读出变换的健康状况</div>
+      <div class="codeblock"><span class="c">// 行列式 det(A) 的速读表</span>
+det = <span class="n">2</span>    <span class="c">→ 面积放大 2 倍</span>
+det = <span class="n">1</span>    <span class="c">→ 面积不变（纯旋转/剪切）</span>
+det = <span class="n">-1</span>   <span class="c">→ 面积不变，但平面被镜面翻转</span>
+det = <span class="n">0.1</span>  <span class="c">→ 压得很扁，数值上开始危险（病态）</span>
+det = <span class="bad">0</span>    <span class="c">→ 压扁成线/点：列向量线性相关，秩 &lt; 2，不可逆</span></div>
+    </div>
+
+    <p>det = 0 正是主页讲过的<b>线性相关</b>在矩阵身上的表现：两列共线 → e₁ 和 e₂ 落到同一条直线上 → 整个平面被压进这条线 → <b>秩 1</b>。压缩丢失的维度无法恢复，所以<span class="hl-r">det = 0 ⇔ 不可逆 ⇔ 列线性相关 ⇔ 秩亏</span>，四种说法一件事。在操场里点"压扁（奇异）"预设可以亲眼看到。</p>
+
+    <div class="callout teal">
+      <div class="t">逆矩阵：变换的"撤销键"</div>
+      <p>A⁻¹ 是把 A 的动作精确倒放的矩阵：<code>A⁻¹A = I</code>（恒等）。解方程组 <code>Ax = b</code> 概念上就是 <code>x = A⁻¹b</code>——"是谁被 A 变成了 b？"。但工程上<b>几乎从不显式求逆</b>：数值不稳定且浪费，库函数都用分解法（LU/QR）直接解。</p>
+    </div>
+  </section>
+
+  <!-- ============ 04 Wx+b ============ -->
+  <section id="nn">
+    <div class="secnum">04 / NEURAL NETWORKS</div>
+    <h2>回到 AI：<em>Wx + b 到底在干嘛</em></h2>
+    <p>现在重新读神经网络的全连接层，每个符号都有了画面：</p>
+
+    <div class="panel">
+      <div class="panel-label">anatomy · 一层网络的逐符号解读</div>
+      <div class="codeblock">h = ReLU( <span class="n">W</span><span class="k">x</span> + <span class="s">b</span> )
+
+<span class="n">W</span>  <span class="c">→ 线性变换：旋转/拉伸/压缩输入空间，把"有用的方向"拉开、没用的压扁</span>
+<span class="s">b</span>  <span class="c">→ 平移：线性变换动不了原点，加个偏置补上（仿射变换）</span>
+ReLU <span class="c">→ 非线性弯折：负的归零。没有它，再多层也只是一个矩阵（见 02 节）</span>
+
+<span class="c">// 维度对账：输入 768 维 → 输出 3072 维</span>
+<span class="c">// W: (3072, 768)   x: (768,)   b: (3072,)   h: (3072,)</span></div>
+    </div>
+
+    <div class="callout violet">
+      <div class="t">batch 也是矩阵乘</div>
+      <p>一次喂 32 条样本？把它们按列（或行）摞成矩阵 X，<code>WX</code> 一次乘法同时变换 32 个向量——<b>矩阵 × 矩阵 = 一批向量同时过同一个变换</b>。GPU 的并行算力正好吃这碗饭，这就是 batch 训练快的线性代数原因。</p>
+    </div>
+  </section>
+
+  <!-- ============ 05 测验 ============ -->
+  <section id="quiz">
+    <div class="secnum">05 / QUIZ</div>
+    <h2>随堂测验：<em>检验一下</em></h2>
+    <p>5 道题。答错没关系，解析比答案重要。</p>
+
+    <div class="panel">
+      <div class="panel-label">quiz · 点击选项作答</div>
+      <div id="quiz-list"></div>
+      <div class="quiz-score" id="quiz-score"></div>
+    </div>
+  </section>
+
+  <!-- ============ 继续深入 ============ -->
+  <section id="next">
+    <div class="secnum">→ / KEEP GOING</div>
+    <h2>继续<em>深入</em></h2>
+    <div class="sib-grid" data-tutorial-siblings></div>
+  </section>
+
+</div>
+
+<footer>
+  <a href="/linalg-lab/">← linalg lab</a> &nbsp;·&nbsp; <a href="/">~/labs</a> &nbsp;·&nbsp; transform deep dive
+</footer>
+
+<script>
+/* ---------- canvas helpers ---------- */
+function setupCanvas(canvas, h){
+  const W = canvas.clientWidth;
+  canvas.width = W * devicePixelRatio; canvas.height = h * devicePixelRatio;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  return {ctx, W, H:h};
+}
+function arrow(ctx, x0, y0, x1, y1, color, w){
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = w || 2.5;
+  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+  const ang = Math.atan2(y1-y0, x1-x0);
+  ctx.beginPath();
+  ctx.moveTo(x1,y1);
+  ctx.lineTo(x1-9*Math.cos(ang-.4), y1-9*Math.sin(ang-.4));
+  ctx.lineTo(x1-9*Math.cos(ang+.4), y1-9*Math.sin(ang+.4));
+  ctx.closePath(); ctx.fill();
+}
+const fmt = x => {
+  const r = Math.round(x*100)/100;
+  return (Object.is(r,-0) ? 0 : r).toString();
+};
+
+/* 画一个被矩阵 M=[[a,b],[c,d]] 变换的场景：网格 + 单位方块 + 基向量 */
+function drawTransform(canvas, M, h){
+  const {ctx,W,H} = setupCanvas(canvas, h);
+  const cx = W/2, cy = H/2, U = 52;
+  const [[a,b],[c,d]] = M;
+  ctx.clearRect(0,0,W,H);
+  const p = (x,y) => [cx + (a*x+b*y)*U, cy - (c*x+d*y)*U];   // 变换后再投屏
+  const p0 = (x,y) => [cx + x*U, cy - y*U];                  // 原始坐标投屏
+  // 原始网格（极淡）
+  ctx.strokeStyle = 'rgba(38,42,56,.7)'; ctx.lineWidth = 1;
+  for(let i=-6;i<=6;i++){
+    ctx.beginPath(); ctx.moveTo(...p0(i,-4)); ctx.lineTo(...p0(i,4)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(...p0(-6,i)); ctx.lineTo(...p0(6,i)); ctx.stroke();
+  }
+  // 变换后的网格
+  ctx.strokeStyle = 'rgba(255,182,72,.28)';
+  for(let i=-6;i<=6;i++){
+    ctx.beginPath(); ctx.moveTo(...p(i,-6)); ctx.lineTo(...p(i,6)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(...p(-6,i)); ctx.lineTo(...p(6,i)); ctx.stroke();
+  }
+  // 原始单位方块（虚线）
+  ctx.strokeStyle = '#565c70'; ctx.setLineDash([4,4]); ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(...p0(0,0)); ctx.lineTo(...p0(1,0)); ctx.lineTo(...p0(1,1)); ctx.lineTo(...p0(0,1)); ctx.closePath(); ctx.stroke();
+  ctx.setLineDash([]);
+  // 变换后的方块（填充）
+  ctx.fillStyle = 'rgba(255,182,72,.16)'; ctx.strokeStyle = '#ffb648'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(...p(0,0)); ctx.lineTo(...p(1,0)); ctx.lineTo(...p(1,1)); ctx.lineTo(...p(0,1)); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  // 基向量的去向 = 矩阵两列
+  arrow(ctx, cx, cy, ...p(1,0), '#4fe3c1', 3);
+  arrow(ctx, cx, cy, ...p(0,1), '#b08aff', 3);
+}
+
+/* ================= 01 playground ================= */
+const presets = {
+  id:     [1,0,0,1],
+  rot:    [0.71,-0.71,0.71,0.71],
+  scale:  [1.6,0,0,0.6],
+  shear:  [1,1,0,1],
+  reflect:[-1,0,0,1],
+  sing:   [1,0.5,0.6,0.3]      // 第 2 列 = 第 1 列 × 0.5 → det=0
+};
+const sliderIds = ['ma','mb','mc','md'];
+const tfCanvas = document.getElementById('tf-canvas');
+function currentM(){
+  const [a,b,c,d] = sliderIds.map(id => +document.getElementById(id).value);
+  return [[a,b],[c,d]];
+}
+function renderTF(){
+  const M = currentM();
+  const [[a,b],[c,d]] = M;
+  sliderIds.forEach((id,i) => {
+    document.getElementById(id+'v').textContent = fmt([a,b,c,d][i]);
+  });
+  drawTransform(tfCanvas, M, 360);
+  document.getElementById('mtx-text').innerHTML =
+    'A = ⎡ <span class="e1">'+fmt(a)+'</span>  <span class="e2">'+fmt(b)+'</span> ⎤\n' +
+    '    ⎣ <span class="e1">'+fmt(c)+'</span>  <span class="e2">'+fmt(d)+'</span> ⎦';
+  const det = a*d - b*c;
+  const status = Math.abs(det) < 0.03
+    ? '<span class="bad">det ≈ 0 → 平面被压扁，秩 ≤ 1，不可逆</span>'
+    : Math.abs(det) < 0.2
+      ? '<span class="bad">det 很小 → 接近奇异（病态）</span>'
+      : '<span class="ok">满秩，可逆</span>';
+  document.getElementById('tf-read').innerHTML =
+    '<span style="color:#4fe3c1">青色箭头</span> = e₁ 的去向（第 1 列） &nbsp; <span style="color:#b08aff">紫色箭头</span> = e₂ 的去向（第 2 列）' +
+    '<br>det = ad − bc = <b>' + fmt(det) + '</b>（方块面积 ×' + fmt(Math.abs(det)) + (det < -0.001 ? '，且翻面' : '') + '）&nbsp;·&nbsp;' + status;
+}
+sliderIds.forEach(id => document.getElementById(id).addEventListener('input', () => {
+  document.querySelectorAll('#preset-tabs button').forEach(x=>x.classList.remove('active'));
+  renderTF();
+}));
+document.getElementById('preset-tabs').addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  document.querySelectorAll('#preset-tabs button').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active');
+  presets[btn.dataset.p].forEach((v,i) => { document.getElementById(sliderIds[i]).value = v; });
+  renderTF();
+});
+renderTF();
+
+/* ================= 02 composition ================= */
+const R = [[0.71,-0.71],[0.71,0.71]];   // 旋转 45°
+const S = [[1,1],[0,1]];                // 剪切
+const mul = (A,B) => [
+  [A[0][0]*B[0][0]+A[0][1]*B[1][0], A[0][0]*B[0][1]+A[0][1]*B[1][1]],
+  [A[1][0]*B[0][0]+A[1][1]*B[1][0], A[1][0]*B[0][1]+A[1][1]*B[1][1]]
+];
+const compCanvas = document.getElementById('comp-canvas');
+const compCases = [
+  {M: mul(R,S), name:'R·S', read:'先做 S（方块被推成平行四边形），再整体旋转 45°。'},
+  {M: mul(S,R), name:'S·R', read:'先旋转 45°，再剪切——结果和左边明显不同。<b>矩阵乘法不交换</b>，因为"先穿袜子再穿鞋"≠"先穿鞋再穿袜子"。'}
+];
+function renderComp(i){
+  const c = compCases[i];
+  drawTransform(compCanvas, c.M, 320);
+  const [[a,b],[cc,d]] = c.M;
+  document.getElementById('comp-mtx').innerHTML =
+    c.name + ' = ⎡ <span class="e1">'+fmt(a)+'</span>  <span class="e2">'+fmt(b)+'</span> ⎤\n' +
+    '      ⎣ <span class="e1">'+fmt(cc)+'</span>  <span class="e2">'+fmt(d)+'</span> ⎦';
+  document.getElementById('comp-read').innerHTML = c.read;
+}
+document.getElementById('comp-tabs').addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  document.querySelectorAll('#comp-tabs button').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active');
+  renderComp(+btn.dataset.o);
+});
+renderComp(0);
+addEventListener('resize', () => {
+  renderTF();
+  const cur = document.querySelector('#comp-tabs button.active');
+  renderComp(+(cur ? cur.dataset.o : 0));
+});
+
+/* ================= 05 quiz ================= */
+const quiz = [
+  {q:'矩阵 A = [[0,−1],[1,0]]。e₁=(1,0) 被它变到哪里？这是什么变换？',
+   opts:['(0,1)，逆时针旋转 90°','(1,0)，没动','(0,−1)，反射','(−1,0)，旋转 180°'],
+   ans:0,
+   exp:'<b>第 1 列就是 e₁ 的去向</b>：(0,1)。e₂ 去了第 2 列 (−1,0)。两支基向量都逆时针转了 90°，所以整个平面逆时针旋转 90°。读矩阵先读列！'},
+  {q:'为什么矩阵乘法一般 AB ≠ BA？',
+   opts:['因为计算精度有限','因为矩阵乘法是变换的复合，"先做 B 再做 A"和"先做 A 再做 B"本来就是两回事','只有方阵才不相等','这是数学家的人为规定'],
+   ans:1,
+   exp:'先剪切再旋转 ≠ 先旋转再剪切——02 节的实验亲眼可见。<b>乘法顺序 = 动作顺序</b>，不交换是几何事实，不是代数怪癖。'},
+  {q:'det(A) = 0 时，下列哪个说法不成立？',
+   opts:['A 的列向量线性相关','A 把平面压扁到一条线（或一个点）上','A 不可逆','只要换个算法仍能精确恢复被 A 变换前的向量'],
+   ans:3,
+   exp:'det=0 意味着压缩到更低维度，<b>不同的输入被压到了同一个输出上</b>，信息永久丢失——任何算法都无法唯一恢复。前三条是 det=0 的等价说法。'},
+  {q:'去掉激活函数后，一个 100 层的全连接网络等价于什么？',
+   opts:['一个 100 倍宽的网络','一个单层线性变换（所有 W 可以乘成一个矩阵）','无法计算','一个卷积网络'],
+   ans:1,
+   exp:'线性变换的复合还是线性变换：W₁₀₀⋯W₂W₁ 可以预先乘成一个矩阵 M。<b>深度的意义来自层间的非线性弯折</b>，这是"深度"学习成立的前提。'},
+  {q:'训练时一次喂入 batch=64 条 768 维样本过一个 (3072×768) 的层，计算上发生的是？',
+   opts:['循环 64 次矩阵×向量','一次 (3072×768)·(768×64) 的矩阵乘法，64 个向量同时变换','64 次求逆','把 batch 拼成一个 49152 维向量'],
+   ans:1,
+   exp:'把 64 个输入按列摞成 768×64 的矩阵 X，<b>WX 一次完成全部变换</b>。矩阵×矩阵 = 一批向量同时过同一个变换，GPU 的吞吐优势全在这一步兑现。'}
+];
+Quiz.render(document.getElementById('quiz-list'), document.getElementById('quiz-score'), quiz, {
+  final: (correct, total) =>
+    correct === total ? ' 🎉 全对！矩阵在你眼里已经会动了'
+    : correct >= 3 ? ' 👍 不错，回头看看错题的解析'
+    : ' 💪 回操场把每个预设都点一遍'
+});
+</script>
+</body>
+</html>

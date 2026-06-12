@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="向量深入教程：加法与数乘的可视化、点积与投影、L1/L2 范数、余弦相似度计算器与 embedding 检索的工作原理。">
+<meta property="og:title" content="向量与相似度 · LINALG LAB">
+<meta property="og:description" content="向量深入教程：加法与数乘的可视化、点积与投影、L1/L2 范数、余弦相似度计算器与 embedding 检索的工作原理。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>向量与相似度 · LINALG LAB</title>
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
+<script defer src="/assets/term.js"></script>
+<script defer src="/assets/secnav.js"></script>
+<script src="/assets/quiz.js"></script>
+<script defer src="/assets/tutorial-nav.js"></script>
+<style>
+  :root{
+    --bg:#0a0b10;
+    --bg2:#0f1118;
+    --panel:#13151f;
+    --panel-hi:#1a1d29;
+    --line:#262a38;
+    --ink:#dfe3ec;
+    --muted:#8a90a3;
+    --faint:#565c70;
+    --violet:#b08aff;
+    --violet-dim:#37284f;
+    --teal:#4fe3c1;
+    --teal-dim:#1f4d44;
+    --amber:#ffb648;
+    --amber-dim:#5a4422;
+    --rose:#ff7a85;
+    --rose-dim:#52262b;
+    --blue:#8aa9ff;
+    --blue-dim:#27314f;
+    --display:'Syne',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+    --accent:var(--teal);
+    --accent-dim:var(--teal-dim);
+    --accent-em:var(--violet);
+    --hero-glow-1:rgba(79,227,193,.09);
+    --hero-glow-2:rgba(176,138,255,.05);
+  }
+
+  .lab-canvas{width:100%;border:1px solid var(--line);border-radius:12px;background:var(--bg2);display:block}
+  .readout{font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:12px;line-height:1.9}
+  .readout b{color:var(--teal)}
+  .readout .neg{color:var(--rose)}
+  .readout .v1c{color:var(--teal)}
+  .readout .v2c{color:var(--amber)}
+  .readout .v3c{color:var(--violet)}
+
+  .sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 24px;margin-bottom:16px}
+  .sld{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .sld label{min-width:62px}
+  .sld input{flex:1;accent-color:var(--teal)}
+  .sld .val{min-width:42px;text-align:right;color:var(--ink)}
+  .sld.amber input{accent-color:var(--amber)}
+
+  /* norm compare */
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:680px){.cmp{grid-template-columns:1fr}}
+  .cmp-card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:18px}
+  .cmp-card h3{font-family:var(--display);font-size:16px;margin-bottom:10px}
+  .cmp-card.l1{border-color:var(--amber-dim)}
+  .cmp-card.l1 h3{color:var(--amber)}
+  .cmp-card.l2{border-color:var(--teal-dim)}
+  .cmp-card.l2 h3{color:var(--teal)}
+  .cmp-card ul{list-style:none;margin-top:10px}
+  .cmp-card li{font-size:13.5px;color:var(--muted);padding:6px 0;border-top:1px dashed var(--line);line-height:1.6}
+  .cmp-card li b{color:var(--ink)}
+  .cmp-card .fx{font-family:var(--mono);font-size:13px;color:var(--ink);background:var(--panel-hi);
+    border:1px solid var(--line);border-radius:8px;padding:9px 12px}
+
+  /* word chips */
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+  .chip{font-family:var(--body);font-size:14px;background:var(--panel-hi);color:var(--muted);
+    border:1.5px solid var(--line);border-radius:999px;padding:8px 18px;cursor:pointer;transition:all .15s}
+  .chip:hover{border-color:var(--muted);color:var(--ink)}
+  .chip.sel{border-color:var(--teal);background:var(--teal-dim);color:var(--teal)}
+  .sim-out{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 20px;
+    font-size:14.5px;color:var(--muted);line-height:1.9;min-height:60px}
+  .sim-out b{color:var(--ink)}
+  .sim-out .calc{font-family:var(--mono);font-size:12.5px;color:var(--teal);background:var(--panel-hi);
+    border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:8px 0;overflow-x:auto;white-space:pre}
+  .sim-bar{height:10px;border-radius:5px;background:var(--panel-hi);border:1px solid var(--line);
+    overflow:hidden;margin-top:10px}
+  .sim-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--violet));transition:width .4s}
+
+  .codeblock{font-family:var(--mono);font-size:12.5px;background:var(--bg2);border:1px solid var(--line);
+    border-radius:12px;padding:16px 18px;overflow-x:auto;line-height:1.8;margin-top:14px;white-space:pre}
+  .codeblock .k{color:var(--blue)}
+  .codeblock .s{color:var(--teal)}
+  .codeblock .c{color:var(--faint)}
+  .codeblock .n{color:var(--amber)}
+</style>
+<link rel="stylesheet" href="/assets/tutorial.css">
+</head>
+<body data-tutorial="vectors">
+<a class="lab-home" href="/linalg-lab/" title="返回 linalg lab">←&nbsp;linalg&nbsp;lab</a>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">// <a href="/linalg-lab/">linalg lab</a> · deep dive 01</div>
+    <h1 class="hero"><span class="b">VECTOR</span><span class="b">&nbsp;&amp;&nbsp;SIM</span></h1>
+    <div class="sub">向量与相似度 —— 加法、数乘、点积、范数到<b>余弦相似度</b>，embedding 检索的全部数学</div>
+  </header>
+
+  <!-- ============ 01 加法与数乘 ============ -->
+  <section id="ops">
+    <div class="secnum">01 / ADD &amp; SCALE</div>
+    <h2>只有两种合法操作：<em>相加、伸缩</em></h2>
+    <p>向量空间里允许的基本动作只有两个：<span class="hl">向量加法</span>（对应分量相加，几何上是"首尾相接"）和<span class="hl-a">数乘</span>（每个分量乘同一个数，几何上是伸缩/反向）。一切"线性"的东西——线性组合、线性变换、线性相关——都是这两个动作搭出来的。拖动滑杆，看 <span class="v1c" style="color:var(--teal)">v₁</span> + <span style="color:var(--amber)">v₂</span> 的平行四边形怎么变👇</p>
+
+    <div class="panel">
+      <div class="panel-label">playground · 拖动滑杆改变两个向量</div>
+      <div class="sliders">
+        <div class="sld"><label>v₁.x</label><input type="range" id="ax" min="-3" max="3" step="0.1" value="2"><span class="val" id="axv">2.0</span></div>
+        <div class="sld"><label>v₁.y</label><input type="range" id="ay" min="-3" max="3" step="0.1" value="0.5"><span class="val" id="ayv">0.5</span></div>
+        <div class="sld amber"><label>v₂.x</label><input type="range" id="bx" min="-3" max="3" step="0.1" value="0.6"><span class="val" id="bxv">0.6</span></div>
+        <div class="sld amber"><label>v₂.y</label><input type="range" id="by" min="-3" max="3" step="0.1" value="1.6"><span class="val" id="byv">1.6</span></div>
+      </div>
+      <canvas class="lab-canvas" id="add-canvas" height="320"></canvas>
+      <div class="readout" id="add-read"></div>
+    </div>
+
+    <div class="callout">
+      <div class="t">为什么只关心这两个动作</div>
+      <p>因为它们是<b>在任何维度都成立</b>的操作。1536 维的 embedding 没法画，但 <code>0.5·v猫 + 0.5·v狗</code> 照样算得出来——著名的 word2vec 算式 <b>king − man + woman ≈ queen</b>，用的就只有加法和数乘。</p>
+    </div>
+  </section>
+
+  <!-- ============ 02 点积 ============ -->
+  <section id="dot">
+    <div class="secnum">02 / DOT PRODUCT</div>
+    <h2>点积：<em>把"有多同向"变成一个数</em></h2>
+    <p>点积的代数定义平平无奇：<code>a·b = a₁b₁ + a₂b₂ + …</code>，对应分量相乘再加起来。但它的几何身份才是重点：<b>a·b = |a||b|cosθ</b>——夹角越小值越大，垂直为零，反向为负。它还给出<span class="hl-v">投影</span>：b 在 a 方向上的"影子"长度。拖动角度，盯住数值的正负变化👇</p>
+
+    <div class="panel">
+      <div class="panel-label">playground · 固定 v₁，旋转 v₂，看点积与投影</div>
+      <div class="sliders">
+        <div class="sld amber"><label>v₂ 角度</label><input type="range" id="theta" min="0" max="360" step="1" value="40"><span class="val" id="thetav">40°</span></div>
+      </div>
+      <canvas class="lab-canvas" id="dot-canvas" height="320"></canvas>
+      <div class="readout" id="dot-read"></div>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">AI 里点积出现的地方</div>
+      <p><b>注意力机制</b>：每个 query 向量和所有 key 向量做点积，得到"该关注谁"的分数表——Transformer 的核心公式 <code>softmax(QKᵀ/√d)V</code> 里，<code>QKᵀ</code> 就是一大批点积同时算；<b>向量检索</b>：把问题 embedding 和库里所有文档 embedding 做点积/余弦，取分数最高的几条，就是 RAG 的"检索"。</p>
+    </div>
+  </section>
+
+  <!-- ============ 03 范数 ============ -->
+  <section id="norm">
+    <div class="secnum">03 / NORMS</div>
+    <h2>范数：<em>向量"有多大"的几种量法</em></h2>
+    <p>范数（norm）就是向量长度的推广。最常用的两种量法走的是不同哲学：</p>
+
+    <div class="panel">
+      <div class="panel-label">contrast · 同一个向量 v = [3, -4] 的两种长度</div>
+      <div class="cmp">
+        <div class="cmp-card l1">
+          <h3>L1 范数 · 曼哈顿距离</h3>
+          <div class="fx">‖v‖₁ = |3| + |−4| = 7</div>
+          <ul>
+            <li><b>量法</b>：所有分量绝对值<b>相加</b>，像在棋盘街道上走路</li>
+            <li><b>性格</b>：对每个分量"一视同仁"</li>
+            <li><b>AI 用途</b>：L1 正则化逼参数<b>变成精确的 0</b> → 稀疏模型、特征选择</li>
+          </ul>
+        </div>
+        <div class="cmp-card l2">
+          <h3>L2 范数 · 欧氏距离</h3>
+          <div class="fx">‖v‖₂ = √(3² + 4²) = 5</div>
+          <ul>
+            <li><b>量法</b>：平方和开根号，就是<b>直线距离</b>（勾股定理）</li>
+            <li><b>性格</b>：重罚大分量（平方放大）</li>
+            <li><b>AI 用途</b>：L2 正则化（weight decay）把参数<b>整体压小</b>但不归零；梯度裁剪按 L2 范数缩放</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">归一化：把长度抹平</div>
+      <p>向量除以自己的 L2 范数，得到<b>单位向量</b>（长度 1，方向不变）。embedding 入库前常做这一步——归一化之后，<b>点积就等于余弦相似度</b>，比较时只剩"方向"这一个变量，长度差异不再干扰排序。</p>
+    </div>
+  </section>
+
+  <!-- ============ 04 余弦相似度 ============ -->
+  <section id="cosine">
+    <div class="secnum">04 / COSINE SIMILARITY</div>
+    <h2>余弦相似度：<em>embedding 世界的通用尺子</em></h2>
+    <p>把 <code>a·b = |a||b|cosθ</code> 倒过来，就得到 <b>cosθ = a·b / (|a||b|)</b>：值域 [−1, 1]，1 = 同向，0 = 无关，−1 = 反向。它只看方向、不看长度，所以"一句长文"和"一句短文"也能公平比较。下面是 6 个词的玩具 embedding（4 维，维度含义：动物 / 宠物 / 财务 / 运动），<b>点击任意两个词</b>，看相似度怎么算出来👇</p>
+
+    <div class="panel">
+      <div class="panel-label">calculator · 选两个词，现场算余弦相似度</div>
+      <div class="chips" id="word-chips"></div>
+      <div class="sim-out" id="sim-out">点击上面任意<b>两个词</b>开始比较。</div>
+    </div>
+
+    <div class="callout violet">
+      <div class="t">从玩具到真实</div>
+      <p>真实 embedding 的维度是几百到几千，而且每一维<b>没有人类可读的含义</b>——它们是模型自己学出来的坐标系。但数学完全一样：把这里的 4 维换成 1536 维，循环多跑几圈而已。这就是为什么先在低维建立直觉如此划算。</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">code · 一次向量检索的全部代码</div>
+      <div class="codeblock"><span class="c"># RAG 检索的核心就这几行</span>
+<span class="k">def</span> cosine(a, b):
+    <span class="k">return</span> dot(a, b) / (norm(a) * norm(b))
+
+q = embed(<span class="s">"怎么退订会员？"</span>)            <span class="c"># 问题 → 向量</span>
+scores = [cosine(q, d) <span class="k">for</span> d <span class="k">in</span> docs]   <span class="c"># 和库里每条文档比方向</span>
+top3 = argsort(scores)[<span class="n">-3</span>:]             <span class="c"># 取最像的 3 条，塞给 LLM</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 05 测验 ============ -->
+  <section id="quiz">
+    <div class="secnum">05 / QUIZ</div>
+    <h2>随堂测验：<em>检验一下</em></h2>
+    <p>5 道题。答错没关系，解析比答案重要。</p>
+
+    <div class="panel">
+      <div class="panel-label">quiz · 点击选项作答</div>
+      <div id="quiz-list"></div>
+      <div class="quiz-score" id="quiz-score"></div>
+    </div>
+  </section>
+
+  <!-- ============ 继续深入 ============ -->
+  <section id="next">
+    <div class="secnum">→ / KEEP GOING</div>
+    <h2>继续<em>深入</em></h2>
+    <div class="sib-grid" data-tutorial-siblings></div>
+  </section>
+
+</div>
+
+<footer>
+  <a href="/linalg-lab/">← linalg lab</a> &nbsp;·&nbsp; <a href="/">~/labs</a> &nbsp;·&nbsp; vectors deep dive
+</footer>
+
+<script>
+/* ---------- shared canvas helpers ---------- */
+function setupCanvas(canvas, h){
+  const W = canvas.clientWidth;
+  canvas.width = W * devicePixelRatio; canvas.height = h * devicePixelRatio;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  return {ctx, W, H:h};
+}
+function axes(ctx, W, H, cx, cy){
+  ctx.strokeStyle = '#262a38'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy); ctx.moveTo(cx,0); ctx.lineTo(cx,H); ctx.stroke();
+}
+function arrow(ctx, x0, y0, x1, y1, color, w){
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = w || 2.5;
+  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+  const ang = Math.atan2(y1-y0, x1-x0);
+  ctx.beginPath();
+  ctx.moveTo(x1,y1);
+  ctx.lineTo(x1-10*Math.cos(ang-.4), y1-10*Math.sin(ang-.4));
+  ctx.lineTo(x1-10*Math.cos(ang+.4), y1-10*Math.sin(ang+.4));
+  ctx.closePath(); ctx.fill();
+}
+const fmt = x => (Math.round(x*100)/100).toFixed(2).replace(/\.?0+$/,'') || '0';
+
+/* ================= 01 add & scale ================= */
+const addCanvas = document.getElementById('add-canvas');
+const addRead = document.getElementById('add-read');
+const sliders = ['ax','ay','bx','by'].map(id => document.getElementById(id));
+function drawAdd(){
+  const [ax,ay,bx,by] = sliders.map(s => +s.value);
+  document.getElementById('axv').textContent = fmt(ax);
+  document.getElementById('ayv').textContent = fmt(ay);
+  document.getElementById('bxv').textContent = fmt(bx);
+  document.getElementById('byv').textContent = fmt(by);
+  const {ctx,W,H} = setupCanvas(addCanvas, 320);
+  const cx = W/2, cy = H/2, U = 42;
+  ctx.clearRect(0,0,W,H);
+  axes(ctx,W,H,cx,cy);
+  const p = v => [cx + v[0]*U, cy - v[1]*U];
+  const s = [ax+bx, ay+by];
+  // 平行四边形虚线
+  ctx.strokeStyle = '#565c70'; ctx.setLineDash([4,4]); ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(...p([ax,ay])); ctx.lineTo(...p(s));
+  ctx.moveTo(...p([bx,by])); ctx.lineTo(...p(s));
+  ctx.stroke(); ctx.setLineDash([]);
+  arrow(ctx, cx, cy, ...p([ax,ay]), '#4fe3c1');
+  arrow(ctx, cx, cy, ...p([bx,by]), '#ffb648');
+  arrow(ctx, cx, cy, ...p(s), '#b08aff', 3);
+  addRead.innerHTML =
+    '<span class="v1c">v₁ = ('+fmt(ax)+', '+fmt(ay)+')</span> &nbsp;+&nbsp; ' +
+    '<span class="v2c">v₂ = ('+fmt(bx)+', '+fmt(by)+')</span> &nbsp;=&nbsp; ' +
+    '<span class="v3c">v₁+v₂ = ('+fmt(ax+bx)+', '+fmt(ay+by)+')</span>' +
+    '<br>分量各加各的，几何上正好是平行四边形的对角线。把 v₂ 的滑杆拉成 v₁ 的倍数（如 v₂ = -v₁），对角线会发生什么？';
+}
+sliders.forEach(s => s.addEventListener('input', drawAdd));
+drawAdd();
+
+/* ================= 02 dot product ================= */
+const dotCanvas = document.getElementById('dot-canvas');
+const dotRead = document.getElementById('dot-read');
+const thetaSlider = document.getElementById('theta');
+function drawDot(){
+  const deg = +thetaSlider.value;
+  document.getElementById('thetav').textContent = deg + '°';
+  const {ctx,W,H} = setupCanvas(dotCanvas, 320);
+  const cx = W/2, cy = H/2, U = 56;
+  ctx.clearRect(0,0,W,H);
+  axes(ctx,W,H,cx,cy);
+  const v1 = [2.2, 0];                       // 固定沿 x 轴，方便看投影
+  const r = Math.PI*deg/180;
+  const v2 = [1.6*Math.cos(r), 1.6*Math.sin(r)];
+  const dot = v1[0]*v2[0] + v1[1]*v2[1];
+  const proj = dot / Math.hypot(...v1);      // v2 在 v1 上的投影长度
+  const p = v => [cx + v[0]*U, cy - v[1]*U];
+  // 投影段（沿 v1 方向）
+  const unit1 = [v1[0]/Math.hypot(...v1), v1[1]/Math.hypot(...v1)];
+  const pp = [unit1[0]*proj, unit1[1]*proj];
+  ctx.strokeStyle = '#b08aff'; ctx.lineWidth = 5; ctx.globalAlpha = .8;
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(...p(pp)); ctx.stroke();
+  ctx.globalAlpha = 1;
+  // 垂线虚线
+  ctx.strokeStyle = '#565c70'; ctx.setLineDash([4,4]); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(...p(v2)); ctx.lineTo(...p(pp)); ctx.stroke();
+  ctx.setLineDash([]);
+  arrow(ctx, cx, cy, ...p(v1), '#4fe3c1');
+  arrow(ctx, cx, cy, ...p(v2), '#ffb648');
+  const sign = dot > 0.01 ? '<b>'+fmt(dot)+' &gt; 0 · 偏同向</b>'
+             : dot < -0.01 ? '<span class="neg">'+fmt(dot)+' &lt; 0 · 偏反向</span>'
+             : fmt(dot)+' ≈ 0 · 垂直，互不相干';
+  dotRead.innerHTML =
+    '<span class="v1c">v₁=(2.2, 0)</span> · <span class="v2c">v₂=('+fmt(v2[0])+', '+fmt(v2[1])+')</span>' +
+    '<br>点积 v₁·v₂ = ' + sign +
+    '<br><span class="v3c">紫色粗线</span> = v₂ 在 v₁ 方向上的投影（长度 '+fmt(proj)+'）—— 点积 = 投影长度 × |v₁|。';
+}
+thetaSlider.addEventListener('input', drawDot);
+drawDot();
+addEventListener('resize', () => { drawAdd(); drawDot(); });
+
+/* ================= 04 cosine calculator ================= */
+/* 玩具 embedding，4 维：[动物, 宠物, 财务, 运动] */
+const words = [
+  {w:'猫',   v:[0.9, 0.8, 0.0, 0.1]},
+  {w:'狗',   v:[0.9, 0.9, 0.0, 0.3]},
+  {w:'老虎', v:[1.0, 0.1, 0.0, 0.2]},
+  {w:'发票', v:[0.0, 0.0, 0.95, 0.0]},
+  {w:'税率', v:[0.0, 0.0, 0.9, 0.05]},
+  {w:'篮球', v:[0.1, 0.0, 0.0, 0.95]}
+];
+const chipsEl = document.getElementById('word-chips');
+const simOut = document.getElementById('sim-out');
+let sel = [];
+words.forEach((item, i) => {
+  const b = document.createElement('button');
+  b.className = 'chip';
+  b.textContent = item.w;
+  b.addEventListener('click', () => {
+    if (sel.includes(i)) sel = sel.filter(x => x !== i);
+    else { sel.push(i); if (sel.length > 2) sel.shift(); }
+    [...chipsEl.children].forEach((c, j) => c.classList.toggle('sel', sel.includes(j)));
+    renderSim();
+  });
+  chipsEl.appendChild(b);
+});
+function renderSim(){
+  if (sel.length < 2) { simOut.innerHTML = '再选一个词。'; return; }
+  const A = words[sel[0]], B = words[sel[1]];
+  const dot = A.v.reduce((s, x, i) => s + x*B.v[i], 0);
+  const na = Math.hypot(...A.v), nb = Math.hypot(...B.v);
+  const cos = dot / (na*nb);
+  const verdict = cos > .85 ? '非常相似 —— 检索时会互相召回'
+    : cos > .4 ? '有点关系，但不算近邻'
+    : '基本无关 —— 在向量空间里住在不同街区';
+  simOut.innerHTML =
+    '<b>'+A.w+'</b> vs <b>'+B.w+'</b>' +
+    '<div class="calc">'+A.w+' = ['+A.v.join(', ')+']\n'+B.w+' = ['+B.v.join(', ')+']\n\n' +
+    'dot  = '+A.v.map((x,i)=>x+'×'+B.v[i]).join(' + ')+' = '+fmt(dot)+'\n' +
+    'cos  = '+fmt(dot)+' / ('+fmt(na)+' × '+fmt(nb)+') = <b>'+fmt(cos)+'</b></div>' +
+    verdict +
+    '<div class="sim-bar"><i style="width:'+Math.max(0, cos*100)+'%"></i></div>';
+}
+
+/* ================= 05 quiz ================= */
+const quiz = [
+  {q:'word2vec 的经典算式 king − man + woman ≈ queen，用到了哪些向量运算？',
+   opts:['点积和叉积','只有加法和数乘（线性组合）','矩阵求逆','特征值分解'],
+   ans:1,
+   exp:'减法 = 加上 (−1) 倍，所以整条算式只用了<b>加法和数乘</b>。语义的"方向差"（性别、时态…）可以用向量差表示，这是 embedding 最迷人的性质之一。'},
+  {q:'两个向量的点积等于 0，几何上说明什么？',
+   opts:['两个向量相等','两个向量垂直（正交），互相"不含对方的成分"','两个向量方向相反','其中一个一定是零向量'],
+   ans:1,
+   exp:'a·b = |a||b|cosθ，点积为 0（且都非零）意味着 cosθ = 0，即 θ = 90°。<b>正交 = 在对方方向上的投影为零</b>，彼此不携带对方的信息。'},
+  {q:'为什么 embedding 检索普遍用余弦相似度而不是直接用点积？',
+   opts:['余弦算得更快','余弦只比方向、不受向量长度影响，长短文本可公平比较','点积只能用于二维','余弦不需要做乘法'],
+   ans:1,
+   exp:'点积会被向量长度放大——长文档天然占便宜。<b>余弦 = 点积除以两个长度</b>，只留下方向信息。实践中常把向量先归一化，之后点积与余弦等价，还能算得快。'},
+  {q:'L1 正则化和 L2 正则化对参数的"性格"差异是？',
+   opts:['L1 把参数压成精确的 0（稀疏），L2 把参数整体压小但不归零','L1 让模型更大，L2 让模型更小','两者完全一样','L1 只用于图像，L2 只用于文本'],
+   ans:0,
+   exp:'L1 的"对每个分量一视同仁"使小参数被直接推到 0 → <b>稀疏化、特征选择</b>；L2 平方惩罚对接近 0 的参数几乎没有推力 → 参数<b>变小但保留</b>（weight decay）。'},
+  {q:'Transformer 注意力公式 softmax(QKᵀ/√d)V 中，QKᵀ 这一步在做什么？',
+   opts:['把矩阵转置着玩','每个 query 向量和每个 key 向量做点积，批量算出"该关注谁"的分数','计算梯度','把向量归一化'],
+   ans:1,
+   exp:'QKᵀ 的第 (i,j) 个元素 = 第 i 个 query ⊙ 第 j 个 key——<b>一次矩阵乘法同时完成所有 token 两两之间的点积打分</b>。注意力的"相关性"判断，底层就是本节学的点积。'}
+];
+Quiz.render(document.getElementById('quiz-list'), document.getElementById('quiz-score'), quiz, {
+  final: (correct, total) =>
+    correct === total ? ' 🎉 全对！点积已经长在直觉里了'
+    : correct >= 3 ? ' 👍 不错，回头看看错题的解析'
+    : ' 💪 建议把 02 节的转盘再玩一遍'
+});
+</script>
+</body>
+</html>

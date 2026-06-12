@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="特征值与 SVD 深入教程：特征向量探测器、SVD 旋转-拉伸-旋转三步几何、PCA 二维点云降维实验、低秩近似与 LoRA 的参数账本。">
+<meta property="og:title" content="特征值与 SVD · LINALG LAB">
+<meta property="og:description" content="特征值与 SVD 深入教程：特征向量探测器、SVD 旋转-拉伸-旋转三步几何、PCA 二维点云降维实验、低秩近似与 LoRA 的参数账本。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>特征值与 SVD · LINALG LAB</title>
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
+<script defer src="/assets/term.js"></script>
+<script defer src="/assets/secnav.js"></script>
+<script src="/assets/quiz.js"></script>
+<script src="/assets/stepper.js"></script>
+<script defer src="/assets/tutorial-nav.js"></script>
+<style>
+  :root{
+    --bg:#0a0b10;
+    --bg2:#0f1118;
+    --panel:#13151f;
+    --panel-hi:#1a1d29;
+    --line:#262a38;
+    --ink:#dfe3ec;
+    --muted:#8a90a3;
+    --faint:#565c70;
+    --violet:#b08aff;
+    --violet-dim:#37284f;
+    --teal:#4fe3c1;
+    --teal-dim:#1f4d44;
+    --amber:#ffb648;
+    --amber-dim:#5a4422;
+    --rose:#ff7a85;
+    --rose-dim:#52262b;
+    --blue:#8aa9ff;
+    --blue-dim:#27314f;
+    --display:'Syne',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+    --accent:var(--rose);
+    --accent-dim:var(--rose-dim);
+    --accent-em:var(--violet);
+    --hero-glow-1:rgba(255,122,133,.09);
+    --hero-glow-2:rgba(176,138,255,.05);
+  }
+
+  .lab-canvas{width:100%;border:1px solid var(--line);border-radius:12px;background:var(--bg2);display:block}
+  .readout{font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:12px;line-height:1.9}
+  .readout b{color:var(--rose)}
+  .readout .hit{color:var(--teal)}
+
+  .sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 24px;margin-bottom:16px}
+  .sld{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .sld label{min-width:62px}
+  .sld input{flex:1;accent-color:var(--rose)}
+  .sld .val{min-width:42px;text-align:right;color:var(--ink)}
+
+  .svd-stage{font-family:var(--mono);font-size:12.5px;color:var(--muted);display:flex;gap:8px;
+    flex-wrap:wrap;align-items:center;justify-content:center;margin-bottom:14px}
+  .svd-stage .st{border:1.5px solid var(--line);border-radius:8px;padding:7px 13px;background:var(--bg2);transition:all .25s}
+  .svd-stage .st.lit{border-color:var(--rose);background:var(--rose-dim);color:var(--rose)}
+  .svd-stage .arr{color:var(--faint)}
+
+  .codeblock{font-family:var(--mono);font-size:12.5px;background:var(--bg2);border:1px solid var(--line);
+    border-radius:12px;padding:16px 18px;overflow-x:auto;line-height:1.8;margin-top:14px;white-space:pre}
+  .codeblock .k{color:var(--blue)}
+  .codeblock .s{color:var(--teal)}
+  .codeblock .c{color:var(--faint)}
+  .codeblock .n{color:var(--amber)}
+</style>
+<link rel="stylesheet" href="/assets/tutorial.css">
+</head>
+<body data-tutorial="decomposition">
+<a class="lab-home" href="/linalg-lab/" title="返回 linalg lab">←&nbsp;linalg&nbsp;lab</a>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">// <a href="/linalg-lab/">linalg lab</a> · deep dive 03</div>
+    <h1 class="hero"><span class="b">EIGEN</span><span class="b">&nbsp;&amp;&nbsp;SVD</span></h1>
+    <div class="sub">特征值与 SVD —— 找到变换中<b>不变的轴</b>，再用它压缩世界：PCA、低秩近似与 LoRA</div>
+  </header>
+
+  <!-- ============ 01 特征向量探测器 ============ -->
+  <section id="eigen">
+    <div class="secnum">01 / EIGENVECTOR HUNT</div>
+    <h2>特征向量：<em>亲手把它找出来</em></h2>
+    <p>定义一行字：<b>Av = λv</b>——被 A 变换后<b>方向不变</b>（还在原直线上），只被拉伸 λ 倍的向量 v 叫特征向量，λ 叫特征值。光看定义没感觉，自己转一圈找找看：下面固定了矩阵 <code>A = [[2,1],[1,2]]</code>，拖动角度旋转<span class="hl">输入向量 v（青色）</span>，观察<span class="hl-v">输出 Av（紫色）</span>——大多数方向两支箭岔开，但有<b>两个方向</b>它们会突然对齐👇</p>
+
+    <div class="panel">
+      <div class="panel-label">detector · 旋转 v，找到两支箭对齐的方向</div>
+      <div class="sliders">
+        <div class="sld"><label>v 角度</label><input type="range" id="eig-theta" min="0" max="180" step="1" value="20"><span class="val" id="eig-thetav">20°</span></div>
+      </div>
+      <canvas class="lab-canvas" id="eig-canvas" height="340"></canvas>
+      <div class="readout" id="eig-read"></div>
+    </div>
+
+    <div class="callout rose">
+      <div class="t">剧透与体检</div>
+      <p>这个 A 的特征方向在 <b>45°（λ=3）</b>和 <b>135°（λ=1）</b>。特征值就是矩阵的"体检指标"：它沿哪些轴用多大力气拉伸。对称矩阵（如协方差矩阵）的特征向量还<b>互相垂直</b>——这正是下面 PCA 能成立的原因。</p>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">AI 里的特征值</div>
+      <p><b>PageRank</b>：整个互联网的链接矩阵的最大特征向量，每个分量就是一个网页的重要性；<b>训练稳定性</b>：权重矩阵特征值长期 &gt;1，信号逐层放大 → 梯度爆炸，&lt;1 → 梯度消失；<b>谱归一化</b>就是按最大奇异值约束矩阵的"拉伸力"。</p>
+    </div>
+  </section>
+
+  <!-- ============ 02 SVD ============ -->
+  <section id="svd">
+    <div class="secnum">02 / SVD</div>
+    <h2>SVD：任何矩阵 = <em>旋转 × 拉伸 × 旋转</em></h2>
+    <p>特征分解只适用于方阵，而<span class="term" data-name="SVD · Singular Value Decomposition" data-tip="奇异值分解：A = UΣVᵀ。U、V 是旋转（正交矩阵），Σ 是对角的拉伸矩阵，对角线上从大到小排着奇异值。任何形状的矩阵都能分解。">SVD</span> 对<b>任何形状的矩阵</b>都成立：<code>A = U Σ Vᵀ</code>。翻译成几何：再复杂的线性变换，都能拆成三个朴素动作——<span class="hl-a">先转正（Vᵀ）</span> → <span class="hl-r">沿坐标轴拉伸（Σ）</span> → <span class="hl-v">再转到位（U）</span>。点击"下一步"，看一个单位圆被三步加工成椭圆👇</p>
+
+    <div class="panel">
+      <div class="panel-label">simulator · 单位圆的三步加工流水线</div>
+      <div class="svd-stage">
+        <span class="st" data-s="0">单位圆</span><span class="arr">→</span>
+        <span class="st" data-s="1">Vᵀ 旋转</span><span class="arr">→</span>
+        <span class="st" data-s="2">Σ 拉伸</span><span class="arr">→</span>
+        <span class="st" data-s="3">U 旋转</span>
+      </div>
+      <canvas class="lab-canvas" id="svd-canvas" height="320"></canvas>
+      <div class="readout" id="svd-read"></div>
+      <div class="btnrow">
+        <button class="btn" id="svd-next">下一步 ▸</button>
+        <button class="btn" id="svd-reset">重置 ↺</button>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">奇异值 = 排好序的重要性</div>
+      <p>Σ 对角线上的<b>奇异值 σ₁ ≥ σ₂ ≥ … ≥ 0</b> 是椭圆各轴的长度，按"这个方向有多重要"从大到小排好了序。很多真实矩阵的奇异值<b>断崖式衰减</b>——前几个很大，后面几乎为零。这意味着矩阵的"有效信息"集中在前几个方向上，于是有了下面的玩法：扔掉小的。</p>
+    </div>
+  </section>
+
+  <!-- ============ 03 PCA ============ -->
+  <section id="pca">
+    <div class="secnum">03 / PCA</div>
+    <h2>PCA：<em>把数据沿"最有戏"的方向压扁</em></h2>
+    <p><span class="term" data-name="PCA · Principal Component Analysis" data-tip="主成分分析：对数据协方差矩阵做特征分解，特征向量给出互相垂直的『主轴』，特征值是各轴上的方差。保留前 k 个主轴即降维。">PCA</span> 回答一个问题：高维数据想压到低维，<b>往哪个方向投影丢的信息最少？</b>答案：协方差矩阵的<b>最大特征向量方向</b>（方差最大 = 信息最多）。下面是 200 个相关的二维数据点，逐步看 PCA 怎么把它们降成一维👇</p>
+
+    <div class="panel">
+      <div class="panel-label">experiment · 200 个数据点的降维三连</div>
+      <div class="toggle-grp" id="pca-tabs">
+        <button class="active" data-s="0">① 原始点云</button>
+        <button data-s="1">② 找出主成分轴</button>
+        <button data-s="2">③ 投影到第一主轴</button>
+      </div>
+      <canvas class="lab-canvas" id="pca-canvas" height="340"></canvas>
+      <div class="readout" id="pca-read"></div>
+    </div>
+
+    <div class="callout violet">
+      <div class="t">从 2 维到 1536 维</div>
+      <p>真实场景：把 1536 维 embedding 用 PCA 压到 2~3 维做<b>可视化</b>（你见过的那些"语义地图"散点图）、压到几十维给下游模型<b>提速省存储</b>。逻辑与这里完全相同——找方差大的正交方向，按特征值大小保留前 k 个。</p>
+    </div>
+  </section>
+
+  <!-- ============ 04 低秩与 LoRA ============ -->
+  <section id="lora">
+    <div class="secnum">04 / LOW-RANK &amp; LORA</div>
+    <h2>低秩近似：<em>LoRA 微调的省钱数学</em></h2>
+    <p>SVD 给了一个惊人的承诺（Eckart–Young 定理）：<b>只保留前 k 个奇异值</b>得到的秩 k 矩阵，是所有秩 k 矩阵里对原矩阵的<b>最佳近似</b>。把这个思想用在微调上，就是 <span class="term" data-name="LoRA · Low-Rank Adaptation" data-tip="低秩适配：冻结原模型权重 W，只训练一个低秩更新 ΔW = B·A（B 高瘦、A 矮胖、中间维度 r 很小）。推理时把 BA 加回 W 即可。">LoRA</span>：微调不必改动整个 W，<b>训练一个秩 r 很小的增量 ΔW = B·A</b> 就够了——因为"适配新任务所需的改动"本身就近似低秩。</p>
+
+    <div class="panel">
+      <div class="panel-label">ledger · 一层 4096×4096 注意力权重的微调账本</div>
+      <div class="codeblock"><span class="c">// 全量微调：直接更新 W</span>
+W : (<span class="n">4096</span> × <span class="n">4096</span>)                = <span class="bad">16,777,216 个可训练参数</span>
+
+<span class="c">// LoRA（r = 8）：冻结 W，训练 ΔW = B·A</span>
+B : (<span class="n">4096</span> × <span class="n">8</span>)   =    32,768
+A : (<span class="n">8</span> × <span class="n">4096</span>)   =    32,768
+                  合计 = <span class="s">65,536 个可训练参数 ≈ 全量的 0.4%</span>
+
+<span class="c">// 前向：h = W·x + B·(A·x)   —— 原模型一字未动，外挂一条低秩旁路</span></div>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">同一思想的其他化身</div>
+      <p><b>推荐系统</b>：把"用户×物品"打分大矩阵分解成两个瘦矩阵（用户向量 × 物品向量），缺失的格子用点积补全；<b>模型压缩</b>：把大权重矩阵 SVD 截断成两个小矩阵相乘，推理省内存；<b>图像压缩</b>：保留前 k 个奇异值就是经典的低秩图像压缩。一套数学，处处开花。</p>
+    </div>
+  </section>
+
+  <!-- ============ 05 测验 ============ -->
+  <section id="quiz">
+    <div class="secnum">05 / QUIZ</div>
+    <h2>随堂测验：<em>检验一下</em></h2>
+    <p>5 道题。答错没关系，解析比答案重要。</p>
+
+    <div class="panel">
+      <div class="panel-label">quiz · 点击选项作答</div>
+      <div id="quiz-list"></div>
+      <div class="quiz-score" id="quiz-score"></div>
+    </div>
+  </section>
+
+  <!-- ============ 继续深入 ============ -->
+  <section id="next">
+    <div class="secnum">→ / KEEP GOING</div>
+    <h2>继续<em>深入</em></h2>
+    <div class="sib-grid" data-tutorial-siblings></div>
+  </section>
+
+</div>
+
+<footer>
+  <a href="/linalg-lab/">← linalg lab</a> &nbsp;·&nbsp; <a href="/">~/labs</a> &nbsp;·&nbsp; eigen &amp; svd deep dive
+</footer>
+
+<script>
+/* ---------- canvas helpers ---------- */
+function setupCanvas(canvas, h){
+  const W = canvas.clientWidth;
+  canvas.width = W * devicePixelRatio; canvas.height = h * devicePixelRatio;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  return {ctx, W, H:h};
+}
+function axes(ctx, W, H, cx, cy){
+  ctx.strokeStyle = '#262a38'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy); ctx.moveTo(cx,0); ctx.lineTo(cx,H); ctx.stroke();
+}
+function arrow(ctx, x0, y0, x1, y1, color, w){
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = w || 2.5;
+  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+  const ang = Math.atan2(y1-y0, x1-x0);
+  ctx.beginPath();
+  ctx.moveTo(x1,y1);
+  ctx.lineTo(x1-9*Math.cos(ang-.4), y1-9*Math.sin(ang-.4));
+  ctx.lineTo(x1-9*Math.cos(ang+.4), y1-9*Math.sin(ang+.4));
+  ctx.closePath(); ctx.fill();
+}
+const fmt = x => {
+  const r = Math.round(x*100)/100;
+  return (Object.is(r,-0) ? 0 : r).toString();
+};
+
+/* ================= 01 eigenvector detector ================= */
+const A = [[2,1],[1,2]];     // 特征方向 45°(λ=3) 与 135°(λ=1)
+const eigCanvas = document.getElementById('eig-canvas');
+const eigSlider = document.getElementById('eig-theta');
+function drawEig(){
+  const deg = +eigSlider.value;
+  document.getElementById('eig-thetav').textContent = deg + '°';
+  const {ctx,W,H} = setupCanvas(eigCanvas, 340);
+  const cx = W/2, cy = H/2, U = 46;
+  ctx.clearRect(0,0,W,H);
+  axes(ctx,W,H,cx,cy);
+  const r = Math.PI*deg/180;
+  const v = [Math.cos(r), Math.sin(r)];
+  const Av = [A[0][0]*v[0]+A[0][1]*v[1], A[1][0]*v[0]+A[1][1]*v[1]];
+  const cross = v[0]*Av[1] - v[1]*Av[0];          // 0 = 共线
+  const aligned = Math.abs(cross) < 0.06;
+  const p = vv => [cx + vv[0]*U, cy - vv[1]*U];
+  // 特征方向参考线（极淡虚线）
+  ctx.strokeStyle = 'rgba(86,92,112,.5)'; ctx.setLineDash([3,5]); ctx.lineWidth = 1;
+  [[1,1],[-1,1]].forEach(d=>{
+    ctx.beginPath(); ctx.moveTo(cx-d[0]*3.4*U, cy+d[1]*3.4*U); ctx.lineTo(cx+d[0]*3.4*U, cy-d[1]*3.4*U); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  if (aligned){
+    ctx.strokeStyle = 'rgba(79,227,193,.5)'; ctx.lineWidth = 8; ctx.globalAlpha = .35;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(...p(Av)); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  arrow(ctx, cx, cy, ...p(v), '#4fe3c1', 3);
+  arrow(ctx, cx, cy, ...p(Av), '#b08aff', 3);
+  const lam = v[0]*Av[0] + v[1]*Av[1];            // |v|=1 时 = 拉伸倍数
+  document.getElementById('eig-read').innerHTML = aligned
+    ? '<span class="hit">🎯 对齐了！这是一个特征方向：Av = λv，λ ≈ <b style="color:#4fe3c1">'+fmt(lam)+'</b></span><br>v = ('+fmt(v[0])+', '+fmt(v[1])+') 被原样拉伸，方向纹丝不动。'
+    : 'v = ('+fmt(v[0])+', '+fmt(v[1])+') → Av = ('+fmt(Av[0])+', '+fmt(Av[1])+')，两支箭<b>没有对齐</b>。继续转——背景里两条淡虚线是提示。';
+}
+eigSlider.addEventListener('input', drawEig);
+drawEig();
+
+/* ================= 02 SVD stepper ================= */
+const svdCanvas = document.getElementById('svd-canvas');
+const rot = t => [[Math.cos(t),-Math.sin(t)],[Math.sin(t),Math.cos(t)]];
+const mulM = (M,v) => [M[0][0]*v[0]+M[0][1]*v[1], M[1][0]*v[0]+M[1][1]*v[1]];
+const Vt = rot(-Math.PI*50/180);                  // 先转正
+const Sg = [[1.8,0],[0,0.6]];                     // 拉伸
+const Uu = rot(Math.PI*30/180);                   // 再转到位
+const stages = [
+  {ms:[], read:'<b>单位圆</b>：所有长度为 1 的向量。两支箭是 V 的列（右奇异向量）v₁、v₂——它们看起来平平无奇，但马上会被精确地送到坐标轴上。'},
+  {ms:[Vt], read:'<b>Vᵀ 旋转</b>：把 v₁、v₂ 转到 x、y 轴上"摆正"。圆还是圆——旋转不改变长度。'},
+  {ms:[Vt,Sg], read:'<b>Σ 拉伸</b>：沿 x 轴 ×1.8，沿 y 轴 ×0.6。圆第一次变形成椭圆，σ₁=1.8、σ₂=0.6 就是<b>奇异值</b>——半轴的长度。'},
+  {ms:[Vt,Sg,Uu], read:'<b>U 旋转</b>：把拉好的椭圆整体转 30° 到最终姿态。三步合成的就是 A = UΣVᵀ 的完整效果：v₁ 落在 σ₁u₁，v₂ 落在 σ₂u₂。'}
+];
+let svdStage = 0;
+function drawSVD(){
+  const {ctx,W,H} = setupCanvas(svdCanvas, 320);
+  const cx = W/2, cy = H/2, U = 62;
+  ctx.clearRect(0,0,W,H);
+  axes(ctx,W,H,cx,cy);
+  const apply = v => stages[svdStage].ms.reduce((acc,M) => mulM(M,acc), v);
+  const p = v => [cx + v[0]*U, cy - v[1]*U];
+  // 圆/椭圆上的点
+  ctx.fillStyle = 'rgba(255,122,133,.65)';
+  for(let i=0;i<72;i++){
+    const t = Math.PI*2*i/72;
+    const q = apply([Math.cos(t), Math.sin(t)]);
+    const [px,py] = p(q);
+    ctx.fillRect(px-1.5, py-1.5, 3, 3);
+  }
+  // 右奇异向量 v1, v2（50° 与 140°）
+  const a1 = Math.PI*50/180;
+  const v1 = [Math.cos(a1), Math.sin(a1)], v2 = [-Math.sin(a1), Math.cos(a1)];
+  arrow(ctx, cx, cy, ...p(apply(v1)), '#4fe3c1', 3);
+  arrow(ctx, cx, cy, ...p(apply(v2)), '#b08aff', 3);
+  document.querySelectorAll('.svd-stage .st').forEach(el =>
+    el.classList.toggle('lit', +el.dataset.s === svdStage));
+  document.getElementById('svd-read').innerHTML = stages[svdStage].read;
+}
+Stepper.bind({
+  next: document.getElementById('svd-next'),
+  reset: document.getElementById('svd-reset'),
+  total: 3,
+  doneText: '加工完成 ✓',
+  onStep(){ svdStage++; drawSVD(); },
+  onReset(){ svdStage = 0; drawSVD(); }
+});
+drawSVD();
+
+/* ================= 03 PCA ================= */
+const pcaCanvas = document.getElementById('pca-canvas');
+const pcaRead = document.getElementById('pca-read');
+/* 固定种子生成相关点云：主方向约 30°，主轴 sd 1.3，次轴 sd 0.42 */
+const pts = (() => {
+  let seed = 7;
+  const rnd = () => (seed = (seed*48271) % 2147483647) / 2147483647;
+  const gauss = () => (rnd()+rnd()+rnd()+rnd()-2) * Math.sqrt(3);   // 近似 N(0,1)
+  const t = Math.PI/6, ct = Math.cos(t), st = Math.sin(t);
+  const out = [];
+  for(let i=0;i<200;i++){
+    const u = gauss()*1.3, w = gauss()*0.42;
+    out.push([u*ct - w*st, u*st + w*ct]);
+  }
+  return out;
+})();
+/* 样本协方差 + 2×2 对称矩阵特征分解（闭式解） */
+const pca = (() => {
+  const n = pts.length;
+  const mx = pts.reduce((s,p)=>s+p[0],0)/n, my = pts.reduce((s,p)=>s+p[1],0)/n;
+  let sxx=0, syy=0, sxy=0;
+  pts.forEach(p=>{ const dx=p[0]-mx, dy=p[1]-my; sxx+=dx*dx; syy+=dy*dy; sxy+=dx*dy; });
+  sxx/=n; syy/=n; sxy/=n;
+  const tr = sxx+syy, dlt = Math.sqrt((sxx-syy)*(sxx-syy) + 4*sxy*sxy);
+  const l1 = (tr+dlt)/2, l2 = (tr-dlt)/2;
+  let e1 = [sxy, l1-sxx];
+  if (Math.hypot(...e1) < 1e-9) e1 = [1,0];
+  const n1 = Math.hypot(...e1); e1 = [e1[0]/n1, e1[1]/n1];
+  const e2 = [-e1[1], e1[0]];
+  return {mx, my, l1, l2, e1, e2};
+})();
+function drawPCA(stage){
+  const {ctx,W,H} = setupCanvas(pcaCanvas, 340);
+  const cx = W/2, cy = H/2, U = 52;
+  ctx.clearRect(0,0,W,H);
+  axes(ctx,W,H,cx,cy);
+  const p = v => [cx + v[0]*U, cy - v[1]*U];
+  const {mx,my,l1,l2,e1,e2} = pca;
+  if (stage < 2){
+    ctx.fillStyle = 'rgba(255,122,133,.55)';
+    pts.forEach(q=>{ const [px,py]=p(q); ctx.fillRect(px-1.6,py-1.6,3.2,3.2); });
+  } else {
+    // 投影：点淡出，投影点落在主轴上
+    ctx.fillStyle = 'rgba(255,122,133,.16)';
+    pts.forEach(q=>{ const [px,py]=p(q); ctx.fillRect(px-1.6,py-1.6,3.2,3.2); });
+    ctx.fillStyle = 'rgba(79,227,193,.8)';
+    pts.forEach(q=>{
+      const s = (q[0]-mx)*e1[0] + (q[1]-my)*e1[1];
+      const proj = [mx + s*e1[0], my + s*e1[1]];
+      const [px,py]=p(proj); ctx.fillRect(px-1.6,py-1.6,3.2,3.2);
+    });
+  }
+  if (stage >= 1){
+    const s1 = Math.sqrt(l1)*2.2, s2 = Math.sqrt(l2)*2.2;
+    arrow(ctx, ...p([mx-e1[0]*s1, my-e1[1]*s1]), ...p([mx+e1[0]*s1, my+e1[1]*s1]), '#4fe3c1', 3);
+    arrow(ctx, ...p([mx-e2[0]*s2, my-e2[1]*s2]), ...p([mx+e2[0]*s2, my+e2[1]*s2]), '#b08aff', 2.5);
+  }
+  const ratio = Math.round(l1/(l1+l2)*1000)/10;
+  pcaRead.innerHTML = [
+    '200 个二维点，两个维度明显<b>相关</b>（斜着的长条）——说明 2 个坐标里其实没装满 2 维的信息。',
+    '对协方差矩阵做特征分解：<span style="color:#4fe3c1">青色 = 第一主成分</span>（λ₁='+fmt(l1)+'，方差最大方向），<span style="color:#b08aff">紫色 = 第二主成分</span>（λ₂='+fmt(l2)+'）。注意两轴<b>互相垂直</b>。',
+    '把每个点垂直投到第一主轴上：2 维 → 1 维，仍保住 <b>'+ratio+'%</b> 的方差（λ₁/(λ₁+λ₂)）。丢掉的只是紫轴上那点"厚度"。'
+  ][stage];
+}
+document.getElementById('pca-tabs').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#pca-tabs button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  drawPCA(+b.dataset.s);
+});
+drawPCA(0);
+addEventListener('resize', () => {
+  drawEig(); drawSVD();
+  const cur = document.querySelector('#pca-tabs button.active');
+  drawPCA(+(cur ? cur.dataset.s : 0));
+});
+
+/* ================= 05 quiz ================= */
+const quiz = [
+  {q:'向量 v 满足 Av = 3v（v ≠ 0），下列说法正确的是？',
+   opts:['v 被 A 旋转了 3 度','v 是 A 的特征向量，变换后方向不变、长度变 3 倍','A 的行列式是 3','v 的长度必须是 3'],
+   ans:1,
+   exp:'这就是特征向量定义本身：<b>Av = λv，λ=3</b>。v 留在自己的直线上，仅被拉伸。行列式是所有特征值之积，单凭一个 λ=3 推不出来。'},
+  {q:'SVD 把任意矩阵分解成 UΣVᵀ，三个因子的几何身份是？',
+   opts:['三次旋转','旋转 × 沿轴拉伸 × 旋转','拉伸 × 拉伸 × 拉伸','平移 × 旋转 × 平移'],
+   ans:1,
+   exp:'U、V 是正交矩阵（旋转/反射，不改长度），Σ 是对角矩阵（<b>只沿坐标轴拉伸</b>）。"任何线性变换 = 转正 → 拉伸 → 转走"，这是 SVD 的全部几何。'},
+  {q:'PCA 选择投影方向的标准是什么？',
+   opts:['随便选一个坐标轴','选数据方差最大的方向（协方差矩阵最大特征向量）','选所有点的平均方向','选与所有点都垂直的方向'],
+   ans:1,
+   exp:'<b>方差大 = 数据在该方向"摊得开" = 信息多</b>。协方差矩阵的特征向量恰好给出这些互相垂直的最大方差方向，特征值就是各方向上的方差。'},
+  {q:'LoRA 微调一个 4096×4096 的权重层（r=8），可训练参数大约是全量微调的多少？',
+   opts:['50%','10%','约 0.4%（两个 4096×8 的小矩阵）','和全量一样多'],
+   ans:2,
+   exp:'ΔW = B·A：B 是 4096×8，A 是 8×4096，合计 65,536 个参数，对比全量的 16,777,216 个，<b>约 0.4%</b>。前提假设是"任务适配所需的权重改动近似低秩"——实践证明大多数时候成立。'},
+  {q:'一个矩阵的奇异值是 [9.7, 8.1, 0.02, 0.01, 0.003]，这暗示了什么？',
+   opts:['这个矩阵不可用','它的"有效秩"约等于 2，可以用秩 2 近似它而几乎不损失信息','它一定是单位矩阵','它的元素都很小'],
+   ans:1,
+   exp:'奇异值<b>断崖式衰减</b>：前 2 个扛起了几乎全部"拉伸力"，后面的接近 0。按 Eckart–Young 定理，截断到秩 2 就是最佳近似——压缩、降噪、低秩分解全部基于这个观察。'}
+];
+Quiz.render(document.getElementById('quiz-list'), document.getElementById('quiz-score'), quiz, {
+  final: (correct, total) =>
+    correct === total ? ' 🎉 全对！SVD 已收入直觉库'
+    : correct >= 3 ? ' 👍 不错，回头看看错题的解析'
+    : ' 💪 回 01 节把特征方向再亲手找一遍'
+});
+</script>
+</body>
+</html>
