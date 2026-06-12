@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="tmux 使用教程：会话、窗口、面板、断线恢复、复制模式、常用配置和日常工作流。">
+<meta property="og:title" content="tmux 实验室 · TMUX LAB">
+<meta property="og:description" content="tmux 使用教程：会话、窗口、面板、断线恢复、复制模式、常用配置和日常工作流。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>tmux 实验室 · TMUX LAB</title>
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
+<script defer src="/assets/term.js"></script>
+<script defer src="/assets/secnav.js"></script>
+<script src="/assets/quiz.js"></script>
+<style>
+  :root{
+    --bg:#080b0d;
+    --bg2:#0d1115;
+    --panel:#111821;
+    --panel-hi:#17212b;
+    --line:#26323e;
+    --ink:#e5edf4;
+    --muted:#91a0ad;
+    --faint:#5d6b78;
+    --green:#79f2b6;
+    --green-dim:#1d4d38;
+    --amber:#ffbd5a;
+    --amber-dim:#553f21;
+    --blue:#83b4ff;
+    --blue-dim:#243c61;
+    --rose:#ff7d8c;
+    --rose-dim:#54282f;
+    --violet:#b99cff;
+    --violet-dim:#382c57;
+    --display:'Syne',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.75;
+    overflow-x:hidden;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:46px 46px;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(ellipse 78% 58% at 50% -10%,rgba(121,242,182,.09),transparent 60%),
+      radial-gradient(ellipse 60% 48% at 90% 22%,rgba(255,189,90,.06),transparent 58%),
+      linear-gradient(180deg,rgba(8,11,13,.42),var(--bg) 88%);
+  }
+  .wrap{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:0 24px}
+  header{padding:92px 0 42px;text-align:center}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:var(--green);text-transform:uppercase;margin-bottom:24px;opacity:0;animation:rise .7s .1s forwards}
+  h1.hero{font-family:var(--display);font-weight:800;font-size:clamp(56px,15vw,136px);line-height:.9;letter-spacing:-.03em;margin-bottom:8px}
+  h1.hero span{display:inline-block;opacity:0;transform:translateY(38px);animation:rise .8s forwards}
+  h1.hero span:first-child{color:var(--green);animation-delay:.15s}
+  h1.hero span:last-child{color:var(--ink);animation-delay:.25s}
+  .sub{font-family:var(--mono);color:var(--muted);font-size:15px;margin-top:18px;opacity:0;animation:rise .7s .55s forwards}
+  .sub b{color:var(--ink);font-weight:500}
+  .scrollcue{margin-top:52px;font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:var(--faint);opacity:0;animation:rise .7s .85s forwards;text-transform:uppercase}
+  .scrollcue span{display:block;font-size:18px;margin-top:6px;animation:bob 1.8s ease-in-out infinite}
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+  @keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+
+  section{padding:72px 0}
+  .secnum{font-family:var(--mono);font-size:12px;color:var(--green);letter-spacing:.2em;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+  .secnum::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,42px);line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
+  h2 em{font-style:normal;background:linear-gradient(90deg,var(--green),var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent}
+  h3{font-family:var(--display);font-size:18px;line-height:1.25;margin-bottom:8px}
+  p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
+  p b{color:var(--ink);font-weight:600}
+  code{font-family:var(--mono);background:var(--panel-hi);color:var(--green);padding:2px 7px;border-radius:5px;font-size:.88em;border:1px solid var(--line)}
+  a{color:var(--green)}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;margin:26px 0;position:relative;overflow:hidden}
+  .panel::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--green),transparent);opacity:.52}
+  .panel-label{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--faint);text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+  .panel-label::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 14px rgba(121,242,182,.55)}
+
+  .callout{border-left:3px solid var(--green);background:var(--panel);border-radius:0 12px 12px 0;padding:16px 20px;margin:22px 0}
+  .callout .t{font-family:var(--mono);font-size:12px;letter-spacing:.15em;color:var(--green);text-transform:uppercase;margin-bottom:6px}
+  .callout p{margin:0;font-size:15px;color:var(--ink)}
+  .callout.amber{border-color:var(--amber)}.callout.amber .t{color:var(--amber)}
+  .callout.blue{border-color:var(--blue)}.callout.blue .t{color:var(--blue)}
+
+  .term-window{background:#07090b;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.26)}
+  .term-title{height:38px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);background:#0d1217;padding:0 14px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--rose)}
+  .dot:nth-child(2){background:var(--amber)}.dot:nth-child(3){background:var(--green)}
+  .term-title span:last-child{margin-left:8px;color:var(--faint)}
+  .term-body{font-family:var(--mono);font-size:13px;line-height:1.8;padding:18px;overflow:auto;color:var(--ink)}
+  .prompt{color:var(--green)}
+  .out{color:var(--muted)}
+  .dim{color:var(--faint)}
+  .tmuxbar{display:flex;gap:6px;align-items:center;border-top:1px solid var(--line);background:#17212b;padding:7px 10px;font-family:var(--mono);font-size:12px;white-space:nowrap;overflow:auto}
+  .tmuxbar .left{background:var(--green);color:#07100b;padding:2px 7px;border-radius:3px;font-weight:700}
+  .tmuxbar .win{color:var(--ink);background:#26323e;padding:2px 8px;border-radius:3px}
+  .tmuxbar .win.on{background:var(--amber);color:#170f03}
+  .tmuxbar .spacer{flex:1}
+  .tmuxbar .right{color:var(--green)}
+
+  .model{display:grid;grid-template-columns:1fr;gap:12px}
+  .model-row{display:grid;grid-template-columns:132px 1fr;gap:12px;align-items:stretch}
+  .model-name{background:var(--green-dim);border:1px solid var(--green);border-radius:12px;padding:14px 16px;font-family:var(--mono);color:var(--green);display:flex;align-items:center}
+  .model-desc{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;color:var(--muted)}
+  .model-desc b{color:var(--ink)}
+  @media(max-width:640px){.model-row{grid-template-columns:1fr}.model-name{padding:10px 14px}}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:18px;transition:border-color .18s,transform .18s}
+  .card:hover{border-color:var(--green);transform:translateY(-1px)}
+  .card .tag{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+  .card ul{list-style:none;margin-top:10px}
+  .card li{color:var(--muted);font-size:14px;padding:7px 0;border-top:1px dashed var(--line)}
+  .card li b{color:var(--ink)}
+
+  .kbd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
+  .kbd-row{display:grid;grid-template-columns:minmax(112px,auto) 1fr;gap:12px;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .kbd-row kbd{font-family:var(--mono);font-size:12px;background:var(--panel-hi);border:1px solid var(--line);border-bottom-color:#111923;border-radius:6px;color:var(--green);padding:4px 7px;white-space:nowrap}
+  .kbd-row span{color:var(--muted);font-size:14px}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .pane{background:var(--bg2);border:1px solid var(--line);border-radius:12px;min-height:170px;display:flex;flex-direction:column;overflow:hidden}
+  .pane-head{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--faint);padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel-hi);text-transform:uppercase}
+  .pane-body{font-family:var(--mono);font-size:12.5px;line-height:1.7;padding:12px;color:var(--muted);flex:1}
+  .pane.active{border-color:var(--green);box-shadow:0 0 24px rgba(121,242,182,.12)}
+  .pane.active .pane-head{color:var(--green)}
+  .btn{font-family:var(--mono);font-size:13px;background:var(--panel-hi);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 16px;cursor:pointer;transition:all .18s}
+  .btn:hover{border-color:var(--green);color:var(--green)}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .btn.active{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+
+  .codeblock{font-family:var(--mono);font-size:12.5px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow-x:auto;line-height:1.8;margin-top:14px;white-space:pre;color:var(--muted)}
+  .codeblock .c{color:var(--faint)}.codeblock .k{color:var(--blue)}.codeblock .s{color:var(--green)}.codeblock .n{color:var(--amber)}
+
+  .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:10px}
+  .flow-step{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+  .flow-step b{display:block;font-family:var(--mono);font-size:12px;color:var(--green);margin-bottom:4px}
+  .flow-step span{font-size:13px;color:var(--muted)}
+  @media(max-width:760px){.flow{grid-template-columns:1fr 1fr}.split{grid-template-columns:1fr}}
+
+  .quiz-q{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+  .quiz-q .qt{font-size:15px;color:var(--ink);margin-bottom:12px;font-weight:600}
+  .quiz-q .qt .qn{font-family:var(--mono);color:var(--green);margin-right:8px}
+  .quiz-opts{display:flex;flex-direction:column;gap:8px}
+  .quiz-opts button{font-size:14px;font-family:var(--body);background:var(--panel-hi);color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:10px 14px;cursor:pointer;transition:all .15s;text-align:left}
+  .quiz-opts button:hover{border-color:var(--muted);color:var(--ink)}
+  .quiz-opts button.right{border-color:var(--green);background:var(--green-dim);color:var(--green)}
+  .quiz-opts button.wrong{border-color:var(--rose);background:var(--rose-dim);color:var(--rose)}
+  .quiz-exp{display:none;margin-top:12px;color:var(--muted);font-size:14px;line-height:1.7;border-top:1px dashed var(--line);padding-top:12px}
+  .quiz-exp b{color:var(--ink)}
+  .score{font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:12px}
+  .score b{color:var(--green)}
+
+  footer{border-top:1px solid var(--line);margin-top:54px;padding:28px 0 54px;font-family:var(--mono);font-size:12px;color:var(--faint);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  footer a{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--line)}
+  footer a:hover{color:var(--ink)}
+  @media(max-width:560px){.wrap{padding:0 18px}header{padding-top:78px}.panel{padding:20px}.kbd-row{grid-template-columns:1fr;gap:6px}}
+</style>
+</head>
+<body>
+<a class="lab-home" href="/">←&nbsp;~/labs</a>
+<div class="wrap">
+  <header>
+    <div class="kicker">// terminal multiplexer</div>
+    <h1 class="hero"><span>tmux</span> <span>lab</span></h1>
+    <p class="sub">把一个终端，拆成可恢复的 <b>session / window / pane</b> 工作台。</p>
+    <div class="scrollcue">start session <span>↓</span></div>
+  </header>
+
+  <section id="why">
+    <div class="secnum">01 / mental model</div>
+    <h2>先理解 <em>tmux 到底在管什么</em></h2>
+    <p>tmux 不是新的 shell，也不是新的终端模拟器。它运行在服务器或本机里，帮你维护一个长期存在的工作区。SSH 断了、终端关了，里面的命令还可以继续跑。</p>
+    <div class="panel">
+      <div class="panel-label">tmux object model</div>
+      <div class="model">
+        <div class="model-row">
+          <div class="model-name">session</div>
+          <div class="model-desc"><b>一套工作区。</b>例如 <code>api</code>、<code>blog</code>、<code>ops</code>。断开后可以重新 attach 回来。</div>
+        </div>
+        <div class="model-row">
+          <div class="model-name">window</div>
+          <div class="model-desc"><b>session 里的标签页。</b>通常按任务拆：编辑器、服务日志、数据库、测试。</div>
+        </div>
+        <div class="model-row">
+          <div class="model-name">pane</div>
+          <div class="model-desc"><b>window 里的分屏。</b>适合同时看命令输出、日志、监控、REPL。</div>
+        </div>
+      </div>
+    </div>
+    <div class="term-window">
+      <div class="term-title"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span>~/project - tmux</span></div>
+      <div class="term-body">
+        <span class="prompt">$</span> tmux new -s api<br>
+        <span class="out">created session: api</span><br>
+        <span class="prompt">$</span> npm run dev<br>
+        <span class="out">server listening on http://localhost:3000</span><br>
+        <span class="dim"># 关闭终端或 SSH 断线后，进程仍留在 tmux session 里。</span>
+      </div>
+      <div class="tmuxbar">
+        <span class="left">api</span><span class="win on">0:zsh*</span><span class="win">1:logs</span><span class="spacer"></span><span class="right">12 Jun 22:10</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="start">
+    <div class="secnum">02 / first run</div>
+    <h2>从这 6 条命令开始</h2>
+    <p>先把命令跑顺，再记快捷键。日常使用里最重要的是：创建、离开、查看、恢复、结束。</p>
+    <div class="grid">
+      <div class="card">
+        <div class="tag">create</div>
+        <h3>新建会话</h3>
+        <ul>
+          <li><code>tmux</code> 直接进入默认会话</li>
+          <li><code>tmux new -s work</code> 创建名为 work 的会话</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">detach</div>
+        <h3>临时离开</h3>
+        <ul>
+          <li><code>Ctrl-b d</code> detach</li>
+          <li>会话留在后台，任务继续运行</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">attach</div>
+        <h3>恢复现场</h3>
+        <ul>
+          <li><code>tmux ls</code> 查看会话</li>
+          <li><code>tmux attach -t work</code> 回到 work</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">clean</div>
+        <h3>结束会话</h3>
+        <ul>
+          <li><code>exit</code> 退出当前 pane 的 shell</li>
+          <li><code>tmux kill-session -t work</code> 删除会话</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout amber">
+      <div class="t">prefix rule</div>
+      <p>默认所有 tmux 快捷键都先按 <code>Ctrl-b</code>，松开后再按后续键。例如新建窗口是 <code>Ctrl-b c</code>，不是三个键同时按。</p>
+    </div>
+  </section>
+
+  <section id="keys">
+    <div class="secnum">03 / keyboard map</div>
+    <h2>常用快捷键只需要 <em>先记一屏</em></h2>
+    <p>下面这些键覆盖了 80% 的 tmux 使用场景。先把前缀键 <code>Ctrl-b</code> 练成肌肉记忆，再慢慢加配置。</p>
+    <div class="panel">
+      <div class="panel-label">daily shortcuts</div>
+      <div class="kbd-grid">
+        <div class="kbd-row"><kbd>Ctrl-b d</kbd><span>离开当前 session，后台继续运行</span></div>
+        <div class="kbd-row"><kbd>Ctrl-b c</kbd><span>创建新 window</span></div>
+        <div class="kbd-row"><kbd>Ctrl-b ,</kbd><span>重命名当前 window</span></div>
+        <div class="kbd-row"><kbd>Ctrl-b n / p</kbd><span>切到下一个 / 上一个 window</span></div>
+        <div class="kbd-row"><kbd>Ctrl-b 0..9</kbd><span>按编号切换 window</span></div>
+        <div class="kbd-row"><kbd>Ctrl-b %</kbd><span>左右分屏</span></div>
+        <div class="kbd-row"><kbd>Ctrl-b "</kbd><span>上下分屏</span></div>
+        <div class="kbd-row"><kbd>Ctrl-b o</kbd><span>切换到下一个 pane</span></div>
+        <div class="kbd-row"><kbd>Ctrl-b x</kbd><span>关闭当前 pane</span></div>
+        <div class="kbd-row"><kbd>Ctrl-b z</kbd><span>当前 pane 最大化 / 还原</span></div>
+        <div class="kbd-row"><kbd>Ctrl-b [</kbd><span>进入复制模式，用方向键或 vi 键滚动</span></div>
+        <div class="kbd-row"><kbd>Ctrl-b ?</kbd><span>查看所有快捷键</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="workflow">
+    <div class="secnum">04 / workflow</div>
+    <h2>一个适合写代码的 <em>三窗口工作流</em></h2>
+    <p>不要把所有东西都塞进一个 pane。更稳定的组织方式是：session 对应项目，window 对应工作类型，pane 只做临时分屏。</p>
+    <div class="flow">
+      <div class="flow-step"><b>1</b><span>tmux new -s app</span></div>
+      <div class="flow-step"><b>2</b><span>0: editor</span></div>
+      <div class="flow-step"><b>3</b><span>1: server</span></div>
+      <div class="flow-step"><b>4</b><span>2: logs</span></div>
+      <div class="flow-step"><b>5</b><span>detach / attach</span></div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">pane focus simulator</div>
+      <div class="split">
+        <div class="pane active" id="pane-edit">
+          <div class="pane-head">pane 0 / editor</div>
+          <div class="pane-body"><span class="prompt">$</span> nvim src/app.ts<br><span class="dim">editing request handler...</span></div>
+        </div>
+        <div class="pane" id="pane-run">
+          <div class="pane-head">pane 1 / server</div>
+          <div class="pane-body"><span class="prompt">$</span> npm run dev<br><span class="out">GET /api/health 200 4ms</span><br><span class="out">POST /api/todos 201 18ms</span></div>
+        </div>
+      </div>
+      <div class="btnrow">
+        <button class="btn active" type="button" data-pane="edit">Ctrl-b o → editor</button>
+        <button class="btn" type="button" data-pane="run">Ctrl-b o → server</button>
+        <button class="btn" type="button" id="zoom">Ctrl-b z 最大化</button>
+      </div>
+    </div>
+    <div class="codeblock"><span class="c"># 推荐的新项目启动方式</span>
+<span class="k">tmux</span> new -s app
+<span class="k">nvim</span> .
+<span class="c"># Ctrl-b c 新建 window，并重命名为 server</span>
+<span class="k">npm</span> run dev
+<span class="c"># Ctrl-b c 新建 window，并重命名为 logs</span>
+<span class="k">tail</span> -f logs/app.log</div>
+  </section>
+
+  <section id="copy">
+    <div class="secnum">05 / copy mode</div>
+    <h2>复制模式解决 <em>滚屏和取日志</em></h2>
+    <p>在 tmux 里，鼠标滚轮可能被终端、shell、程序本身同时影响。稳定做法是进入 tmux 的复制模式，再搜索、选择、复制。</p>
+    <div class="grid">
+      <div class="card">
+        <div class="tag">scroll</div>
+        <h3>回看输出</h3>
+        <ul>
+          <li><code>Ctrl-b [</code> 进入复制模式</li>
+          <li><code>q</code> 退出复制模式</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">search</div>
+        <h3>搜索日志</h3>
+        <ul>
+          <li><code>/error</code> 向下搜 error</li>
+          <li><code>n</code> 跳到下一个结果</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">copy</div>
+        <h3>vi 风格复制</h3>
+        <ul>
+          <li><code>Space</code> 开始选择</li>
+          <li><code>Enter</code> 复制选区</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="config">
+    <div class="secnum">06 / config</div>
+    <h2>一个够用的 <em>~/.tmux.conf</em></h2>
+    <p>配置不是必须，但下面这份能把常见摩擦点降下来：鼠标、vi 复制模式、更大的历史缓冲、从 1 开始编号、重载配置快捷键。</p>
+    <div class="codeblock"><span class="c"># ~/.tmux.conf</span>
+<span class="c"># 使用鼠标选择 pane、调整大小、滚动历史</span>
+<span class="k">set</span> -g mouse on
+
+<span class="c"># 历史输出保留更多行</span>
+<span class="k">set</span> -g history-limit 50000
+
+<span class="c"># window / pane 从 1 开始编号，更贴近键盘数字</span>
+<span class="k">set</span> -g base-index 1
+<span class="k">setw</span> -g pane-base-index 1
+
+<span class="c"># 复制模式使用 vi 键位</span>
+<span class="k">setw</span> -g mode-keys vi
+
+<span class="c"># 快速重载配置：Ctrl-b r</span>
+<span class="k">bind</span> r source-file ~/.tmux.conf \; display-message <span class="s">"tmux.conf reloaded"</span>
+
+<span class="c"># 更直觉的分屏键</span>
+<span class="k">bind</span> | split-window -h
+<span class="k">bind</span> - split-window -v</div>
+    <div class="callout blue">
+      <div class="t">reload</div>
+      <p>改完配置后，在 tmux 里按 <code>Ctrl-b r</code>。如果这条绑定还没生效，就先运行 <code>tmux source-file ~/.tmux.conf</code>。</p>
+    </div>
+  </section>
+
+  <section id="trouble">
+    <div class="secnum">07 / troubleshooting</div>
+    <h2>出问题时先查这几项</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="tag">nested</div>
+        <h3>套娃 tmux</h3>
+        <ul>
+          <li>状态栏里已经有 tmux 时，不要再直接 <code>tmux</code></li>
+          <li>需要套娃时用 <code>Ctrl-b b</code> 把前缀传给内层</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">server</div>
+        <h3>找不到会话</h3>
+        <ul>
+          <li><code>tmux ls</code> 确认还有没有 session</li>
+          <li>如果服务器重启过，tmux 里的进程也会消失</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">color</div>
+        <h3>颜色不对</h3>
+        <ul>
+          <li>优先检查终端的 true color 支持</li>
+          <li>SSH、tmux、编辑器的 TERM 设置要一致</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">exit</div>
+        <h3>关不掉 pane</h3>
+        <ul>
+          <li>先让前台程序退出，例如 <code>Ctrl-c</code></li>
+          <li>再用 <code>exit</code> 或 <code>Ctrl-b x</code></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="quiz">
+    <div class="secnum">08 / check</div>
+    <h2>最后做个 <em>快速自测</em></h2>
+    <div id="quiz-list"></div>
+    <div class="score" id="quiz-score">得分 <b>0 / 0</b></div>
+  </section>
+
+  <footer>
+    <span>tmux lab · static tutorial</span>
+    <span><a href="/">back to learning labs</a></span>
+  </footer>
+</div>
+<script>
+  (function(){
+    const buttons = Array.from(document.querySelectorAll('[data-pane]'));
+    const edit = document.getElementById('pane-edit');
+    const run = document.getElementById('pane-run');
+    const zoom = document.getElementById('zoom');
+    let zoomed = false;
+
+    function setPane(name){
+      edit.classList.toggle('active', name === 'edit');
+      run.classList.toggle('active', name === 'run');
+      buttons.forEach((b) => b.classList.toggle('active', b.dataset.pane === name));
+    }
+    buttons.forEach((b) => b.addEventListener('click', () => {
+      zoomed = false;
+      zoom.textContent = 'Ctrl-b z 最大化';
+      edit.style.display = '';
+      run.style.display = '';
+      setPane(b.dataset.pane);
+    }));
+    zoom.addEventListener('click', () => {
+      zoomed = !zoomed;
+      const current = edit.classList.contains('active') ? edit : run;
+      const other = current === edit ? run : edit;
+      other.style.display = zoomed ? 'none' : '';
+      zoom.textContent = zoomed ? 'Ctrl-b z 还原' : 'Ctrl-b z 最大化';
+    });
+
+    Quiz.render(
+      document.getElementById('quiz-list'),
+      document.getElementById('quiz-score'),
+      [
+        {
+          q:'SSH 断线前，想让服务继续跑并稍后恢复，最合适的操作是？',
+          opts:['直接关闭终端', '在 tmux 里按 Ctrl-b d detach', '按 Ctrl-c 停止命令'],
+          ans:1,
+          exp:'<b>detach</b> 会让你离开 session，但 session 内的进程继续运行。'
+        },
+        {
+          q:'tmux 里的 window 更像什么？',
+          opts:['一个完整项目工作区', '一个标签页', '一条 shell 命令的别名'],
+          ans:1,
+          exp:'一个 <b>session</b> 是工作区，<b>window</b> 是其中的标签页，<b>pane</b> 是标签页里的分屏。'
+        },
+        {
+          q:'想左右分屏，默认快捷键是？',
+          opts:['Ctrl-b %', 'Ctrl-b "', 'Ctrl-b c'],
+          ans:0,
+          exp:'<code>Ctrl-b %</code> 左右分屏，<code>Ctrl-b "</code> 上下分屏，<code>Ctrl-b c</code> 新建 window。'
+        },
+        {
+          q:'改完 ~/.tmux.conf 后，最直接的生效方式是？',
+          opts:['重启电脑', '运行 tmux source-file ~/.tmux.conf', '删除所有 session'],
+          ans:1,
+          exp:'配置可以通过 <code>tmux source-file ~/.tmux.conf</code> 重新加载；教程里的配置还绑定了 <code>Ctrl-b r</code>。'
+        }
+      ],
+      { final: (correct, total) => correct === total ? ' · 可以上手用了' : ' · 回到上面再看一遍快捷键' }
+    );
+  })();
+</script>
+</body>
+</html>

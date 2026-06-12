@@ -55,6 +55,13 @@
       "title": "土区 Apple ID",
       "sub": "土耳其区 Apple ID 教程 —— 2026 最新注册流程、过时方法甄别、高信誉礼品卡渠道对比与充值兑换。",
       "topics": ["apple-id", "turkey", "gift-card", "app-store"]
+    },
+    {
+      "path": "/tmux-lab/",
+      "tag": "guide",
+      "title": "tmux 实验室",
+      "sub": "tmux 使用教程 —— 会话、窗口、面板、断线恢复、复制模式、常用配置与代码工作流。",
+      "topics": ["tmux", "terminal", "ssh", "workflow", "cli"]
     }
   ]
 }
