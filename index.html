@@ -38,7 +38,7 @@
   .wrap{max-width:980px;margin:0 auto;padding:48px 28px 96px;width:100%;flex:1}
 
   /* top bar */
-  .topbar{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:18px;gap:24px;flex-wrap:wrap}
+  .topbar{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:18px;gap:24px;flex-wrap:wrap}
   .brand{font-weight:700;font-size:13px;letter-spacing:0.04em}
   .brand .dot{display:inline-block;width:8px;height:8px;background:var(--accent);border-radius:50%;margin-right:8px;vertical-align:middle;box-shadow:0 0 12px var(--accent)}
   .meta{color:var(--muted);font-size:12px;display:flex;gap:18px;flex-wrap:wrap}
@@ -129,8 +129,9 @@
   }
   footer a{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--line-2)}
   footer a:hover{color:var(--ink)}
-  footer .gh-link{display:inline-flex;align-items:center;border-bottom:none}
-  footer .gh-link svg{width:18px;height:18px;fill:currentColor;transition:fill .15s ease}
+  .gh-link{display:inline-flex;align-items:center;color:var(--muted);border-bottom:none}
+  .gh-link:hover{color:var(--ink)}
+  .gh-link svg{width:18px;height:18px;fill:currentColor;transition:fill .15s ease}
   .cursor{display:inline-block;width:8px;height:14px;background:var(--accent);vertical-align:-2px;margin-left:4px;animation:blink 1.1s steps(2) infinite}
   @keyframes blink{50%{opacity:0}}
 
@@ -146,19 +147,18 @@
     <header class="topbar">
       <div class="brand"><span class="dot"></span>LEARNING&nbsp;LABS</div>
       <div class="meta">
-        <span>host <b>learn.chinatsu1124.com</b></span>
-        <span>repo <b>chinatsu1124/learning-labs</b></span>
+        <a class="gh-link" href="https://github.com/chinatsu1124/learning-labs" aria-label="GitHub 仓库" title="GitHub 仓库"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg></a>
       </div>
     </header>
 
     <section class="hero">
-      <div class="kicker">// index of experiments</div>
+      <div class="kicker">// 实验索引</div>
       <h1><span class="slash">~/</span>learning-<span class="hl">labs</span><span class="cursor"></span></h1>
       <p class="lede">一些写着玩、用来理解概念的小页面。每个 lab 是独立的静态站，放在 <code>/&lt;slug&gt;/</code> 下。后面会持续加。</p>
     </section>
 
     <div class="sec-head">
-      <h2>&gt; labs</h2>
+      <h2>&gt; 实验列表</h2>
       <span class="count" id="lab-count"></span>
     </div>
 
@@ -174,7 +174,7 @@
   </div>
 
   <footer>
-    <span>© chinatsu1124 · static site on cloudflare pages</span>
+    <span>© chinatsu1124 · 静态站 · 托管于 Cloudflare Pages</span>
     <span><a class="gh-link" href="https://github.com/chinatsu1124/learning-labs" aria-label="GitHub 仓库" title="source on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg></a></span>
   </footer>
   <script>
@@ -209,7 +209,7 @@
           '<div class="card-sub">' + esc(lab.sub) + '</div>' +
           '<div class="card-foot">' +
             '<div class="topics">' + lab.topics.map(function(t){ return '<span>' + esc(t) + '</span>'; }).join('') + '</div>' +
-            '<span class="go">open →</span>' +
+            '<span class="go">进入 →</span>' +
           '</div>';
         return a;
       }
@@ -219,7 +219,7 @@
         d.className = 'card placeholder';
         d.innerHTML =
           '<div class="card-row"><span class="card-path">/_/</span><span class="card-tag">tbd</span></div>' +
-          '<div class="card-title">more soon</div>' +
+          '<div class="card-title">敬请期待</div>' +
           '<div class="card-sub">下一个 lab 还在草稿里。</div>' +
           '<div class="card-foot"><div class="topics"><span>wip</span></div>' +
           '<span class="go" style="color:var(--faint)">—</span></div>';
@@ -245,8 +245,8 @@
         if (!filtering) grid.appendChild(placeholder());
         document.getElementById('no-hit').style.display = shown ? 'none' : 'block';
         document.getElementById('lab-count').textContent = filtering
-          ? pad(shown) + ' / ' + pad(labs.length) + ' labs'
-          : pad(labs.length) + ' active · 01 pending';
+          ? pad(shown) + ' / ' + pad(labs.length) + ' 个'
+          : pad(labs.length) + ' 个 · 持续更新中';
       }
 
       function buildFilters(){
