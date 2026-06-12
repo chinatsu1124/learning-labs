@@ -2,70 +2,81 @@
   "labs": [
     {
       "path": "/decrypt/",
-      "tag": "crypto",
+      "tag": "加密",
       "title": "解密台",
       "sub": "凯撒、AES、RSA、Hash、Diffie-Hellman —— 常见加密算法的可视化演示与暴力破解工具。",
       "topics": ["caesar", "aes", "rsa", "hash", "dh"]
     },
     {
       "path": "/byte-lab/",
-      "tag": "encoding",
+      "tag": "编码",
       "title": "字节实验室",
       "sub": "字节、编码、表示形式的拆解 —— 看见数据在内存里到底长什么样。",
       "topics": ["bytes", "encoding", "binary"]
     },
     {
       "path": "/net-lab/",
-      "tag": "networking",
+      "tag": "网络",
       "title": "网络实验室",
       "sub": "分层模型、封装、IP 子网、TCP 握手、DNS、HTTP —— 交互式走完一次完整的网页加载。",
       "topics": ["tcp/ip", "dns", "http", "subnet"]
     },
     {
       "path": "/pm-lab/",
-      "tag": "product",
+      "tag": "产品",
       "title": "产品实验室",
       "sub": "产品经理与产品运营的入门教程 —— RICE 计算器、KANO 练习、AARRR 漏斗与 A/B 实验模拟。",
       "topics": ["pm", "ops", "rice", "aarrr", "ab-test"]
     },
     {
       "path": "/agent-lab/",
-      "tag": "ai",
+      "tag": "AI",
       "title": "智能体实验室",
       "sub": "AI Agent 入门教程 —— Agent 循环模拟器、工具调用拆解、上下文剖析、ReAct 等架构模式与安全护栏。",
-      "topics": ["agent", "tool-use", "react", "rag", "mcp"]
+      "topics": ["agent", "tool-use", "react", "rag", "mcp"],
+      "children": [
+        { "title": "工具调用", "path": "/agent-lab/tool-use/" },
+        { "title": "上下文工程", "path": "/agent-lab/context/" },
+        { "title": "架构模式", "path": "/agent-lab/patterns/" },
+        { "title": "记忆与检索", "path": "/agent-lab/memory/" }
+      ]
     },
     {
       "path": "/micro-lab/",
-      "tag": "backend",
+      "tag": "后端",
       "title": "微服务实验室",
       "sub": "微服务入门教程 —— 单体 vs 微服务、请求链路模拟、熔断器演示、Saga 分布式事务与可观测性。",
       "topics": ["microservices", "gateway", "circuit-breaker", "saga"]
     },
     {
       "path": "/chip-lab/",
-      "tag": "hardware",
+      "tag": "硬件",
       "title": "芯片实验室",
       "sub": "CPU 与 GPU 的区别 —— 架构对比、硅片面积图解、并行竞速模拟、延迟 vs 吞吐、PCIe 搬运成本与调度练习。",
       "topics": ["cpu", "gpu", "parallel", "throughput", "cuda"]
     },
     {
       "path": "/linalg-lab/",
-      "tag": "ai",
+      "tag": "AI",
       "title": "线性代数实验室",
       "sub": "AI 路上的线性代数 —— 向量与相似度、矩阵即变换、线性相关与秩、特征值、SVD 与 PCA，全程可视化。",
-      "topics": ["vector", "matrix", "rank", "eigenvalue", "svd", "pca"]
+      "topics": ["vector", "matrix", "rank", "eigenvalue", "svd", "pca"],
+      "children": [
+        { "title": "向量与相似度", "path": "/linalg-lab/vectors/" },
+        { "title": "矩阵与线性变换", "path": "/linalg-lab/transform/" },
+        { "title": "特征值与 SVD", "path": "/linalg-lab/decomposition/" }
+      ]
     },
     {
       "path": "/tr-appleid/",
-      "tag": "guide",
+      "tag": "教程",
       "title": "土区 Apple ID",
       "sub": "土耳其区 Apple ID 教程 —— 2026 最新注册流程、过时方法甄别、高信誉礼品卡渠道对比与充值兑换。",
       "topics": ["apple-id", "turkey", "gift-card", "app-store"]
     },
     {
       "path": "/tmux-lab/",
-      "tag": "guide",
+      "tag": "教程",
       "title": "tmux 实验室",
       "sub": "tmux 使用教程 —— 会话、窗口、面板、断线恢复、复制模式、常用配置与代码工作流。",
       "topics": ["tmux", "terminal", "ssh", "workflow", "cli"]

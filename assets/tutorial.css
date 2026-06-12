@@ -63,7 +63,7 @@ h1.hero .b:nth-child(2){animation-delay:.25s;color:var(--ink)}
 }
 .sub b{color:var(--ink);font-weight:500}
 .scrollcue{
-  margin-top:54px;
+  margin-top:36px;
   font-family:var(--mono);
   font-size:11px;
   letter-spacing:.3em;
@@ -77,7 +77,7 @@ h1.hero .b:nth-child(2){animation-delay:.25s;color:var(--ink)}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
 @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
 
-section{padding:72px 0}
+section{padding:40px 0}
 .secnum{
   font-family:var(--mono);
   font-size:12px;

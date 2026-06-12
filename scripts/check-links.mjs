@@ -25,6 +25,7 @@ for (const file of htmlFiles(ROOT)) {
   for (const m of html.matchAll(/(?:href|src)\s*=\s*"([^"]+)"/g)) {
     const url = m[1];
     if (SKIP.test(url)) continue;
+    if (url.includes("' +")) continue; // 内联 JS 里拼接出来的 href，不是真实链接
     const path = url.split(/[?#]/)[0];
     if (!path) continue;
     let target = path.startsWith('/')
@@ -53,6 +54,16 @@ for (const file of htmlFiles(ROOT)) {
     if (lab.path && !existsSync(join(ROOT, lab.path, 'index.html'))) {
       console.error(`✗ labs.json → ${lab.path} (missing: ${lab.path.slice(1)}index.html)`);
       errors++;
+    }
+    for (const child of lab.children || []) {
+      if (!child.title || !child.path) {
+        console.error(`✗ labs.json → ${lab.path} children 缺少 title/path`);
+        errors++;
+      }
+      if (child.path && !existsSync(join(ROOT, child.path, 'index.html'))) {
+        console.error(`✗ labs.json → ${child.path} (missing: ${child.path.slice(1)}index.html)`);
+        errors++;
+      }
     }
   }
 }

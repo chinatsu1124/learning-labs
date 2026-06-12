@@ -38,23 +38,21 @@
   .wrap{max-width:980px;margin:0 auto;padding:48px 28px 96px;width:100%;flex:1}
 
   /* top bar */
-  .topbar{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:18px;gap:24px;flex-wrap:wrap}
+  .topbar{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:18px;gap:24px;flex-wrap:wrap}
   .brand{font-weight:700;font-size:13px;letter-spacing:0.04em}
   .brand .dot{display:inline-block;width:8px;height:8px;background:var(--accent);border-radius:50%;margin-right:8px;vertical-align:middle;box-shadow:0 0 12px var(--accent)}
   .meta{color:var(--muted);font-size:12px;display:flex;gap:18px;flex-wrap:wrap}
   .meta span b{color:var(--ink);font-weight:500}
 
   /* hero */
-  .hero{margin:64px 0 56px}
-  .kicker{color:var(--accent);font-size:12px;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:18px}
+  .hero{margin:40px 0 12px}
   h1{font-family:'Inter',sans-serif;font-size:clamp(34px,5.5vw,56px);font-weight:600;letter-spacing:-0.02em;line-height:1.05;max-width:820px}
   h1 .slash{color:var(--faint);font-weight:400}
   h1 .hl{color:var(--accent)}
   .lede{margin-top:22px;color:var(--muted);max-width:640px;font-size:14px;line-height:1.7}
-  .lede code{color:var(--ink);background:var(--bg-2);padding:1px 6px;border-radius:3px;border:1px solid var(--line)}
 
   /* section heading */
-  .sec-head{display:flex;justify-content:space-between;align-items:flex-end;margin:48px 0 18px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
+  .sec-head{display:flex;justify-content:space-between;align-items:flex-end;margin:12px 0 18px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
   .sec-head h2{font-family:'Inter',sans-serif;font-weight:600;font-size:13px;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted)}
   .sec-head .count{color:var(--faint);font-size:11px}
 
@@ -84,7 +82,14 @@
   .card-tag{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line-2);padding:2px 7px;border-radius:2px}
   .card-title{font-family:'Inter',sans-serif;font-weight:600;font-size:22px;letter-spacing:-0.01em;color:var(--ink)}
   .card-sub{color:var(--muted);font-size:13px;line-height:1.55}
-  .card-foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:12px;border-top:1px dashed var(--line)}
+  .card-title a{color:inherit;text-decoration:none}
+  .card-title a::after{content:"";position:absolute;inset:0}
+  .card-foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;padding-top:12px;border-top:1px dashed var(--line)}
+  .card-foot a.go{position:relative;z-index:1;text-decoration:none}
+  .card-subs{display:flex;flex-direction:column;gap:5px}
+  .card-subs a{position:relative;z-index:1;color:var(--muted);font-size:12px;text-decoration:none;width:fit-content;transition:color .15s ease}
+  .card-subs a::before{content:"›";color:var(--faint);margin-right:6px}
+  .card-subs a:hover{color:var(--ink)}
   .card-foot .topics{display:flex;gap:8px;flex-wrap:wrap}
   .card-foot .topics span{color:var(--faint);font-size:11px}
   .card-foot .topics span::before{content:"#";color:var(--line-2);margin-right:2px}
@@ -129,12 +134,15 @@
   }
   footer a{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--line-2)}
   footer a:hover{color:var(--ink)}
+  .gh-link{display:inline-flex;align-items:center;color:var(--muted);border-bottom:none}
+  .gh-link:hover{color:var(--ink)}
+  .gh-link svg{width:18px;height:18px;fill:currentColor;transition:fill .15s ease}
   .cursor{display:inline-block;width:8px;height:14px;background:var(--accent);vertical-align:-2px;margin-left:4px;animation:blink 1.1s steps(2) infinite}
   @keyframes blink{50%{opacity:0}}
 
   @media (max-width:560px){
     .wrap{padding:32px 20px 64px}
-    .hero{margin:40px 0 40px}
+    .hero{margin:28px 0 12px}
     .card{padding:18px}
   }
 </style>
@@ -144,19 +152,17 @@
     <header class="topbar">
       <div class="brand"><span class="dot"></span>LEARNING&nbsp;LABS</div>
       <div class="meta">
-        <span>host <b>learn.chinatsu1124.com</b></span>
-        <span>repo <b>chinatsu1124/learning-labs</b></span>
+        <a class="gh-link" href="https://github.com/chinatsu1124/learning-labs" aria-label="GitHub 仓库" title="GitHub 仓库"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg></a>
       </div>
     </header>
 
     <section class="hero">
-      <div class="kicker">// index of experiments</div>
       <h1><span class="slash">~/</span>learning-<span class="hl">labs</span><span class="cursor"></span></h1>
-      <p class="lede">一些写着玩、用来理解概念的小页面。每个 lab 是独立的静态站，放在 <code>/&lt;slug&gt;/</code> 下。后面会持续加。</p>
+      <p class="lede">一些用来理解概念的交互式小页面，持续更新中。</p>
     </section>
 
     <div class="sec-head">
-      <h2>&gt; labs</h2>
+      <h2>&gt; 实验列表</h2>
       <span class="count" id="lab-count"></span>
     </div>
 
@@ -172,8 +178,8 @@
   </div>
 
   <footer>
-    <span>© chinatsu1124 · static site on cloudflare pages</span>
-    <span><a href="https://github.com/chinatsu1124/learning-labs">source on github</a></span>
+    <span>© <a href="https://github.com/chinatsu1124">chinatsu1124</a> · 静态站 · 托管于 Cloudflare Pages</span>
+    <span><a class="gh-link" href="https://github.com/chinatsu1124/learning-labs" aria-label="GitHub 仓库" title="source on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg></a></span>
   </footer>
   <script>
     /* 卡片从 /labs.json 渲染（单一数据源，加新 lab 只改 json）；
@@ -183,7 +189,7 @@
       var pad = function(n){ return String(n).padStart(2, '0'); };
       var grid = document.getElementById('grid');
       var labs = [];
-      var activeTag = 'all';
+      var activeTag = '全部';
       var query = '';
 
       function esc(s){
@@ -193,31 +199,43 @@
       }
 
       function card(lab, i){
-        var a = document.createElement('a');
-        a.className = 'card';
-        a.href = lab.path;
+        var el = document.createElement('div');
+        el.className = 'card';
         var accent = ACCENTS[i % ACCENTS.length];
-        if (accent) a.dataset.accent = accent;
-        a.innerHTML =
+        if (accent) el.dataset.accent = accent;
+        /* 有子教程：底部列前 3 篇直达链接 + 「全部 N 篇」；
+         * 没有：保持 topics 标签 + 「进入」。标题链接经 ::after 撑满整卡。 */
+        var foot;
+        if (lab.children && lab.children.length){
+          foot =
+            '<div class="card-subs">' +
+              lab.children.slice(0, 3).map(function(c){
+                return '<a href="' + esc(c.path) + '">' + esc(c.title) + '</a>';
+              }).join('') +
+            '</div>' +
+            '<a class="go" href="' + esc(lab.path) + '">全部 ' + lab.children.length + ' 篇 →</a>';
+        } else {
+          foot =
+            '<div class="topics">' + lab.topics.map(function(t){ return '<span>' + esc(t) + '</span>'; }).join('') + '</div>' +
+            '<span class="go">进入 →</span>';
+        }
+        el.innerHTML =
           '<div class="card-row">' +
             '<span class="card-path">' + esc(lab.path) + '</span>' +
             '<span class="card-tag">' + esc(lab.tag) + '</span>' +
           '</div>' +
-          '<div class="card-title">' + esc(lab.title) + '</div>' +
+          '<div class="card-title"><a href="' + esc(lab.path) + '">' + esc(lab.title) + '</a></div>' +
           '<div class="card-sub">' + esc(lab.sub) + '</div>' +
-          '<div class="card-foot">' +
-            '<div class="topics">' + lab.topics.map(function(t){ return '<span>' + esc(t) + '</span>'; }).join('') + '</div>' +
-            '<span class="go">open →</span>' +
-          '</div>';
-        return a;
+          '<div class="card-foot">' + foot + '</div>';
+        return el;
       }
 
       function placeholder(){
         var d = document.createElement('div');
         d.className = 'card placeholder';
         d.innerHTML =
-          '<div class="card-row"><span class="card-path">/_/</span><span class="card-tag">tbd</span></div>' +
-          '<div class="card-title">more soon</div>' +
+          '<div class="card-row"><span class="card-path">/_/</span><span class="card-tag">待定</span></div>' +
+          '<div class="card-title">敬请期待</div>' +
           '<div class="card-sub">下一个 lab 还在草稿里。</div>' +
           '<div class="card-foot"><div class="topics"><span>wip</span></div>' +
           '<span class="go" style="color:var(--faint)">—</span></div>';
@@ -225,9 +243,10 @@
       }
 
       function matches(lab){
-        if (activeTag !== 'all' && lab.tag !== activeTag) return false;
+        if (activeTag !== '全部' && lab.tag !== activeTag) return false;
         if (!query) return true;
-        var hay = [lab.path, lab.tag, lab.title, lab.sub].concat(lab.topics).join(' ').toLowerCase();
+        var hay = [lab.path, lab.tag, lab.title, lab.sub].concat(lab.topics)
+          .concat((lab.children || []).map(function(c){ return c.title; })).join(' ').toLowerCase();
         return query.split(/\s+/).every(function(w){ return hay.indexOf(w) !== -1; });
       }
 
@@ -239,17 +258,17 @@
           grid.appendChild(card(lab, i));
           shown++;
         });
-        var filtering = activeTag !== 'all' || query;
+        var filtering = activeTag !== '全部' || query;
         if (!filtering) grid.appendChild(placeholder());
         document.getElementById('no-hit').style.display = shown ? 'none' : 'block';
         document.getElementById('lab-count').textContent = filtering
-          ? pad(shown) + ' / ' + pad(labs.length) + ' labs'
-          : pad(labs.length) + ' active · 01 pending';
+          ? pad(shown) + ' / ' + pad(labs.length) + ' 个'
+          : pad(labs.length) + ' 个 · 持续更新中';
       }
 
       function buildFilters(){
         var row = document.getElementById('tag-row');
-        var tags = ['all'].concat(labs.map(function(l){ return l.tag; })
+        var tags = ['全部'].concat(labs.map(function(l){ return l.tag; })
           .filter(function(t, i, arr){ return arr.indexOf(t) === i; }));
         tags.forEach(function(tag){
           var b = document.createElement('button');
