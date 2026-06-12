@@ -1,0 +1,33 @@
+{
+  "root": {
+    "path": "/linalg-lab/",
+    "title": "线性代数实验室",
+    "description": "AI 路上的线性代数：向量、矩阵变换、线性相关与秩、特征值与 SVD。"
+  },
+  "tutorials": [
+    {
+      "id": "vectors",
+      "order": 1,
+      "path": "/linalg-lab/vectors/",
+      "title": "向量与相似度",
+      "label": "deep dive 01",
+      "description": "向量运算、点积与投影、范数与余弦相似度 —— embedding 检索的数学底座"
+    },
+    {
+      "id": "transform",
+      "order": 2,
+      "path": "/linalg-lab/transform/",
+      "title": "矩阵与线性变换",
+      "label": "deep dive 02",
+      "description": "矩阵即变换、乘法即复合、行列式与秩、线性相关的几何真相与 Wx+b"
+    },
+    {
+      "id": "decomposition",
+      "order": 3,
+      "path": "/linalg-lab/decomposition/",
+      "title": "特征值与 SVD",
+      "label": "deep dive 03",
+      "description": "特征向量、SVD 三步几何、PCA 降维点云实验与低秩近似 / LoRA"
+    }
+  ]
+}

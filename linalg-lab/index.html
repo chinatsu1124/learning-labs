@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="AI 路上的线性代数入门：向量与 embedding、矩阵即变换、线性相关与秩的可视化、特征值与 SVD 概览，全程交互演示。">
+<meta property="og:title" content="线性代数实验室 · LINALG LAB">
+<meta property="og:description" content="AI 路上的线性代数入门：向量与 embedding、矩阵即变换、线性相关与秩的可视化、特征值与 SVD 概览，全程交互演示。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>线性代数实验室 · LINALG LAB</title>
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
+<script defer src="/assets/term.js"></script>
+<script defer src="/assets/secnav.js"></script>
+<script src="/assets/quiz.js"></script>
+<script src="/assets/cards.js"></script>
+<script src="/assets/stepper.js"></script>
+<style>
+  :root{
+    --bg:#0a0b10;
+    --bg2:#0f1118;
+    --panel:#13151f;
+    --panel-hi:#1a1d29;
+    --line:#262a38;
+    --ink:#dfe3ec;
+    --muted:#8a90a3;
+    --faint:#565c70;
+    --violet:#b08aff;
+    --violet-dim:#37284f;
+    --teal:#4fe3c1;
+    --teal-dim:#1f4d44;
+    --amber:#ffb648;
+    --amber-dim:#5a4422;
+    --rose:#ff7a85;
+    --rose-dim:#52262b;
+    --blue:#8aa9ff;
+    --blue-dim:#27314f;
+    --display:'Syne',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+    --accent:var(--violet);
+    --accent-dim:var(--violet-dim);
+    --accent-em:var(--teal);
+    --hero-size:clamp(44px,10vw,104px);
+    --hero-glow-1:rgba(176,138,255,.10);
+    --hero-glow-2:rgba(79,227,193,.05);
+  }
+
+  /* ---------- why cards ---------- */
+  .why-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  @media(max-width:680px){.why-grid{grid-template-columns:1fr}}
+  .why-card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:18px}
+  .why-card .wi{font-size:22px;margin-bottom:6px}
+  .why-card h3{font-family:var(--display);font-size:17px;margin-bottom:4px}
+  .why-card .wq{font-family:var(--mono);font-size:11px;color:var(--faint);margin-bottom:10px}
+  .why-card ul{list-style:none}
+  .why-card li{font-size:13.5px;color:var(--muted);padding:6px 0;border-top:1px dashed var(--line);line-height:1.6}
+  .why-card li b{color:var(--ink)}
+  .why-card.w1{border-color:var(--teal-dim)}
+  .why-card.w1 h3{color:var(--teal)}
+  .why-card.w2{border-color:var(--violet-dim)}
+  .why-card.w2 h3{color:var(--violet)}
+  .why-card.w3{border-color:var(--amber-dim)}
+  .why-card.w3 h3{color:var(--amber)}
+
+  /* ---------- vector identity cards ---------- */
+  .vid-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+  .vid-card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:16px;
+    cursor:pointer;transition:all .18s;text-align:left;color:inherit;font:inherit;width:100%}
+  .vid-card:hover{border-color:var(--muted)}
+  .vid-card.active{border-color:var(--violet);background:var(--violet-dim);box-shadow:0 0 22px rgba(176,138,255,.15)}
+  .vid-card .pi{font-size:22px;margin-bottom:6px}
+  .vid-card .pn{font-family:var(--display);font-weight:700;font-size:15px;color:var(--ink)}
+  .vid-card.active .pn{color:var(--violet)}
+  .vid-card .pd{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:2px}
+  .vid-detail{margin-top:16px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;
+    padding:18px 20px;font-size:14.5px;color:var(--muted);line-height:1.9}
+  .vid-detail b{color:var(--ink)}
+  .vid-detail .vec{font-family:var(--mono);font-size:12.5px;color:var(--teal);background:var(--panel-hi);
+    border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:8px 0;overflow-x:auto;white-space:pre}
+
+  /* ---------- matmul stepper ---------- */
+  .mm-log{display:flex;flex-direction:column;gap:10px;margin-top:14px;min-height:40px}
+  .mm-msg{border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:14px;
+    line-height:1.7;animation:pop .3s ease;background:var(--bg2)}
+  .mm-msg .who{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+    margin-bottom:5px;color:var(--faint)}
+  .mm-msg.row1{border-color:var(--teal-dim)}
+  .mm-msg.row1 .who{color:var(--teal)}
+  .mm-msg.row2{border-color:var(--amber-dim)}
+  .mm-msg.row2 .who{color:var(--amber)}
+  .mm-msg.fin{border-color:var(--violet-dim)}
+  .mm-msg.fin .who{color:var(--violet)}
+  .mm-msg .note{color:var(--muted);font-size:13.5px}
+  .mm-msg .note b{color:var(--ink)}
+  .mm-eq{font-family:var(--mono);font-size:14px;background:var(--panel-hi);border:1px solid var(--line);
+    border-radius:8px;padding:10px 14px;margin-top:8px;overflow-x:auto;white-space:pre;line-height:1.8;color:var(--muted)}
+  .mm-eq b{color:var(--teal);font-weight:600}
+  .mm-eq .a{color:var(--amber)}
+  .mm-eq .v{color:var(--violet)}
+
+  /* ---------- span playground ---------- */
+  .span-canvas{width:100%;border:1px solid var(--line);border-radius:12px;background:var(--bg2);display:block}
+  .span-read{font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:12px;line-height:1.8}
+  .span-read b{color:var(--violet)}
+  .span-read .t1{color:var(--teal)}
+  .span-read .t2{color:var(--amber)}
+
+  /* ---------- eigen overview cards ---------- */
+  .eig-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+  .eig-card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:18px}
+  .eig-card .pi{font-size:22px;margin-bottom:6px}
+  .eig-card h3{font-family:var(--display);font-size:16px;margin-bottom:6px;color:var(--ink)}
+  .eig-card p{font-size:13.5px;color:var(--muted);margin:0;line-height:1.7}
+  .eig-card .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--faint);
+    text-transform:uppercase;margin-bottom:8px}
+</style>
+<link rel="stylesheet" href="/assets/tutorial.css">
+</head>
+<body>
+<a class="lab-home" href="/" title="返回 learning labs 首页">←&nbsp;~/labs</a>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">// linalg lab</div>
+    <h1 class="hero"><span class="b">LINEAR</span><span class="b">&nbsp;ALGEBRA</span></h1>
+    <div class="sub">AI 路上的线性代数 —— <b>向量、矩阵、线性相关、特征值</b>，不背公式，全部画出来</div>
+    <div class="scrollcue">scroll<span>▾</span></div>
+  </header>
+
+  <!-- ============ 01 为什么 ============ -->
+  <section id="why">
+    <div class="secnum">01 / WHY LINEAR ALGEBRA</div>
+    <h2>学 AI 为什么<em>绕不开线性代数？</em></h2>
+    <p>打开任何一个深度学习模型，里面没有"智能"，只有三样东西：<span class="hl">装数据的向量</span>、<span class="hl-v">装参数的矩阵</span>、<span class="hl-a">把它们乘起来的运算</span>。线性代数就是这三样东西的语法书——不懂它，看到 <code>y = Wx + b</code> 只能死记；懂了它，整个神经网络就是一连串看得见的几何变换。</p>
+
+    <div class="panel">
+      <div class="panel-label">big picture · 一个模型的三类零件</div>
+      <div class="why-grid">
+        <div class="why-card w1">
+          <div class="wi">📦</div>
+          <h3>数据 = 向量</h3>
+          <div class="wq">vector · 一串数字</div>
+          <ul>
+            <li>一个词 → <b>embedding 向量</b>（几百~几千维）</li>
+            <li>一张图 → 像素拉平的向量</li>
+            <li>"语义相近"= 向量<b>方向相近</b></li>
+          </ul>
+        </div>
+        <div class="why-card w2">
+          <div class="wi">🔢</div>
+          <h3>参数 = 矩阵</h3>
+          <div class="wq">matrix · 数字表格</div>
+          <ul>
+            <li>每个全连接层就是一个<b>权重矩阵 W</b></li>
+            <li>"7B 模型"= 70 亿个矩阵元素</li>
+            <li>训练 = 不断微调这些表格里的数</li>
+          </ul>
+        </div>
+        <div class="why-card w3">
+          <div class="wi">⚙️</div>
+          <h3>计算 = 矩阵乘法</h3>
+          <div class="wq">matmul · 变换的复合</div>
+          <ul>
+            <li>前向传播 = 一串<b>矩阵 × 向量</b></li>
+            <li>注意力分数 = <b>QKᵀ</b> 一次矩阵乘</li>
+            <li>GPU 之所以重要：它是矩阵乘法机器</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="t">这个 lab 的路线</div>
+      <p>主页把<b>向量 → 矩阵 → 线性相关与秩 → 特征值/SVD</b> 四块直觉一次建立起来；每一块下面有"深入 →"子教程，把运算细节、几何动画和 AI 应用逐个拆开。建议先通读主页，再按兴趣深入。</p>
+    </div>
+  </section>
+
+  <!-- ============ 02 向量 ============ -->
+  <section id="vectors">
+    <div class="secnum">02 / VECTORS</div>
+    <h2>向量：<em>一串数字，也是一支箭</em></h2>
+    <p>向量有两副面孔：代数上是<b>一列数字</b> <code>[2, 1]</code>，几何上是<b>空间里的一支箭头</b>（从原点指向点 (2,1)）。AI 里的一切表示都是向量——维度从 2 涨到 1536，箭头画不出来了，但"方向、长度、夹角"这些几何直觉<b>全部照常成立</b>。点击下面的卡片，看向量在 AI 里的几种身份👇</p>
+
+    <div class="panel">
+      <div class="panel-label">identities · 向量在 AI 里的四种身份</div>
+      <div class="vid-grid" id="vid-grid"></div>
+      <div class="vid-detail" id="vid-detail"></div>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">最重要的一个运算：点积</div>
+      <p>两个向量的<b>点积（dot product）</b>= 对应分量相乘再相加，结果是一个数，衡量"两个向量有多同向"：同向为正、垂直为零、反向为负。<b>embedding 检索算相似度、注意力算匹配分数，本质都是在算点积。</b></p>
+    </div>
+
+    <a class="deeper" href="/linalg-lab/vectors/">深入 → 向量与相似度子教程<small>向量加减与数乘的可视化、点积与投影、L1/L2 范数、余弦相似度计算器与 embedding 检索演示</small></a>
+  </section>
+
+  <!-- ============ 03 矩阵 ============ -->
+  <section id="matrices">
+    <div class="secnum">03 / MATRICES</div>
+    <h2>矩阵：<em>对向量做变换的机器</em></h2>
+    <p>别把矩阵当成"数字表格"，把它当成<b>一台函数机器</b>：吃进一个向量，吐出一个新向量。<code>y = Wx</code> 读作"用 W 变换 x"。计算规则只有一条：<span class="hl-a">输出的每个分量 = W 的对应行与 x 的点积</span>。点击"下一步"，手算一遍神经网络里最常见的一步👇</p>
+
+    <div class="panel">
+      <div class="panel-label">simulator · 算一次 y = Wx，W 是 2×2 权重，x 是输入</div>
+      <div class="mm-eq">W = <span class="a">⎡ 2  0 ⎤</span>   x = <span class="v">⎡ 1 ⎤</span>
+    <span class="a">⎣ 1  3 ⎦</span>       <span class="v">⎣ 2 ⎦</span></div>
+      <div class="mm-log" id="mm-log"></div>
+      <div class="btnrow">
+        <button class="btn" id="mm-next">下一步 ▸</button>
+        <button class="btn" id="mm-reset">重置 ↺</button>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <div class="t">维度对账</div>
+      <p>矩阵乘法合法的唯一条件：<b>左边的列数 = 右边的行数</b>。一个 (m×n) 矩阵把 n 维向量变成 m 维向量——神经网络一层"从 768 维变到 3072 维"，说的就是乘了一个 3072×768 的 W。读模型结构图时，先对维度，错不了。</p>
+    </div>
+
+    <a class="deeper" href="/linalg-lab/transform/">深入 → 矩阵与线性变换子教程<small>2×2 变换可视化操场（旋转/缩放/剪切/投影）、矩阵乘法即复合、行列式与秩、神经网络里的 Wx+b</small></a>
+  </section>
+
+  <!-- ============ 04 线性相关与秩 ============ -->
+  <section id="dependence">
+    <div class="secnum">04 / LINEAR DEPENDENCE &amp; RANK</div>
+    <h2>线性相关：<em>你的向量"撑得开"空间吗？</em></h2>
+    <p>给你两个向量，用"伸缩 + 相加"（即<span class="term" data-name="线性组合 · Linear Combination" data-tip="a·v₁ + b·v₂ 这种『各自乘个系数再加起来』的式子。一组向量所有线性组合构成的集合叫它们的张成空间（span）。">线性组合</span>）能拼出哪些点？答案是它们的<b>张成空间（span）</b>。如果两个向量方向不同，组合能铺满整个平面——叫<span class="hl">线性无关</span>；如果一个是另一个的倍数，怎么组合都困在一条直线上——叫<span class="hl-r">线性相关</span>，第二个向量没提供任何新方向，是<b>冗余的</b>。切换下面的场景，看 600 个随机组合落在哪里👇</p>
+
+    <div class="panel">
+      <div class="panel-label">playground · 随机生成 a·v₁ + b·v₂，看 span 长什么样</div>
+      <div class="toggle-grp" id="span-tabs">
+        <button class="active" data-m="0">线性无关</button>
+        <button data-m="1">线性相关</button>
+        <button data-m="2">接近相关</button>
+      </div>
+      <canvas class="span-canvas" id="span-canvas" height="340"></canvas>
+      <div class="span-read" id="span-read"></div>
+    </div>
+
+    <div class="callout violet">
+      <div class="t">秩 Rank：矩阵的"真实维度"</div>
+      <p>把矩阵的每一列看成一个向量，<b>秩 = 这些列向量里真正线性无关的个数</b>，也就是这台变换机器实际能输出的空间维度。2×2 矩阵满秩（秩 2）能覆盖整个平面；秩 1 就把整个平面压扁成一条线——压扁的信息<b>永远找不回来</b>，这样的矩阵不可逆。</p>
+    </div>
+
+    <div class="callout teal">
+      <div class="t">AI 里它无处不在</div>
+      <p><b>特征共线性</b>：两列特征线性相关（如"米"和"厘米"），回归系数就不唯一，模型不稳定；<b>低秩近似</b>：大矩阵往往"实际秩"很低，用两个小矩阵的乘积就能近似——这正是 <b>LoRA 微调</b>省参数的原理（在特征值与 SVD 子教程里细讲）。</p>
+    </div>
+  </section>
+
+  <!-- ============ 05 特征值与 SVD ============ -->
+  <section id="eigen">
+    <div class="secnum">05 / EIGENVALUES &amp; SVD</div>
+    <h2>特征值与 SVD：<em>看穿一个矩阵的"本性"</em></h2>
+    <p>一个矩阵把向量转来转去，看起来毫无规律——但总有几个<b>特殊方向</b>，变换前后方向不变、只被拉伸：这些方向叫<span class="hl-v">特征向量</span>，拉伸倍数叫<span class="hl-v">特征值</span>。顺着这条线走下去，就是把任意矩阵拆成"旋转 × 拉伸 × 旋转"的 <b>SVD（奇异值分解）</b>——整个经典机器学习里最有用的一个分解。先混个脸熟👇</p>
+
+    <div class="panel">
+      <div class="panel-label">overview · 四个互相串联的概念</div>
+      <div class="eig-grid">
+        <div class="eig-card">
+          <div class="pi">🧭</div>
+          <div class="tag">eigenvector</div>
+          <h3>特征向量</h3>
+          <p>变换中<b>方向不变</b>的轴：Av = λv。它揭示矩阵"沿哪些方向只做拉伸"。</p>
+        </div>
+        <div class="eig-card">
+          <div class="pi">✂️</div>
+          <div class="tag">svd</div>
+          <h3>奇异值分解</h3>
+          <p>任意矩阵 = <b>旋转 × 拉伸 × 旋转</b>。奇异值排好序，告诉你哪些方向重要。</p>
+        </div>
+        <div class="eig-card">
+          <div class="pi">📉</div>
+          <div class="tag">pca</div>
+          <h3>PCA 降维</h3>
+          <p>找数据<b>方差最大的方向</b>（协方差矩阵的特征向量），把 1000 维压到几维还保住主要信息。</p>
+        </div>
+        <div class="eig-card">
+          <div class="pi">🪶</div>
+          <div class="tag">low-rank</div>
+          <h3>低秩近似 / LoRA</h3>
+          <p>只保留前 k 个奇异值就能近似大矩阵——<b>LoRA 用秩 8 的更新微调 70 亿参数</b>就是这笔账。</p>
+        </div>
+      </div>
+    </div>
+
+    <a class="deeper" href="/linalg-lab/decomposition/">深入 → 特征值与 SVD 子教程<small>特征向量探测器、SVD 三步几何动画、PCA 二维点云实验、低秩近似与 LoRA 的参数账本</small></a>
+  </section>
+
+  <!-- ============ 06 测验 ============ -->
+  <section id="quiz">
+    <div class="secnum">06 / QUIZ</div>
+    <h2>随堂测验：<em>检验一下</em></h2>
+    <p>6 道题，覆盖前面所有章节。答错没关系，解析比答案重要。</p>
+
+    <div class="panel">
+      <div class="panel-label">quiz · 点击选项作答</div>
+      <div id="quiz-list"></div>
+      <div class="quiz-score" id="quiz-score"></div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <a href="/">← back to labs</a> &nbsp;·&nbsp; linalg lab · learning-labs
+</footer>
+
+<script>
+/* ================= 02 vector identities ================= */
+const vids = [
+  {icon:'🔤', name:'词的 Embedding', tag:'语义坐标',
+   vec:'"猫" → [ 0.21, -1.30, 0.77, …, 0.05 ]   // 1536 维',
+   d:'每个词/句子被映射成一个高维向量，<b>语义相近 → 向量方向相近</b>。"猫"和"狗"的夹角小，"猫"和"发票"的夹角大。搜索、推荐、RAG 检索全靠在向量空间里"找最近的邻居"。'},
+  {icon:'🖼️', name:'一张图片', tag:'像素向量',
+   vec:'28×28 灰度图 → 拉平 → [ 0, 0, 0.95, 0.87, …, 0 ]   // 784 维',
+   d:'图像就是把像素值排成一长串。经典的 MNIST 手写数字识别，本质是在 784 维空间里<b>给点云画分界面</b>。卷积网络只是更聪明地利用了"相邻像素相关"这一结构。'},
+  {icon:'🎲', name:'一个概率分布', tag:'输出向量',
+   vec:'softmax 输出 → [ 0.01, 0.90, 0.04, 0.05 ]   // 各分量≥0 且和为 1',
+   d:'分类模型的最后一层输出一个向量，每个分量是属于某类别的概率。LLM 每生成一个 token，其实是在<b>十几万维的词表向量</b>上算了一个概率分布，再从中采样。'},
+  {icon:'🧗', name:'梯度', tag:'下山方向',
+   vec:'∇L = [ 0.03, -0.12, …, 0.0007 ]   // 和参数一样多的维度',
+   d:'训练时，损失函数对每个参数的偏导排成一个巨大向量——<b>梯度</b>，指向损失上升最快的方向。梯度下降就是"沿它的反方向挪一小步"。理解了向量，"训练"这个黑盒就透明了一半。'}
+];
+Cards.render(document.getElementById('vid-grid'), document.getElementById('vid-detail'), vids, {
+  cardClass: 'vid-card',
+  card: v => '<div class="pi">'+v.icon+'</div><div class="pn">'+v.name+'</div><div class="pd">'+v.tag+'</div>',
+  detail: v => '<div class="vec">'+v.vec+'</div>'+v.d
+});
+
+/* ================= 03 matmul stepper ================= */
+const mmSteps = [
+  {role:'row1', who:'第 1 步 · W 的第 1 行 ⊙ x',
+   html:'<div class="note">输出向量的<b>第 1 个分量</b>：取 W 的第 1 行 <span class="hl-a">[2, 0]</span>，和 x 做点积：</div><div class="mm-eq">y₁ = <span class="a">2</span>×<span class="v">1</span> + <span class="a">0</span>×<span class="v">2</span> = <b>2</b></div>'},
+  {role:'row2', who:'第 2 步 · W 的第 2 行 ⊙ x',
+   html:'<div class="note">输出向量的<b>第 2 个分量</b>：取 W 的第 2 行 <span class="hl-a">[1, 3]</span>，再和同一个 x 做点积：</div><div class="mm-eq">y₂ = <span class="a">1</span>×<span class="v">1</span> + <span class="a">3</span>×<span class="v">2</span> = <b>7</b></div>'},
+  {role:'fin', who:'第 3 步 · 拼装结果',
+   html:'<div class="note">两个分量拼起来就是输出向量。<b>矩阵 × 向量 = 每行做一次点积</b>，没有别的了：</div><div class="mm-eq">y = Wx = <b>⎡ 2 ⎤</b>\n         <b>⎣ 7 ⎦</b></div><div class="note" style="margin-top:8px">真实网络里这一步会再加偏置 b、过激活函数：<b>h = ReLU(Wx + b)</b>。一层如此，百层也是如此——前向传播就是这套动作的流水线。</div>'}
+];
+const mmLog = document.getElementById('mm-log');
+Stepper.bind({
+  next: document.getElementById('mm-next'),
+  reset: document.getElementById('mm-reset'),
+  total: mmSteps.length,
+  doneText: '算完了 ✓',
+  onStep(i){
+    const s = mmSteps[i];
+    const d = document.createElement('div');
+    d.className = 'mm-msg ' + s.role;
+    d.innerHTML = '<div class="who">' + s.who + '</div>' + s.html;
+    mmLog.appendChild(d);
+  },
+  onReset(){ mmLog.innerHTML = ''; }
+});
+
+/* ================= 04 span playground ================= */
+const spanModes = [
+  {v1:[1.6,.5], v2:[.4,1.4],
+   read:'<span class="t1">v₁=(1.6, 0.5)</span> 和 <span class="t2">v₂=(0.4, 1.4)</span> 方向不同 → <b>线性无关</b>。随机组合铺满整个平面：span = 全平面，秩 = 2。'},
+  {v1:[1.6,.5], v2:[-1.2,-.375],
+   read:'<span class="t2">v₂=(-1.2, -0.375)</span> 恰好是 <span class="t1">v₁</span> 的 -0.75 倍 → <b>线性相关</b>。再怎么组合都困在一条直线上：span = 一条线，秩 = 1。v₂ 没有提供任何新信息。'},
+  {v1:[1.6,.5], v2:[1.5,.55],
+   read:'<span class="t2">v₂=(1.5, 0.55)</span> 和 <span class="t1">v₁</span> 几乎共线 → 严格说仍线性无关，但组合<b>极不均匀</b>地挤在窄带里。数值计算里这叫病态（ill-conditioned）：理论可逆，实际一算就放大误差——特征共线性问题的几何样子。'}
+];
+const spanCanvas = document.getElementById('span-canvas');
+const spanRead = document.getElementById('span-read');
+function drawSpan(mode){
+  const m = spanModes[mode];
+  const ctx = spanCanvas.getContext('2d');
+  const W = spanCanvas.clientWidth, H = 340;
+  spanCanvas.width = W * devicePixelRatio; spanCanvas.height = H * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const cx = W/2, cy = H/2, U = 46;   // 像素/单位
+  ctx.clearRect(0,0,W,H);
+  // 坐标轴
+  ctx.strokeStyle = '#262a38'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy); ctx.moveTo(cx,0); ctx.lineTo(cx,H); ctx.stroke();
+  // 随机组合点云（固定种子的简易 LCG，保证每次渲染一致）
+  let seed = 42;
+  const rnd = () => (seed = (seed*48271) % 2147483647) / 2147483647;
+  ctx.fillStyle = 'rgba(176,138,255,.38)';
+  for(let i=0;i<600;i++){
+    const a = (rnd()-.5)*6, b = (rnd()-.5)*6;
+    const x = a*m.v1[0] + b*m.v2[0], y = a*m.v1[1] + b*m.v2[1];
+    const px = cx + x*U, py = cy - y*U;
+    if(px<0||px>W||py<0||py>H) continue;
+    ctx.fillRect(px-1.2, py-1.2, 2.4, 2.4);
+  }
+  // 两个基向量箭头
+  const arrow = (v, color) => {
+    const tx = cx + v[0]*U, ty = cy - v[1]*U;
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(tx,ty); ctx.stroke();
+    const ang = Math.atan2(ty-cy, tx-cx);
+    ctx.beginPath();
+    ctx.moveTo(tx,ty);
+    ctx.lineTo(tx-10*Math.cos(ang-.4), ty-10*Math.sin(ang-.4));
+    ctx.lineTo(tx-10*Math.cos(ang+.4), ty-10*Math.sin(ang+.4));
+    ctx.closePath(); ctx.fill();
+  };
+  arrow(m.v1, '#4fe3c1');
+  arrow(m.v2, '#ffb648');
+  spanRead.innerHTML = m.read;
+}
+document.getElementById('span-tabs').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#span-tabs button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  drawSpan(+b.dataset.m);
+});
+drawSpan(0);
+addEventListener('resize', ()=>{
+  const cur = document.querySelector('#span-tabs button.active');
+  drawSpan(+(cur ? cur.dataset.m : 0));
+});
+
+/* ================= 06 quiz ================= */
+const quiz = [
+  {q:'"猫"和"狗"的 embedding 相似，在向量空间里指的是什么？',
+   opts:['两个向量的分量都是正数','两个向量方向相近（夹角小）','两个向量长度相等','两个向量维度相同'],
+   ans:1,
+   exp:'语义相似度看的是<b>方向（夹角）</b>，通常用余弦相似度衡量。维度相同只是能比较的前提，长度和正负都不是关键。'},
+  {q:'一个 (3072×768) 的权重矩阵 W，能对什么样的向量做变换？结果是几维？',
+   opts:['吃 3072 维，吐 768 维','吃 768 维，吐 3072 维','只能乘 3072×768 的矩阵','任意维度都行'],
+   ans:1,
+   exp:'合法条件是<b>左边的列数 = 右边的行数</b>：W 有 768 列，所以吃 768 维向量；W 有 3072 行，每行做一次点积，所以吐 3072 维。'},
+  {q:'矩阵 × 向量的计算规则是？',
+   opts:['对应元素相乘','输出的每个分量 = 矩阵对应行与向量的点积','向量的每个分量乘以矩阵的行列式','矩阵转置后相加'],
+   ans:1,
+   exp:'就一条规则：<b>第 i 个输出分量 = W 的第 i 行 ⊙ x</b>。整个深度学习的前向传播都建立在这一个动作上。'},
+  {q:'两个向量线性相关，意味着什么？',
+   opts:['它们的点积为 0','一个是另一个的倍数，span 塌缩成一条直线','它们的长度相等','它们必须都是零向量'],
+   ans:1,
+   exp:'线性相关 = 存在冗余：其中一个能被另一个线性表出（共线），组合不出平面，只能困在一条线上。点积为 0 反而是"垂直"，是最不相关的情形。'},
+  {q:'一个 2×2 矩阵的秩是 1，对它的几何理解是？',
+   opts:['它把平面旋转了 1 度','它把整个平面压扁到一条直线上，且不可逆','它只能处理 1 维向量','它的所有元素都是 1'],
+   ans:1,
+   exp:'秩 = 输出空间的真实维度。秩 1 的 2×2 矩阵把二维输入全部压到一条线上——<b>压扁丢掉的信息无法恢复，所以不可逆</b>（行列式为 0）。'},
+  {q:'特征向量（eigenvector）的定义是？',
+   opts:['长度为 1 的向量','变换后方向不变、只被拉伸 λ 倍的向量：Av = λv','矩阵的第一列','所有分量相等的向量'],
+   ans:1,
+   exp:'<b>Av = λv</b>：被 A 作用后还在原来的直线上，只是长度变成 λ 倍。这些"不变的轴"是理解 PCA、谱分解、PageRank 的钥匙。'}
+];
+Quiz.render(document.getElementById('quiz-list'), document.getElementById('quiz-score'), quiz, {
+  final: (correct, total) =>
+    correct === total ? ' 🎉 全对！去子教程里玩可视化吧'
+    : correct >= 4 ? ' 👍 不错，回头看看错题的解析'
+    : ' 💪 建议从第 02 节再过一遍'
+});
+</script>
+</body>
+</html>

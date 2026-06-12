@@ -2,6 +2,7 @@
  * Pages opt in with:
  *   <body data-tutorial="tool-use">
  *   <div class="sib-grid" data-tutorial-siblings></div>
+ * The manifest is <lab>/tutorials.json, derived from the page's first path segment.
  */
 (() => {
   const currentId = document.body.dataset.tutorial;
@@ -15,7 +16,8 @@
     '"': '&quot;'
   })[c]);
 
-  fetch('/agent-lab/tutorials.json')
+  const lab = location.pathname.split('/')[1];
+  fetch('/' + lab + '/tutorials.json')
     .then(r => r.ok ? r.json() : Promise.reject(new Error('tutorial manifest load failed')))
     .then(data => {
       const tutorials = [...(data.tutorials || [])].sort((a, b) => a.order - b.order);

@@ -50,6 +50,13 @@
       "topics": ["cpu", "gpu", "parallel", "throughput", "cuda"]
     },
     {
+      "path": "/linalg-lab/",
+      "tag": "ai",
+      "title": "线性代数实验室",
+      "sub": "AI 路上的线性代数 —— 向量与相似度、矩阵即变换、线性相关与秩、特征值、SVD 与 PCA，全程可视化。",
+      "topics": ["vector", "matrix", "rank", "eigenvalue", "svd", "pca"]
+    },
+    {
       "path": "/tr-appleid/",
       "tag": "guide",
       "title": "土区 Apple ID",
