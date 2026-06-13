@@ -80,6 +80,20 @@
       "title": "tmux 实验室",
       "sub": "tmux 使用教程 —— 会话、窗口、面板、断线恢复、复制模式、常用配置与代码工作流。",
       "topics": ["tmux", "terminal", "ssh", "workflow", "cli"]
+    },
+    {
+      "path": "/wrangler-lab/",
+      "tag": "教程",
+      "title": "Wrangler 实验室",
+      "sub": "Wrangler 安装与使用教程 —— 登录授权、创建 Worker、本地开发、部署上线、wrangler.toml 配置、绑定密钥与实时日志。",
+      "topics": ["wrangler", "cloudflare", "workers", "deploy", "cli"]
+    },
+    {
+      "path": "/gh-lab/",
+      "tag": "教程",
+      "title": "GitHub CLI 实验室",
+      "sub": "GitHub CLI（gh）使用教程 —— 登录授权、仓库管理、PR 全流程、Issue、Actions 流水线、release 发布与 gh api。",
+      "topics": ["gh", "github", "pull-request", "actions", "cli"]
     }
   ]
 }

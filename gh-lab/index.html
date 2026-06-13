@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="GitHub CLI（gh）安装与使用教程：登录授权、仓库管理、PR 全流程、Issue、Actions 跑流水线、release 发布、gh api 与别名扩展。">
+<meta property="og:title" content="GitHub CLI 实验室 · GH LAB">
+<meta property="og:description" content="GitHub CLI（gh）安装与使用教程：登录授权、仓库、PR 全流程、Issue、Actions、release、gh api 与别名扩展。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>GitHub CLI 实验室 · GH LAB</title>
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
+<script defer src="/assets/term.js"></script>
+<script defer src="/assets/secnav.js"></script>
+<script src="/assets/quiz.js"></script>
+<style>
+  :root{
+    --bg:#0a0810;
+    --bg2:#100d18;
+    --panel:#16121f;
+    --panel-hi:#1d1829;
+    --line:#2e2740;
+    --ink:#ece8f4;
+    --muted:#a79bbf;
+    --faint:#6b6082;
+    --accent:#b794f6;
+    --accent-dim:#3a2c5a;
+    --amber:#ffbd5a;
+    --amber-dim:#553f21;
+    --blue:#83b4ff;
+    --blue-dim:#243c61;
+    --green:#79f2b6;
+    --green-dim:#1d4d38;
+    --rose:#ff7d8c;
+    --rose-dim:#54282f;
+    --secnav-accent:#b794f6;
+    --display:'Syne',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.75;
+    overflow-x:hidden;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:46px 46px;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(ellipse 78% 58% at 50% -10%,rgba(183,148,246,.11),transparent 60%),
+      radial-gradient(ellipse 60% 48% at 90% 22%,rgba(131,180,255,.06),transparent 58%),
+      linear-gradient(180deg,rgba(10,8,16,.42),var(--bg) 88%);
+  }
+  .wrap{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:0 24px}
+  header{padding:92px 0 42px;text-align:center}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:var(--accent);text-transform:uppercase;margin-bottom:24px;opacity:0;animation:rise .7s .1s forwards}
+  h1.hero{font-family:var(--display);font-weight:800;font-size:clamp(64px,17vw,148px);line-height:.9;letter-spacing:-.03em;margin-bottom:8px}
+  h1.hero span{display:inline-block;opacity:0;transform:translateY(38px);animation:rise .8s forwards}
+  h1.hero span:first-child{color:var(--accent);animation-delay:.15s}
+  h1.hero span:last-child{color:var(--ink);animation-delay:.25s}
+  .sub{font-family:var(--mono);color:var(--muted);font-size:15px;margin-top:18px;opacity:0;animation:rise .7s .55s forwards}
+  .sub b{color:var(--ink);font-weight:500}
+  .scrollcue{margin-top:52px;font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:var(--faint);opacity:0;animation:rise .7s .85s forwards;text-transform:uppercase}
+  .scrollcue span{display:block;font-size:18px;margin-top:6px;animation:bob 1.8s ease-in-out infinite}
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+  section{padding:72px 0}
+  .secnum{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.2em;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+  .secnum::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,42px);line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
+  h2 em{font-style:normal;background:linear-gradient(90deg,var(--accent),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+  h3{font-family:var(--display);font-size:18px;line-height:1.25;margin-bottom:8px}
+  p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
+  p b{color:var(--ink);font-weight:600}
+  code{font-family:var(--mono);background:var(--panel-hi);color:var(--accent);padding:2px 7px;border-radius:5px;font-size:.88em;border:1px solid var(--line)}
+  a{color:var(--accent)}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;margin:26px 0;position:relative;overflow:hidden}
+  .panel::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.52}
+  .panel-label{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--faint);text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+  .panel-label::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px rgba(183,148,246,.55)}
+
+  .callout{border-left:3px solid var(--accent);background:var(--panel);border-radius:0 12px 12px 0;padding:16px 20px;margin:22px 0}
+  .callout .t{font-family:var(--mono);font-size:12px;letter-spacing:.15em;color:var(--accent);text-transform:uppercase;margin-bottom:6px}
+  .callout p{margin:0;font-size:15px;color:var(--ink)}
+  .callout.amber{border-color:var(--amber)}.callout.amber .t{color:var(--amber)}
+  .callout.blue{border-color:var(--blue)}.callout.blue .t{color:var(--blue)}
+  .callout.green{border-color:var(--green)}.callout.green .t{color:var(--green)}
+  .callout.rose{border-color:var(--rose)}.callout.rose .t{color:var(--rose)}
+
+  .term-window{background:#07050c;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.26)}
+  .term-title{height:38px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);background:#100c18;padding:0 14px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--rose)}
+  .dot:nth-child(2){background:var(--amber)}.dot:nth-child(3){background:var(--green)}
+  .term-title span:last-child{margin-left:8px;color:var(--faint)}
+  .term-body{font-family:var(--mono);font-size:13px;line-height:1.8;padding:18px;overflow:auto;color:var(--ink)}
+  .prompt{color:var(--accent)}
+  .out{color:var(--muted)}
+  .dim{color:var(--faint)}
+  .ok{color:var(--green)}
+
+  .model{display:grid;grid-template-columns:1fr;gap:12px}
+  .model-row{display:grid;grid-template-columns:148px 1fr;gap:12px;align-items:stretch}
+  .model-name{background:var(--accent-dim);border:1px solid var(--accent);border-radius:12px;padding:14px 16px;font-family:var(--mono);color:var(--accent);display:flex;align-items:center;font-size:14px}
+  .model-desc{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;color:var(--muted)}
+  .model-desc b{color:var(--ink)}
+  @media(max-width:640px){.model-row{grid-template-columns:1fr}.model-name{padding:10px 14px}}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:18px;transition:border-color .18s,transform .18s}
+  .card:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .card .tag{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+  .card ul{list-style:none;margin-top:10px}
+  .card li{color:var(--muted);font-size:14px;padding:7px 0;border-top:1px dashed var(--line)}
+  .card li b{color:var(--ink)}
+
+  .cmd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+  .cmd-row{display:grid;grid-template-columns:minmax(168px,auto) 1fr;gap:12px;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .cmd-row kbd{font-family:var(--mono);font-size:12px;background:var(--panel-hi);border:1px solid var(--line);border-bottom-color:#0e0a16;border-radius:6px;color:var(--accent);padding:4px 7px;white-space:nowrap}
+  .cmd-row span{color:var(--muted);font-size:14px}
+
+  .codeblock{font-family:var(--mono);font-size:12.5px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow-x:auto;line-height:1.8;margin-top:14px;white-space:pre;color:var(--muted)}
+  .codeblock .c{color:var(--faint)}.codeblock .k{color:var(--blue)}.codeblock .s{color:var(--green)}.codeblock .n{color:var(--amber)}
+
+  .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:10px}
+  .flow-step{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+  .flow-step b{display:block;font-family:var(--mono);font-size:12px;color:var(--accent);margin-bottom:4px}
+  .flow-step span{font-size:13px;color:var(--muted)}
+  @media(max-width:760px){.flow{grid-template-columns:1fr 1fr}}
+
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .tab{font-family:var(--mono);font-size:13px;background:var(--panel-hi);color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:8px 15px;cursor:pointer;transition:all .16s}
+  .tab:hover{color:var(--ink);border-color:var(--muted)}
+  .tab.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+  .tabpane{display:none}.tabpane.active{display:block}
+
+  .quiz-q{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+  .quiz-q .qt{font-size:15px;color:var(--ink);margin-bottom:12px;font-weight:600}
+  .quiz-q .qt .qn{font-family:var(--mono);color:var(--accent);margin-right:8px}
+  .quiz-opts{display:flex;flex-direction:column;gap:8px}
+  .quiz-opts button{font-size:14px;font-family:var(--body);background:var(--panel-hi);color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:10px 14px;cursor:pointer;transition:all .15s;text-align:left}
+  .quiz-opts button:hover{border-color:var(--muted);color:var(--ink)}
+  .quiz-opts button.right{border-color:var(--green);background:var(--green-dim);color:var(--green)}
+  .quiz-opts button.wrong{border-color:var(--rose);background:var(--rose-dim);color:var(--rose)}
+  .quiz-exp{display:none;margin-top:12px;color:var(--muted);font-size:14px;line-height:1.7;border-top:1px dashed var(--line);padding-top:12px}
+  .quiz-exp b{color:var(--ink)}
+  .score{font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:12px}
+  .score b{color:var(--accent)}
+
+  footer{border-top:1px solid var(--line);margin-top:54px;padding:28px 0 54px;font-family:var(--mono);font-size:12px;color:var(--faint);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  footer a{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--line)}
+  footer a:hover{color:var(--ink)}
+  @media(max-width:560px){.wrap{padding:0 18px}header{padding-top:78px}.panel{padding:20px}.cmd-row{grid-template-columns:1fr;gap:6px}}
+</style>
+</head>
+<body>
+<a class="lab-home" href="/">←&nbsp;~/labs</a>
+<div class="wrap">
+  <header>
+    <div class="kicker">// github on the command line</div>
+    <h1 class="hero"><span>gh</span> <span>lab</span></h1>
+    <p class="sub">不切回浏览器，在终端里把 <b>PR / Issue / Actions / release</b> 全做完。</p>
+    <div class="scrollcue">gh pr create <span>↓</span></div>
+  </header>
+
+  <section id="why">
+    <div class="secnum">01 / mental model</div>
+    <h2>先理解 <em>gh 和 git 不是一回事</em></h2>
+    <p><code>git</code> 管的是本地的版本历史（commit、branch、merge），它不知道 GitHub 的存在。<code>gh</code> 是 GitHub 官方 CLI，管的是 GitHub 平台上的协作对象 —— Pull Request、Issue、Actions、Release。两者配合：git 提交代码，gh 走流程。</p>
+    <div class="panel">
+      <div class="panel-label">gh 管的协作对象</div>
+      <div class="model">
+        <div class="model-row">
+          <div class="model-name">repo</div>
+          <div class="model-desc"><b>仓库。</b>创建、克隆、fork、查看，不用打开网页。</div>
+        </div>
+        <div class="model-row">
+          <div class="model-name">pr</div>
+          <div class="model-desc"><b>Pull Request。</b>从当前分支建 PR、看评审、查 CI、合并，全在终端。</div>
+        </div>
+        <div class="model-row">
+          <div class="model-name">issue</div>
+          <div class="model-desc"><b>问题与任务。</b>建、列、查、评论、关闭。</div>
+        </div>
+        <div class="model-row">
+          <div class="model-name">run</div>
+          <div class="model-desc"><b>Actions 工作流。</b>看流水线状态、追日志、重跑。</div>
+        </div>
+        <div class="model-row">
+          <div class="model-name">api</div>
+          <div class="model-desc"><b>万能出口。</b>CLI 没封装的功能，用 <code>gh api</code> 直接打 REST / GraphQL。</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout amber">
+      <div class="t">一句话区分</div>
+      <p><code>git push</code> 把 commit 推上去；<code>gh pr create</code> 才是发起一次评审请求。提交是 git 的事，协作流程是 gh 的事。</p>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="secnum">02 / install</div>
+    <h2>挑你系统的 <em>包管理器装上</em></h2>
+    <p>gh 是个独立二进制，各平台都有官方包。装完用 <code>gh --version</code> 验证。</p>
+    <div class="tabs">
+      <button class="tab active" data-tab="mac">macOS</button>
+      <button class="tab" data-tab="win">Windows</button>
+      <button class="tab" data-tab="linux">Linux</button>
+    </div>
+    <div class="tabpane active" data-pane="mac">
+      <div class="codeblock"><span class="c"># Homebrew（最常用）</span>
+<span class="k">brew</span> install gh
+
+<span class="c"># 或 MacPorts</span>
+<span class="k">sudo</span> port install gh
+
+<span class="k">gh</span> --version   <span class="c"># gh version 2.x.x</span></div>
+    </div>
+    <div class="tabpane" data-pane="win">
+      <div class="codeblock"><span class="c"># winget（Windows 自带）</span>
+<span class="k">winget</span> install --id GitHub.cli
+
+<span class="c"># 或 Scoop / Chocolatey</span>
+<span class="k">scoop</span> install gh
+<span class="k">choco</span> install gh</div>
+    </div>
+    <div class="tabpane" data-pane="linux">
+      <div class="codeblock"><span class="c"># Debian / Ubuntu —— 加官方源后 apt 安装</span>
+<span class="k">sudo</span> apt update &amp;&amp; sudo apt install gh
+
+<span class="c"># Fedora / RHEL</span>
+<span class="k">sudo</span> dnf install gh
+
+<span class="c"># Arch</span>
+<span class="k">sudo</span> pacman -S github-cli</div>
+    </div>
+    <div class="callout blue">
+      <div class="t">apt 装不到？</div>
+      <p>部分发行版自带的源里 gh 版本很旧，甚至没有。按 <a href="https://github.com/cli/cli/blob/trunk/docs/install_linux.md" target="_blank" rel="noopener">官方 Linux 安装文档</a> 先加 GitHub 的 apt 源（导入 keyring）再 install，能拿到最新版。</p>
+    </div>
+  </section>
+
+  <section id="auth">
+    <div class="secnum">03 / auth</div>
+    <h2>第一步永远是 <em>gh auth login</em></h2>
+    <p>装完先授权，否则任何操作都会提示未登录。<code>gh auth login</code> 是交互式问答：选 GitHub.com 还是企业版、用 HTTPS 还是 SSH、浏览器登录还是粘 token。新手一路回车走浏览器最省事。</p>
+    <div class="term-window">
+      <div class="term-title"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span>~ — gh auth login</span></div>
+      <div class="term-body">
+        <span class="prompt">$</span> gh auth login<br>
+        <span class="out">? What account do you want to log into? GitHub.com</span><br>
+        <span class="out">? What is your preferred protocol for Git operations? HTTPS</span><br>
+        <span class="out">? How would you like to authenticate? Login with a web browser</span><br>
+        <span class="out">! First copy your one-time code: ABCD-1234</span><br>
+        <span class="out">- Press Enter to open github.com in your browser...</span><br>
+        <span class="ok">✓ Authentication complete.</span><br>
+        <span class="ok">✓ Logged in as your-username</span>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="tag">login</div>
+        <h3>登录</h3>
+        <ul>
+          <li><code>gh auth login</code> 交互式授权</li>
+          <li>顺手让它管 git 凭证</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">status</div>
+        <h3>查状态</h3>
+        <ul>
+          <li><code>gh auth status</code> 看登录了哪个账号</li>
+          <li><code>gh auth token</code> 打印当前 token</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">switch</div>
+        <h3>多账号</h3>
+        <ul>
+          <li><code>gh auth switch</code> 切换账号</li>
+          <li><code>gh auth logout</code> 退出</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout green">
+      <div class="t">顺手解决 git 推送鉴权</div>
+      <p>登录时选「让 gh 管理 git 凭证」，之后 <code>git push</code> 也不再要你输密码 —— gh 把 HTTPS 凭证一起配好了。CI 环境则用 <code>GH_TOKEN</code> 环境变量代替交互登录。</p>
+    </div>
+  </section>
+
+  <section id="repo">
+    <div class="secnum">04 / repo</div>
+    <h2>仓库的 <em>建、克隆、看</em></h2>
+    <p>常见仓库操作不用再打开网页。注意 gh 用 <code>owner/repo</code> 这种简写就能定位仓库，比贴完整 URL 快。</p>
+    <div class="cmd-grid">
+      <div class="cmd-row"><kbd>gh repo create</kbd><span>交互式新建仓库（可同时推本地代码）</span></div>
+      <div class="cmd-row"><kbd>gh repo clone owner/repo</kbd><span>克隆仓库，无需完整 URL</span></div>
+      <div class="cmd-row"><kbd>gh repo fork</kbd><span>fork 并自动配置 upstream</span></div>
+      <div class="cmd-row"><kbd>gh repo view --web</kbd><span>在浏览器打开当前仓库</span></div>
+      <div class="cmd-row"><kbd>gh repo list owner</kbd><span>列出某用户/组织的仓库</span></div>
+      <div class="cmd-row"><kbd>gh browse</kbd><span>把当前文件/行号在网页打开</span></div>
+    </div>
+    <div class="callout amber">
+      <div class="t">gh repo view 当帮助文档用</div>
+      <p>在一个陌生仓库里 <code>gh repo view</code> 直接在终端渲染 README，比切浏览器快。加 <code>--web</code> 才是打开网页。</p>
+    </div>
+  </section>
+
+  <section id="pr">
+    <div class="secnum">05 / pull request</div>
+    <h2>核心场景：<em>一条分支到合并</em></h2>
+    <p>gh 最高频的用途就是 PR。典型流程：本地建分支、提交、推送、建 PR、等评审和 CI、合并。中间不用碰一次浏览器。</p>
+    <div class="flow">
+      <div class="flow-step"><b>1</b><span>git push</span></div>
+      <div class="flow-step"><b>2</b><span>gh pr create</span></div>
+      <div class="flow-step"><b>3</b><span>gh pr checks</span></div>
+      <div class="flow-step"><b>4</b><span>review</span></div>
+      <div class="flow-step"><b>5</b><span>gh pr merge</span></div>
+    </div>
+    <div class="term-window">
+      <div class="term-title"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span>~/project — pr flow</span></div>
+      <div class="term-body">
+        <span class="prompt">$</span> git switch -c fix/login<br>
+        <span class="dim"># ...改代码、commit...</span><br>
+        <span class="prompt">$</span> git push -u origin fix/login<br>
+        <span class="prompt">$</span> gh pr create --fill<br>
+        <span class="out">Creating pull request for fix/login into main</span><br>
+        <span class="ok">✓ https://github.com/you/project/pull/42</span><br>
+        <span class="prompt">$</span> gh pr checks<br>
+        <span class="ok">✓ build    1m20s</span><br>
+        <span class="ok">✓ test     2m05s</span><br>
+        <span class="prompt">$</span> gh pr merge --squash --delete-branch<br>
+        <span class="ok">✓ Squashed and merged pull request #42</span>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="tag">create</div>
+        <h3>发起 PR</h3>
+        <ul>
+          <li><code>gh pr create --fill</code> 用 commit 自动填标题正文</li>
+          <li><code>--draft</code> 建草稿 PR</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">inspect</div>
+        <h3>查看</h3>
+        <ul>
+          <li><code>gh pr list</code> 列出 PR</li>
+          <li><code>gh pr view 42 --web</code> 网页打开</li>
+          <li><code>gh pr diff</code> 看改动</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">review</div>
+        <h3>评审与试跑</h3>
+        <ul>
+          <li><code>gh pr checkout 42</code> 拉别人的 PR 到本地</li>
+          <li><code>gh pr review --approve</code> 批准</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">merge</div>
+        <h3>合并</h3>
+        <ul>
+          <li><code>--squash</code> / <code>--merge</code> / <code>--rebase</code> 选策略</li>
+          <li><code>--delete-branch</code> 合完删分支</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout green">
+      <div class="t">checkout 别人的 PR 来 review</div>
+      <p><code>gh pr checkout 42</code> 会把这个 PR 的分支拉到本地，让你跑起来、改一改再推回去。这是本地评审最实用的一招，纯网页做不到。</p>
+    </div>
+  </section>
+
+  <section id="issue">
+    <div class="secnum">06 / issue</div>
+    <h2>Issue 也是 <em>一行命令的事</em></h2>
+    <p>提 bug、记 TODO、查任务，不用切回网页打断思路。和 PR 一套语法风格，记一个就会另一个。</p>
+    <div class="cmd-grid">
+      <div class="cmd-row"><kbd>gh issue create</kbd><span>交互式新建 issue</span></div>
+      <div class="cmd-row"><kbd>gh issue list --assignee @me</kbd><span>列出分配给我的</span></div>
+      <div class="cmd-row"><kbd>gh issue view 17</kbd><span>终端里看 issue 详情和评论</span></div>
+      <div class="cmd-row"><kbd>gh issue comment 17 -b "..."</kbd><span>评论</span></div>
+      <div class="cmd-row"><kbd>gh issue close 17</kbd><span>关闭</span></div>
+      <div class="cmd-row"><kbd>gh issue status</kbd><span>看和我相关的 issue 概览</span></div>
+    </div>
+  </section>
+
+  <section id="actions">
+    <div class="secnum">07 / actions & release</div>
+    <h2>盯流水线、<em>发版本</em></h2>
+    <p>推完代码想知道 CI 过没过，不用刷网页 —— <code>gh run</code> 直接在终端看 Actions。发布版本也能一条命令搞定。</p>
+    <div class="cmd-grid">
+      <div class="cmd-row"><kbd>gh run list</kbd><span>最近的工作流运行</span></div>
+      <div class="cmd-row"><kbd>gh run watch</kbd><span>实时盯一次运行直到结束</span></div>
+      <div class="cmd-row"><kbd>gh run view --log-failed</kbd><span>只看失败 step 的日志</span></div>
+      <div class="cmd-row"><kbd>gh run rerun</kbd><span>重跑（可只重跑失败的 job）</span></div>
+      <div class="cmd-row"><kbd>gh release create v1.0.0</kbd><span>建一个 release</span></div>
+      <div class="cmd-row"><kbd>gh release create v1.0.0 ./dist/*</kbd><span>顺带上传产物附件</span></div>
+    </div>
+    <div class="term-window">
+      <div class="term-title"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span>~/project — gh run</span></div>
+      <div class="term-body">
+        <span class="prompt">$</span> gh run list --limit 3<br>
+        <span class="ok">✓  CI   push  main   fix/login   1m20s</span><br>
+        <span class="dim">X  CI   push  main   add-cache   0m48s</span><br>
+        <span class="ok">✓  CI   pull  main   docs        1m02s</span><br>
+        <span class="prompt">$</span> gh run view --log-failed<br>
+        <span class="dim">test › should cache responses</span><br>
+        <span class="dim">  AssertionError: expected 200 got 500</span>
+      </div>
+    </div>
+    <div class="callout amber">
+      <div class="t">CI 红了先看这个</div>
+      <p><code>gh run view --log-failed</code> 直接跳到失败 step 的日志，不用在网页里一层层点开 job。配合 <code>gh pr checks</code> 看 PR 的整体状态。</p>
+    </div>
+  </section>
+
+  <section id="power">
+    <div class="secnum">08 / api & extensions</div>
+    <h2>进阶：<em>api、别名、扩展</em></h2>
+    <p>CLI 封装的命令覆盖日常 80%。剩下的边角功能用 <code>gh api</code> 直接打接口；高频命令设别名；想要更多功能装扩展。</p>
+    <div class="codeblock"><span class="c"># gh api —— 直接调 REST，自动带鉴权和分页</span>
+<span class="k">gh</span> api repos/cli/cli/releases/latest --jq <span class="s">'.tag_name'</span>
+
+<span class="c"># 也能打 GraphQL</span>
+<span class="k">gh</span> api graphql -f query=<span class="s">'{ viewer { login } }'</span>
+
+<span class="c"># 别名：把常用长命令缩短</span>
+<span class="k">gh</span> alias set prc <span class="s">'pr create --fill'</span>
+<span class="k">gh</span> prc          <span class="c"># 等于 gh pr create --fill</span>
+
+<span class="c"># 扩展：社区命令，一行安装</span>
+<span class="k">gh</span> extension install dlvhdr/gh-dash   <span class="c"># PR/issue 仪表盘 TUI</span></div>
+    <div class="callout blue">
+      <div class="t">gh api 是后备万能钥匙</div>
+      <p>遇到 gh 没有专门子命令的操作（改仓库设置、查冷门字段……），先想 <code>gh api</code>。它复用你的登录态，省去手搓 curl + token 的麻烦。</p>
+    </div>
+  </section>
+
+  <section id="cheat">
+    <div class="secnum">09 / cheat sheet</div>
+    <h2>一屏 <em>常用命令速查</em></h2>
+    <div class="panel">
+      <div class="panel-label">daily gh commands</div>
+      <div class="cmd-grid">
+        <div class="cmd-row"><kbd>gh auth login</kbd><span>登录授权</span></div>
+        <div class="cmd-row"><kbd>gh auth status</kbd><span>看登录状态</span></div>
+        <div class="cmd-row"><kbd>gh repo clone owner/repo</kbd><span>克隆仓库</span></div>
+        <div class="cmd-row"><kbd>gh repo create</kbd><span>新建仓库</span></div>
+        <div class="cmd-row"><kbd>gh pr create --fill</kbd><span>发起 PR</span></div>
+        <div class="cmd-row"><kbd>gh pr checkout 42</kbd><span>拉 PR 到本地</span></div>
+        <div class="cmd-row"><kbd>gh pr checks</kbd><span>看 PR 的 CI 状态</span></div>
+        <div class="cmd-row"><kbd>gh pr merge --squash</kbd><span>合并 PR</span></div>
+        <div class="cmd-row"><kbd>gh issue create</kbd><span>新建 issue</span></div>
+        <div class="cmd-row"><kbd>gh issue list --assignee @me</kbd><span>我的 issue</span></div>
+        <div class="cmd-row"><kbd>gh run watch</kbd><span>盯流水线</span></div>
+        <div class="cmd-row"><kbd>gh release create v1.0.0</kbd><span>发版本</span></div>
+        <div class="cmd-row"><kbd>gh api ...</kbd><span>直接调接口</span></div>
+        <div class="cmd-row"><kbd>gh help</kbd><span>看所有命令</span></div>
+      </div>
+    </div>
+    <div class="callout green">
+      <div class="t">忘了用法就问 gh 自己</div>
+      <p>每个命令都能加 <code>--help</code>，如 <code>gh pr merge --help</code>。完整手册在 <a href="https://cli.github.com/manual/" target="_blank" rel="noopener">cli.github.com/manual</a>。</p>
+    </div>
+  </section>
+
+  <section id="quiz">
+    <div class="secnum">10 / check</div>
+    <h2>最后做个 <em>快速自测</em></h2>
+    <div id="quiz-list"></div>
+    <div class="score" id="quiz-score">得分 <b>0 / 0</b></div>
+  </section>
+
+  <footer>
+    <span>gh lab · static tutorial</span>
+    <span><a href="/">back to learning labs</a></span>
+  </footer>
+</div>
+<script>
+  (function(){
+    // 安装方式 tab 切换
+    const tabs = Array.from(document.querySelectorAll('.tab'));
+    const panes = Array.from(document.querySelectorAll('.tabpane'));
+    tabs.forEach(t => t.addEventListener('click', () => {
+      tabs.forEach(x => x.classList.toggle('active', x === t));
+      panes.forEach(p => p.classList.toggle('active', p.dataset.pane === t.dataset.tab));
+    }));
+
+    Quiz.render(
+      document.getElementById('quiz-list'),
+      document.getElementById('quiz-score'),
+      [
+        {
+          q:'gh 和 git 的区别是？',
+          opts:['gh 是 git 的新版本，迟早替代 git', 'git 管本地版本历史，gh 管 GitHub 平台上的 PR/Issue/Actions', '两者完全一样，只是名字不同'],
+          ans:1,
+          exp:'<b>git</b> 不知道 GitHub 存在，只管 commit/branch/merge；<b>gh</b> 管平台协作对象。git push 推代码，gh pr create 发起评审。'
+        },
+        {
+          q:'装完 gh 第一步该做什么？',
+          opts:['gh repo clone', 'gh auth login 授权', 'gh pr create'],
+          ans:1,
+          exp:'没授权任何操作都会提示未登录。<code>gh auth login</code> 交互式走完，顺手还能让它管 git 推送凭证。'
+        },
+        {
+          q:'想把别人的 PR #42 拉到本地跑一跑再 review，用？',
+          opts:['gh pr view 42', 'gh pr checkout 42', 'gh pr merge 42'],
+          ans:1,
+          exp:'<code>gh pr checkout 42</code> 把该 PR 的分支拉到本地，能运行、修改、推回。这是纯网页做不到的本地评审能力。'
+        },
+        {
+          q:'CI 红了，最快定位失败原因的命令是？',
+          opts:['gh run view --log-failed', 'gh repo view --web', 'gh issue list'],
+          ans:0,
+          exp:'<code>gh run view --log-failed</code> 直接跳到失败 step 的日志，不用在网页里逐层点开 job。'
+        },
+        {
+          q:'gh 没有现成子命令的冷门操作，应该？',
+          opts:['只能回网页手动操作', '用 gh api 直接调 REST / GraphQL 接口', '放弃，gh 做不到'],
+          ans:1,
+          exp:'<code>gh api</code> 是万能后备出口，复用你的登录态直接打接口，省去手搓 curl + token。'
+        }
+      ],
+      { final: (correct, total) => correct === total ? ' · 可以扔掉浏览器了' : ' · 回到上面再过一遍命令' }
+    );
+  })();
+</script>
+</body>
+</html>
