@@ -113,6 +113,8 @@
   @media(max-width:640px){.model-row{grid-template-columns:1fr}.model-name{padding:10px 14px}}
 
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:20px 0}
+  .grid.cols2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:600px){.grid.cols2{grid-template-columns:1fr}}
   .card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:18px;transition:border-color .18s,transform .18s}
   .card:hover{border-color:var(--accent);transform:translateY(-1px)}
   .card .tag{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
@@ -388,7 +390,7 @@ zone_name = <span class="s">"example.com"</span></div>
     <div class="secnum">06 / bindings & secrets</div>
     <h2>给 Worker <em>接上数据和密钥</em></h2>
     <p>Worker 本身只有计算，要存数据、读密钥得靠绑定。绑定在配置里声明，代码里通过 <code>env</code> 拿到；密钥则不写进配置，单独用命令加密上传。</p>
-    <div class="grid">
+    <div class="grid cols2">
       <div class="card">
         <div class="tag">vars</div>
         <h3>明文变量</h3>
