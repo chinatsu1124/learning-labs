@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Wrangler 安装与使用教程：登录授权、创建 Worker、本地开发、部署上线、wrangler.toml 配置、绑定与密钥、实时日志和常用命令。">
+<meta property="og:title" content="Wrangler 实验室 · WRANGLER LAB">
+<meta property="og:description" content="Wrangler 安装与使用教程：登录授权、创建 Worker、本地开发、部署上线、配置、绑定密钥、实时日志和常用命令。">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<title>Wrangler 实验室 · WRANGLER LAB</title>
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/base.css">
+<script defer src="/assets/term.js"></script>
+<script defer src="/assets/secnav.js"></script>
+<script src="/assets/quiz.js"></script>
+<style>
+  :root{
+    --bg:#0b0907;
+    --bg2:#13100c;
+    --panel:#1a150f;
+    --panel-hi:#221b12;
+    --line:#372c1e;
+    --ink:#f4ece2;
+    --muted:#b1a290;
+    --faint:#796a58;
+    --accent:#ffa94d;
+    --accent-dim:#523412;
+    --amber:#ffd479;
+    --amber-dim:#553f21;
+    --blue:#83b4ff;
+    --blue-dim:#243c61;
+    --rose:#ff7d8c;
+    --rose-dim:#54282f;
+    --secnav-accent:#ffa94d;
+    --display:'Syne',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --body:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.75;
+    overflow-x:hidden;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:46px 46px;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(ellipse 78% 58% at 50% -10%,rgba(255,169,77,.10),transparent 60%),
+      radial-gradient(ellipse 60% 48% at 90% 22%,rgba(255,212,121,.06),transparent 58%),
+      linear-gradient(180deg,rgba(11,9,7,.42),var(--bg) 88%);
+  }
+  .wrap{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:0 24px}
+  header{padding:92px 0 42px;text-align:center}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.42em;color:var(--accent);text-transform:uppercase;margin-bottom:24px;opacity:0;animation:rise .7s .1s forwards}
+  h1.hero{font-family:var(--display);font-weight:800;font-size:clamp(52px,13vw,128px);line-height:.9;letter-spacing:-.03em;margin-bottom:8px}
+  h1.hero span{display:inline-block;opacity:0;transform:translateY(38px);animation:rise .8s forwards}
+  h1.hero span:first-child{color:var(--accent);animation-delay:.15s}
+  h1.hero span:last-child{color:var(--ink);animation-delay:.25s}
+  .sub{font-family:var(--mono);color:var(--muted);font-size:15px;margin-top:18px;opacity:0;animation:rise .7s .55s forwards}
+  .sub b{color:var(--ink);font-weight:500}
+  .scrollcue{margin-top:52px;font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:var(--faint);opacity:0;animation:rise .7s .85s forwards;text-transform:uppercase}
+  .scrollcue span{display:block;font-size:18px;margin-top:6px;animation:bob 1.8s ease-in-out infinite}
+  @keyframes rise{to{opacity:1;transform:translateY(0)}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+  section{padding:72px 0}
+  .secnum{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.2em;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+  .secnum::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,42px);line-height:1.1;letter-spacing:-.02em;margin-bottom:18px}
+  h2 em{font-style:normal;background:linear-gradient(90deg,var(--accent),var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent}
+  h3{font-family:var(--display);font-size:18px;line-height:1.25;margin-bottom:8px}
+  p{color:var(--muted);margin-bottom:16px;font-size:16.5px}
+  p b{color:var(--ink);font-weight:600}
+  code{font-family:var(--mono);background:var(--panel-hi);color:var(--accent);padding:2px 7px;border-radius:5px;font-size:.88em;border:1px solid var(--line)}
+  a{color:var(--accent)}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;margin:26px 0;position:relative;overflow:hidden}
+  .panel::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.52}
+  .panel-label{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--faint);text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+  .panel-label::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px rgba(255,169,77,.55)}
+
+  .callout{border-left:3px solid var(--accent);background:var(--panel);border-radius:0 12px 12px 0;padding:16px 20px;margin:22px 0}
+  .callout .t{font-family:var(--mono);font-size:12px;letter-spacing:.15em;color:var(--accent);text-transform:uppercase;margin-bottom:6px}
+  .callout p{margin:0;font-size:15px;color:var(--ink)}
+  .callout.amber{border-color:var(--amber)}.callout.amber .t{color:var(--amber)}
+  .callout.blue{border-color:var(--blue)}.callout.blue .t{color:var(--blue)}
+  .callout.rose{border-color:var(--rose)}.callout.rose .t{color:var(--rose)}
+
+  .term-window{background:#080604;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.26);margin:24px 0}
+  .term-title{height:38px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);background:#120d08;padding:0 14px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--rose)}
+  .dot:nth-child(2){background:var(--amber)}.dot:nth-child(3){background:var(--accent)}
+  .term-title span:last-child{margin-left:8px;color:var(--faint)}
+  .term-body{font-family:var(--mono);font-size:13px;line-height:1.8;padding:18px;overflow:auto;color:var(--ink)}
+  .prompt{color:var(--accent)}
+  .out{color:var(--muted)}
+  .dim{color:var(--faint)}
+  .ok{color:#79f2b6}
+
+  .model{display:grid;grid-template-columns:1fr;gap:12px}
+  .model-row{display:grid;grid-template-columns:148px 1fr;gap:12px;align-items:stretch}
+  .model-name{background:var(--accent-dim);border:1px solid var(--accent);border-radius:12px;padding:14px 16px;font-family:var(--mono);color:var(--accent);display:flex;align-items:center;font-size:14px}
+  .model-desc{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;color:var(--muted)}
+  .model-desc b{color:var(--ink)}
+  @media(max-width:640px){.model-row{grid-template-columns:1fr}.model-name{padding:10px 14px}}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:20px 0}
+  .grid.cols2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:600px){.grid.cols2{grid-template-columns:1fr}}
+  .card{background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:18px;transition:border-color .18s,transform .18s}
+  .card:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .card .tag{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+  .card ul{list-style:none;margin-top:10px}
+  .card li{color:var(--muted);font-size:14px;padding:7px 0;border-top:1px dashed var(--line)}
+  .card li b{color:var(--ink)}
+
+  .cmd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px;margin:20px 0}
+  .cmd-row{display:flex;flex-direction:column;align-items:flex-start;gap:9px;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:14px 15px}
+  .cmd-row kbd{font-family:var(--mono);font-size:12px;background:var(--panel-hi);border:1px solid var(--line);border-bottom-color:#120d08;border-radius:6px;color:var(--accent);padding:5px 9px;white-space:nowrap;max-width:100%;overflow-x:auto}
+  .cmd-row span{color:var(--muted);font-size:13.5px;line-height:1.5}
+
+  .codeblock{font-family:var(--mono);font-size:12.5px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow-x:auto;line-height:1.8;margin-top:14px;white-space:pre;color:var(--muted)}
+  .codeblock .c{color:var(--faint)}.codeblock .k{color:var(--blue)}.codeblock .s{color:var(--accent)}.codeblock .n{color:var(--amber)}
+
+  .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:10px}
+  .flow-step{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+  .flow-step b{display:block;font-family:var(--mono);font-size:12px;color:var(--accent);margin-bottom:4px}
+  .flow-step span{font-size:13px;color:var(--muted)}
+  @media(max-width:760px){.flow{grid-template-columns:1fr 1fr}}
+
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .tab{font-family:var(--mono);font-size:13px;background:var(--panel-hi);color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:8px 15px;cursor:pointer;transition:all .16s}
+  .tab:hover{color:var(--ink);border-color:var(--muted)}
+  .tab.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+  .tabpane{display:none}.tabpane.active{display:block}
+
+  .quiz-q{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+  .quiz-q .qt{font-size:15px;color:var(--ink);margin-bottom:12px;font-weight:600}
+  .quiz-q .qt .qn{font-family:var(--mono);color:var(--accent);margin-right:8px}
+  .quiz-opts{display:flex;flex-direction:column;gap:8px}
+  .quiz-opts button{font-size:14px;font-family:var(--body);background:var(--panel-hi);color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:10px 14px;cursor:pointer;transition:all .15s;text-align:left}
+  .quiz-opts button:hover{border-color:var(--muted);color:var(--ink)}
+  .quiz-opts button.right{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
+  .quiz-opts button.wrong{border-color:var(--rose);background:var(--rose-dim);color:var(--rose)}
+  .quiz-exp{display:none;margin-top:12px;color:var(--muted);font-size:14px;line-height:1.7;border-top:1px dashed var(--line);padding-top:12px}
+  .quiz-exp b{color:var(--ink)}
+  .score{font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:12px}
+  .score b{color:var(--accent)}
+
+  footer{border-top:1px solid var(--line);margin-top:54px;padding:28px 0 54px;font-family:var(--mono);font-size:12px;color:var(--faint);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  footer a{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--line)}
+  footer a:hover{color:var(--ink)}
+  @media(max-width:560px){.wrap{padding:0 18px}header{padding-top:78px}.panel{padding:20px}}
+</style>
+</head>
+<body>
+<a class="lab-home" href="/">←&nbsp;~/labs</a>
+<div class="wrap">
+  <header>
+    <div class="kicker">// cloudflare developer cli</div>
+    <h1 class="hero"><span>wrangler</span> <span>lab</span></h1>
+    <p class="sub">把代码从本地一条命令推到 <b>Cloudflare 全球边缘网络</b> 的命令行工具。</p>
+    <div class="scrollcue">wrangler deploy <span>↓</span></div>
+  </header>
+
+  <section id="why">
+    <div class="secnum">01 / mental model</div>
+    <h2>先理解 <em>wrangler 到底在做什么</em></h2>
+    <p>Wrangler 是 Cloudflare 官方的命令行工具，专门用来开发、调试和部署 <b>Workers</b>（边缘函数）和 <b>Pages</b>（静态站点 + 函数）。它把「写代码 → 本地预览 → 上传到 Cloudflare → 绑定资源」整条链路收进一个 CLI。</p>
+    <div class="panel">
+      <div class="panel-label">wrangler 管的几样东西</div>
+      <div class="model">
+        <div class="model-row">
+          <div class="model-name">Worker</div>
+          <div class="model-desc"><b>一段跑在边缘的 JS/TS 代码。</b>每个 Worker 是一个项目，有自己的入口文件和配置。</div>
+        </div>
+        <div class="model-row">
+          <div class="model-name">wrangler.toml</div>
+          <div class="model-desc"><b>项目配置文件。</b>声明名字、入口、兼容日期、环境变量和各种资源绑定。也支持 <code>wrangler.jsonc</code>。</div>
+        </div>
+        <div class="model-row">
+          <div class="model-name">binding</div>
+          <div class="model-desc"><b>把外部资源接进代码。</b>KV、R2、D1、队列、密钥等，在配置里声明后，运行时通过 <code>env</code> 访问。</div>
+        </div>
+        <div class="model-row">
+          <div class="model-name">account</div>
+          <div class="model-desc"><b>你的 Cloudflare 账号。</b><code>wrangler login</code> 授权后，部署的资源都归在这个账号下。</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout amber">
+      <div class="t">名字由来</div>
+      <p>「Wrangler」是「牧马人 / 牲口管理员」的意思 —— 帮你把一群分散在边缘节点上的 Worker 管起来。它不是框架，是<b>部署工具链</b>。</p>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="secnum">02 / install</div>
+    <h2>两种装法：<em>全局 还是 跟着项目走</em></h2>
+    <p>Wrangler 是个 npm 包，需要先有 <a href="https://nodejs.org" target="_blank" rel="noopener">Node.js</a>（建议 18 以上）。推荐<b>按项目安装</b>，团队里每个人用的版本就被锁进 <code>package.json</code>，不会因为全局版本不同而踩坑。</p>
+    <div class="tabs">
+      <button class="tab active" data-tab="project">按项目（推荐）</button>
+      <button class="tab" data-tab="global">全局安装</button>
+      <button class="tab" data-tab="scaffold">直接脚手架</button>
+    </div>
+    <div class="tabpane active" data-pane="project">
+      <div class="codeblock"><span class="c"># 在项目目录里作为开发依赖安装</span>
+<span class="k">npm</span> install -D wrangler@latest
+
+<span class="c"># 之后所有命令都用 npx 触发，版本跟着项目走</span>
+<span class="k">npx</span> wrangler --version
+<span class="k">npx</span> wrangler deploy</div>
+    </div>
+    <div class="tabpane" data-pane="global">
+      <div class="codeblock"><span class="c"># 装到全局，任何目录都能直接 wrangler ...</span>
+<span class="k">npm</span> install -g wrangler
+
+<span class="c"># 验证</span>
+<span class="k">wrangler</span> --version
+<span class="c"># ⛅️ wrangler 4.x.x</span></div>
+    </div>
+    <div class="tabpane" data-pane="scaffold">
+      <div class="codeblock"><span class="c"># 一条命令拉起完整项目（含 wrangler、示例代码、配置）</span>
+<span class="k">npm</span> create cloudflare@latest my-worker
+
+<span class="c"># 按提示选模板（Hello World / 框架 / Pages…），自动装好 wrangler</span>
+<span class="k">cd</span> my-worker</div>
+    </div>
+    <div class="callout blue">
+      <div class="t">不想记 npx</div>
+      <p>按项目安装后，把命令写进 <code>package.json</code> 的 <code>scripts</code>：<code>"deploy": "wrangler deploy"</code>，然后 <code>npm run deploy</code> 即可。也可以用 <code>pnpm</code> / <code>yarn</code> / <code>bun</code> 代替 npm。</p>
+    </div>
+  </section>
+
+  <section id="login">
+    <div class="secnum">03 / login</div>
+    <h2>先把 CLI <em>和你的账号连起来</em></h2>
+    <p>部署前必须授权。<code>wrangler login</code> 会打开浏览器走 OAuth，授权后凭证存在本地，后续命令自动带上。</p>
+    <div class="term-window">
+      <div class="term-title"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span>~/my-worker — wrangler</span></div>
+      <div class="term-body">
+        <span class="prompt">$</span> npx wrangler login<br>
+        <span class="out">Attempting to login via OAuth...</span><br>
+        <span class="out">Opening a link in your browser: https://dash.cloudflare.com/oauth2/auth?...</span><br>
+        <span class="ok">Successfully logged in.</span><br>
+        <span class="prompt">$</span> npx wrangler whoami<br>
+        <span class="out">Account Name        Account ID</span><br>
+        <span class="out">my-account          a1b2c3d4e5f6...</span>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="tag">login</div>
+        <h3>浏览器授权</h3>
+        <ul>
+          <li><code>wrangler login</code> 打开浏览器登录</li>
+          <li>本地开发机、个人电脑首选</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">token</div>
+        <h3>API Token</h3>
+        <ul>
+          <li>CI / 无浏览器环境用环境变量</li>
+          <li><code>CLOUDFLARE_API_TOKEN=xxx</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">check</div>
+        <h3>确认身份</h3>
+        <ul>
+          <li><code>wrangler whoami</code> 看当前账号</li>
+          <li><code>wrangler logout</code> 退出</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout rose">
+      <div class="t">CI 里不要 login</div>
+      <p>GitHub Actions 等自动化环境弹不出浏览器。去 Cloudflare 控制台建一个 <b>API Token</b>，作为 secret 注入环境变量 <code>CLOUDFLARE_API_TOKEN</code>（必要时再加 <code>CLOUDFLARE_ACCOUNT_ID</code>），wrangler 会自动读取。</p>
+    </div>
+  </section>
+
+  <section id="first">
+    <div class="secnum">04 / first worker</div>
+    <h2>四步跑通 <em>本地开发到上线</em></h2>
+    <p>一个 Worker 的最小闭环就这四步：写代码、本地预览、部署、看线上。先把流程跑顺，配置和绑定后面再加。</p>
+    <div class="flow">
+      <div class="flow-step"><b>1</b><span>写 src/index.ts</span></div>
+      <div class="flow-step"><b>2</b><span>wrangler dev</span></div>
+      <div class="flow-step"><b>3</b><span>wrangler deploy</span></div>
+      <div class="flow-step"><b>4</b><span>wrangler tail</span></div>
+      <div class="flow-step"><b>5</b><span>改完重复</span></div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">最小 Worker 代码</div>
+      <div class="codeblock"><span class="c">// src/index.ts —— 一个 Worker 就是一个导出的 fetch 处理器</span>
+<span class="k">export default</span> {
+  <span class="k">async</span> fetch(request, env, ctx) {
+    <span class="k">return new</span> Response(<span class="s">"Hello from the edge 👋"</span>);
+  },
+};</div>
+    </div>
+    <div class="term-window">
+      <div class="term-title"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span>~/my-worker — dev & deploy</span></div>
+      <div class="term-body">
+        <span class="prompt">$</span> npx wrangler dev<br>
+        <span class="out">⎔ Starting local server...</span><br>
+        <span class="ok">[wrangler] Ready on http://localhost:8787</span><br>
+        <span class="dim"># 改代码自动热重载，按 b 在浏览器打开，按 x 退出</span><br>
+        <br>
+        <span class="prompt">$</span> npx wrangler deploy<br>
+        <span class="out">Total Upload: 1.02 KiB / gzip: 0.54 KiB</span><br>
+        <span class="ok">Deployed my-worker</span><br>
+        <span class="out">  https://my-worker.my-account.workers.dev</span>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="tag">dev</div>
+        <h3>本地预览</h3>
+        <ul>
+          <li><code>wrangler dev</code> 默认本地模拟运行</li>
+          <li>加 <code>--remote</code> 在真实边缘上跑</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">deploy</div>
+        <h3>部署上线</h3>
+        <ul>
+          <li><code>wrangler deploy</code> 上传并发布</li>
+          <li>得到 <code>*.workers.dev</code> 地址</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">delete</div>
+        <h3>下线</h3>
+        <ul>
+          <li><code>wrangler delete</code> 删除这个 Worker</li>
+          <li>误部署时清理用</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout amber">
+      <div class="t">deploy ≠ publish</div>
+      <p>老教程里的 <code>wrangler publish</code> 已经改名为 <code>wrangler deploy</code>。如果你看到 publish 报错或提示废弃，换成 deploy 即可。</p>
+    </div>
+  </section>
+
+  <section id="config">
+    <div class="secnum">05 / config</div>
+    <h2>一份够用的 <em>wrangler.toml</em></h2>
+    <p>配置文件是整个项目的中枢。最关键的三项是 <code>name</code>（Worker 名字）、<code>main</code>（入口文件）和 <code>compatibility_date</code>（运行时行为锁定在某一天，避免平台升级悄悄改变行为）。</p>
+    <div class="codeblock"><span class="c"># wrangler.toml</span>
+name = <span class="s">"my-worker"</span>
+main = <span class="s">"src/index.ts"</span>
+compatibility_date = <span class="s">"2026-01-01"</span>
+
+<span class="c"># 明文变量，运行时 env.API_BASE 可读</span>
+[vars]
+API_BASE = <span class="s">"https://api.example.com"</span>
+
+<span class="c"># 绑定一个 KV 命名空间，代码里用 env.CACHE</span>
+[[kv_namespaces]]
+binding = <span class="s">"CACHE"</span>
+id = <span class="s">"a1b2c3d4..."</span>
+
+<span class="c"># 自定义域名路由（可选）</span>
+[[routes]]
+pattern = <span class="s">"api.example.com/*"</span>
+zone_name = <span class="s">"example.com"</span></div>
+    <div class="callout blue">
+      <div class="t">多环境</div>
+      <p>用 <code>[env.staging]</code> / <code>[env.production]</code> 区分环境，部署时 <code>wrangler deploy --env staging</code>。每个环境可以有不同的变量、绑定和路由。</p>
+    </div>
+    <div class="callout amber">
+      <div class="t">compatibility_date 别乱填未来</div>
+      <p>它代表「用这一天的运行时语义」。把它设成项目真实开始的日期，平台之后的破坏性变更就不会自动套到你头上。需要新特性时再手动往后调并测试。</p>
+    </div>
+  </section>
+
+  <section id="bindings">
+    <div class="secnum">06 / bindings & secrets</div>
+    <h2>给 Worker <em>接上数据和密钥</em></h2>
+    <p>Worker 本身只有计算，要存数据、读密钥得靠绑定。绑定在配置里声明，代码里通过 <code>env</code> 拿到；密钥则不写进配置，单独用命令加密上传。</p>
+    <div class="grid cols2">
+      <div class="card">
+        <div class="tag">vars</div>
+        <h3>明文变量</h3>
+        <ul>
+          <li>写在 <code>[vars]</code> 里</li>
+          <li>非敏感的配置项，如域名、开关</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">secret</div>
+        <h3>加密密钥</h3>
+        <ul>
+          <li><code>wrangler secret put API_KEY</code></li>
+          <li>不进 git，加密存在云端</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">KV</div>
+        <h3>键值存储</h3>
+        <ul>
+          <li><code>wrangler kv namespace create CACHE</code></li>
+          <li>低延迟读、最终一致</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">D1 / R2</div>
+        <h3>数据库与对象</h3>
+        <ul>
+          <li>D1 是 SQLite 数据库</li>
+          <li>R2 是 S3 兼容对象存储</li>
+        </ul>
+      </div>
+    </div>
+    <div class="term-window">
+      <div class="term-title"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span>~/my-worker — secrets & kv</span></div>
+      <div class="term-body">
+        <span class="prompt">$</span> npx wrangler secret put API_KEY<br>
+        <span class="out">? Enter a secret value: ********</span><br>
+        <span class="ok">Success! Uploaded secret API_KEY</span><br>
+        <br>
+        <span class="prompt">$</span> npx wrangler kv namespace create CACHE<br>
+        <span class="out">Add the following to your wrangler.toml:</span><br>
+        <span class="dim">[[kv_namespaces]]</span><br>
+        <span class="dim">binding = "CACHE"</span><br>
+        <span class="dim">id = "0f2ac74b..."</span>
+      </div>
+    </div>
+    <div class="codeblock"><span class="c">// 代码里统一从 env 读，绑定名就是 env 上的字段</span>
+<span class="k">export default</span> {
+  <span class="k">async</span> fetch(request, env) {
+    <span class="k">const</span> token = env.API_KEY;        <span class="c">// 来自 secret</span>
+    <span class="k">const</span> hit = <span class="k">await</span> env.CACHE.get(<span class="s">"k"</span>); <span class="c">// 来自 KV 绑定</span>
+    <span class="k">return new</span> Response(hit ?? <span class="s">"miss"</span>);
+  },
+};</div>
+    <div class="callout rose">
+      <div class="t">密钥不要写进 wrangler.toml</div>
+      <p><code>[vars]</code> 里的内容会进版本库，等于明文公开。任何 token、密码、API key 一律走 <code>wrangler secret put</code>。本地开发要用时，放进不提交的 <code>.dev.vars</code> 文件。</p>
+    </div>
+  </section>
+
+  <section id="ops">
+    <div class="secnum">07 / logs & rollback</div>
+    <h2>上线之后 <em>怎么看怎么回滚</em></h2>
+    <p>部署不是终点。线上报错要能实时看日志，发版出问题要能一键回滚到上一个好版本。</p>
+    <div class="cmd-grid">
+      <div class="cmd-row"><kbd>wrangler tail</kbd><span>实时串流线上请求日志，定位报错</span></div>
+      <div class="cmd-row"><kbd>wrangler deployments list</kbd><span>查看历史部署版本</span></div>
+      <div class="cmd-row"><kbd>wrangler rollback</kbd><span>回滚到上一个版本</span></div>
+      <div class="cmd-row"><kbd>wrangler versions upload</kbd><span>上传新版本但先不放量</span></div>
+      <div class="cmd-row"><kbd>wrangler dev --remote</kbd><span>在真实边缘环境调试</span></div>
+      <div class="cmd-row"><kbd>wrangler pages deploy ./dist</kbd><span>部署静态站点到 Pages</span></div>
+    </div>
+    <div class="term-window">
+      <div class="term-title"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span>~/my-worker — wrangler tail</span></div>
+      <div class="term-body">
+        <span class="prompt">$</span> npx wrangler tail<br>
+        <span class="out">Connected to my-worker, waiting for logs...</span><br>
+        <span class="ok">GET https://my-worker.workers.dev/  Ok @ 12:04:31</span><br>
+        <span class="out">  (log) cache miss for key=home</span><br>
+        <span class="dim">GET https://my-worker.workers.dev/x  Error @ 12:04:33</span><br>
+        <span class="dim">  (error) TypeError: env.DB is undefined</span>
+      </div>
+    </div>
+    <div class="callout amber">
+      <div class="t">Pages 也归 wrangler 管</div>
+      <p>静态站点（含本仓库）可以用 <code>wrangler pages deploy ./dist --project-name=site</code> 部署，或者直接连 Git 仓库让 Cloudflare 自动构建。两条路都行，CLI 适合手动发布和 CI。</p>
+    </div>
+  </section>
+
+  <section id="cheat">
+    <div class="secnum">08 / cheat sheet</div>
+    <h2>一屏 <em>常用命令速查</em></h2>
+    <div class="panel">
+      <div class="panel-label">daily wrangler commands</div>
+      <div class="cmd-grid">
+        <div class="cmd-row"><kbd>wrangler login</kbd><span>浏览器授权登录</span></div>
+        <div class="cmd-row"><kbd>wrangler whoami</kbd><span>查看当前账号</span></div>
+        <div class="cmd-row"><kbd>wrangler dev</kbd><span>本地开发服务器</span></div>
+        <div class="cmd-row"><kbd>wrangler deploy</kbd><span>部署上线</span></div>
+        <div class="cmd-row"><kbd>wrangler delete</kbd><span>删除 Worker</span></div>
+        <div class="cmd-row"><kbd>wrangler tail</kbd><span>实时日志</span></div>
+        <div class="cmd-row"><kbd>wrangler secret put NAME</kbd><span>上传加密密钥</span></div>
+        <div class="cmd-row"><kbd>wrangler secret list</kbd><span>列出已设密钥名</span></div>
+        <div class="cmd-row"><kbd>wrangler kv namespace create X</kbd><span>建 KV 命名空间</span></div>
+        <div class="cmd-row"><kbd>wrangler kv key put --binding=X k v</kbd><span>写入 KV 键值</span></div>
+        <div class="cmd-row"><kbd>wrangler d1 create db</kbd><span>建 D1 数据库</span></div>
+        <div class="cmd-row"><kbd>wrangler rollback</kbd><span>回滚版本</span></div>
+        <div class="cmd-row"><kbd>wrangler pages deploy ./dist</kbd><span>部署 Pages 站点</span></div>
+        <div class="cmd-row"><kbd>wrangler --help</kbd><span>看所有命令</span></div>
+      </div>
+    </div>
+    <div class="callout blue">
+      <div class="t">忘了参数就 --help</div>
+      <p>几乎每个子命令都能加 <code>--help</code>，比如 <code>wrangler kv key --help</code>。配合官方文档 <a href="https://developers.cloudflare.com/workers/wrangler/" target="_blank" rel="noopener">developers.cloudflare.com/workers/wrangler</a> 查最新参数。</p>
+    </div>
+  </section>
+
+  <section id="quiz">
+    <div class="secnum">09 / check</div>
+    <h2>最后做个 <em>快速自测</em></h2>
+    <div id="quiz-list"></div>
+    <div class="score" id="quiz-score">得分 <b>0 / 0</b></div>
+  </section>
+
+  <footer>
+    <span>wrangler lab · static tutorial</span>
+    <span><a href="/">back to learning labs</a></span>
+  </footer>
+</div>
+<script>
+  (function(){
+    // 安装方式 tab 切换
+    const tabs = Array.from(document.querySelectorAll('.tab'));
+    const panes = Array.from(document.querySelectorAll('.tabpane'));
+    tabs.forEach(t => t.addEventListener('click', () => {
+      tabs.forEach(x => x.classList.toggle('active', x === t));
+      panes.forEach(p => p.classList.toggle('active', p.dataset.pane === t.dataset.tab));
+    }));
+
+    Quiz.render(
+      document.getElementById('quiz-list'),
+      document.getElementById('quiz-score'),
+      [
+        {
+          q:'团队协作时，最推荐的 wrangler 安装方式是？',
+          opts:['全局 npm install -g wrangler', '按项目 npm install -D wrangler', '每次手动下载二进制'],
+          ans:1,
+          exp:'<b>按项目安装</b>会把版本锁进 package.json，团队每个人和 CI 用的版本一致，避免「我这能跑你那不行」。'
+        },
+        {
+          q:'本地预览 Worker，用哪条命令？',
+          opts:['wrangler deploy', 'wrangler dev', 'wrangler tail'],
+          ans:1,
+          exp:'<code>wrangler dev</code> 起本地开发服务器并热重载；<code>deploy</code> 是上线，<code>tail</code> 是看线上日志。'
+        },
+        {
+          q:'一个 API token 应该怎么交给 Worker？',
+          opts:['写进 wrangler.toml 的 [vars]', '用 wrangler secret put 上传', '硬编码在 src/index.ts'],
+          ans:1,
+          exp:'<code>[vars]</code> 会进版本库等于明文公开。敏感值一律走 <b>wrangler secret put</b>，加密存在云端、不进 git。'
+        },
+        {
+          q:'compatibility_date 的作用是？',
+          opts:['必须设成今天，否则部署失败', '把运行时行为锁定在某一天，避免平台升级悄悄改变行为', '决定 Worker 的过期下线时间'],
+          ans:1,
+          exp:'它锁定运行时语义。设成项目开始的日期，之后平台的破坏性变更不会自动套到你头上；要新特性时再手动往后调。'
+        },
+        {
+          q:'线上发版出问题，最快的补救是？',
+          opts:['wrangler delete 删掉重来', 'wrangler rollback 回滚到上一个版本', '改 compatibility_date'],
+          ans:1,
+          exp:'<code>wrangler rollback</code> 一键回到上一个正常版本；配合 <code>wrangler deployments list</code> 看历史。'
+        }
+      ],
+      { final: (correct, total) => correct === total ? ' · 可以 deploy 了' : ' · 回到上面再过一遍命令' }
+    );
+  })();
+</script>
+</body>
+</html>
